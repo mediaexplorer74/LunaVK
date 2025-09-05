@@ -19,7 +19,7 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
-using Opusfile;
+//using Opusfile;
 using LunaVK.Core;
 
 namespace LunaVK.UC
@@ -282,11 +282,12 @@ namespace LunaVK.UC
             return storageFile;
         }
 
+        //TODO
         private void Microphone_OnBufferReady(byte[] _buffer, string path)
         {
-            Opusfile.WindowsRuntime.OggOpusFile _opusComponent = new Opusfile.WindowsRuntime.OggOpusFile();
+            //Opusfile.WindowsRuntime.OggOpusFile _opusComponent = new Opusfile.WindowsRuntime.OggOpusFile();
 
-            int ii = _opusComponent.initRecorder(path);
+            //int ii = _opusComponent.initRecorder(path);
 
             int data = _buffer.Length;
             int num1 = data / 1920;
@@ -295,10 +296,10 @@ namespace LunaVK.UC
             {
                 int length = 1920 * (index + 1) > _buffer.Length ? _buffer.Length - 1920 * index : 1920;
                 var temp = SubArray<byte>(_buffer, 1920 * index, length);
-                _opusComponent.writeFrame(temp, (uint)length);
+                //_opusComponent.writeFrame(temp, (uint)length);
             }
 
-            _opusComponent.cleanupRecorder();
+           // _opusComponent.cleanupRecorder();
 
 
 

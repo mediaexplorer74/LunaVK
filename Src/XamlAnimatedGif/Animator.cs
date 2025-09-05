@@ -4,23 +4,23 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-#if WPF || SILVERLIGHT
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Animation;
-using System.Windows.Media.Imaging;
-using System.Runtime.InteropServices;
-#elif WINRT || WINDOWS_PHONE_APP
+//#if WPF || SILVERLIGHT
+//using System.Windows;
+//using System.Windows.Media;
+//using System.Windows.Media.Animation;
+//using System.Windows.Media.Imaging;
+//using System.Runtime.InteropServices;
+//#elif WINRT || WINDOWS_PHONE_APP
 using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Media.Animation;
 using System.Runtime.InteropServices.WindowsRuntime;
-#endif
-#if !NET40 && !SILVERLIGHT
+//#endif
+//#if !NET40 && !SILVERLIGHT
 using TaskEx = System.Threading.Tasks.Task;
-#endif
+//#endif
 
 using XamlAnimatedGif.Decoding;
 using XamlAnimatedGif.Decompression;
@@ -248,13 +248,13 @@ namespace XamlAnimatedGif
         private static WriteableBitmap CreateBitmap(GifDataStream metadata)
         {
             var desc = metadata.Header.LogicalScreenDescriptor;
-#if WPF
-            var bitmap = new WriteableBitmap(desc.Width, desc.Height, 96, 96, PixelFormats.Bgra32, null);
-#elif WINRT || WINDOWS_PHONE_APP || SILVERLIGHT
+//#if WPF
+//            var bitmap = new WriteableBitmap(desc.Width, desc.Height, 96, 96, PixelFormats.Bgra32, null);
+//#elif WINRT || WINDOWS_PHONE_APP || SILVERLIGHT
             var bitmap = new WriteableBitmap(desc.Width, desc.Height);
-#else
-            #error Not implemented
-#endif
+//#else
+//            #error Not implemented
+//#endif
             return bitmap;
         }
 
@@ -365,13 +365,13 @@ namespace XamlAnimatedGif
                         }
                         CopyToBitmap(lineBuffer, _bitmap, offset, bufferLength);
                     }
-#if WPF
-                    _bitmap.AddDirtyRect(rect);
-#endif
+//#if WPF
+//                    _bitmap.AddDirtyRect(rect);
+//#endif
                 }
-#if WINRT || SILVERLIGHT
+//#if WINRT || SILVERLIGHT
                 _bitmap.Invalidate();
-#endif
+//#endif
                 _previousFrame = frame;
                 _previousFrameIndex = frameIndex;
             }
@@ -411,28 +411,28 @@ namespace XamlAnimatedGif
 
         private static void CopyToBitmap(byte[] buffer, WriteableBitmap bitmap, int offset, int length)
         {
-#if WPF
-            Marshal.Copy(buffer, 0, bitmap.BackBuffer + offset, length);
-#elif WINRT || WINDOWS_PHONE_APP
+//#if WPF
+//            Marshal.Copy(buffer, 0, bitmap.BackBuffer + offset, length);
+//#elif WINRT || WINDOWS_PHONE_APP
             buffer.CopyTo(0, bitmap.PixelBuffer, (uint)offset, length);
-#elif SILVERLIGHT
-            Buffer.BlockCopy(buffer, 0, bitmap.Pixels, offset, length);
-#else
-            #error Not implemented
-#endif
+//#elif SILVERLIGHT
+//            Buffer.BlockCopy(buffer, 0, bitmap.Pixels, offset, length);
+//#else
+//            #error Not implemented
+//#endif
         }
 
         private static void CopyFromBitmap(byte[] buffer, WriteableBitmap bitmap, int offset, int length)
         {
-#if WPF
-            Marshal.Copy(bitmap.BackBuffer + offset, buffer, 0, length);
-#elif WINRT || WINDOWS_PHONE_APP
+//#if WPF
+//            Marshal.Copy(bitmap.BackBuffer + offset, buffer, 0, length);
+//#elif WINRT || WINDOWS_PHONE_APP
             bitmap.PixelBuffer.CopyTo((uint)offset, buffer, 0, length);
-#elif SILVERLIGHT
-            Buffer.BlockCopy(bitmap.Pixels, offset, buffer, 0, length);
-#else
-            #error Not implemented
-#endif
+//#elif SILVERLIGHT
+//            Buffer.BlockCopy(bitmap.Pixels, offset, buffer, 0, length);
+//#else
+//            #error Not implemented
+//#endif
         }
 
         private static void WriteColor(byte[] lineBuffer, Color color, int startIndex)
@@ -498,9 +498,9 @@ namespace XamlAnimatedGif
                 int offset = (rect.Y + y) * _stride + 4 * rect.X;
                 CopyToBitmap(lineBuffer, _bitmap, offset, bufferLength);
             }
-#if WPF
-            _bitmap.AddDirtyRect(new Int32Rect(rect.X, rect.Y, rect.Width, rect.Height));
-#endif
+//#if WPF
+//            _bitmap.AddDirtyRect(new Int32Rect(rect.X, rect.Y, rect.Width, rect.Height));
+//#endif
         }
 
         private async Task<Stream> GetIndexStreamAsync(GifFrame frame, CancellationToken cancellationToken)

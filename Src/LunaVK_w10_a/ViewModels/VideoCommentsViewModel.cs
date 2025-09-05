@@ -396,7 +396,8 @@ namespace LunaVK.ViewModels
                 //
                 if (url.Contains("vk.com/video_hls.php") || url.Contains("video.m3u8"))//HTTP Live Streaming (HLS-VOD) - есть варианты качества
                 {
-                    this.ProcessHLS(url);
+                    // TODO
+                    //this.ProcessHLS(url);
                     continue;
                 }
                 else if(url.Contains("playlist.m3u"))//Трансляция - нет выбора качества

@@ -21,7 +21,7 @@ using Windows.Storage;
 using Windows.Storage.Streams;
 using System.Text;
 using LunaVK.Core.Framework;
-using Opusfile;
+//using Opusfile;
 using LunaVK.Core.Network;
 using LunaVK.Core;
 
@@ -198,7 +198,8 @@ namespace LunaVK.UC.Attachment
             {
                 if (res == true)
                 {
-
+                    // TODO
+                    /*
                     Opusfile.WindowsRuntime.OggOpusFile temp = new Opusfile.WindowsRuntime.OggOpusFile();
                     var stream = await CacheManager.GetStreamInCurrentUserCacheFolder(uri);
                     temp.Open(stream);
@@ -234,6 +235,7 @@ namespace LunaVK.UC.Attachment
                         this.media.SetSource(outStream, outFile.ContentType);
                         this.media.Play();
                     });
+                    */
 
                 }
 

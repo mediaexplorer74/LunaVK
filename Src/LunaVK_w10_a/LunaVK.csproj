@@ -4141,10 +4141,6 @@
       <Project>{fbb1664d-a9ee-4e8c-b6da-c6a64211c3d8}</Project>
       <Name>LunaVK.Photo</Name>
     </ProjectReference>
-    <ProjectReference Include="..\OpusComponent\src\opusfile_winrt\opusfile_winrt.vcxproj">
-      <Project>{3448342a-2165-438e-a5a3-2a832a985f98}</Project>
-      <Name>opusfile_winrt</Name>
-    </ProjectReference>
     <ProjectReference Include="..\RawNotificationBackgroundComponent\RawNotificationBackgroundComponent.csproj">
       <Project>{62a6999f-9124-4a25-97fa-380ff756163a}</Project>
       <Name>RawNotificationBackgroundComponent</Name>

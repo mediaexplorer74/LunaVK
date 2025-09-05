@@ -3,24 +3,24 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using XamlAnimatedGif.Extensions;
-#if WPF || SILVERLIGHT
-using System.ComponentModel;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Markup;
-using System.Windows.Media.Animation;
-using System.Windows.Media.Imaging;
-#elif WINRT || WINDOWS_PHONE_APP
+//#if WPF || SILVERLIGHT
+//using System.ComponentModel;
+//using System.Windows;
+//using System.Windows.Controls;
+//using System.Windows.Markup;
+//using System.Windows.Media.Animation;
+//using System.Windows.Media.Imaging;
+//#elif WINRT || WINDOWS_PHONE_APP
 using Windows.ApplicationModel;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Media;
-#endif
-#if SILVERLIGHT
-using System.Windows.Media;
-#endif
+//#endif
+//#if SILVERLIGHT
+//using System.Windows.Media;
+//#endif
 
 namespace XamlAnimatedGif
 {
@@ -177,52 +177,52 @@ namespace XamlAnimatedGif
 
         #region Error
 
-#if WPF
-        public static readonly RoutedEvent ErrorEvent =
-            EventManager.RegisterRoutedEvent(
-                "Error",
-                RoutingStrategy.Bubble,
-                typeof (AnimationErrorEventHandler),
-                typeof (AnimationBehavior));
+//#if WPF
+//        public static readonly RoutedEvent ErrorEvent =
+//            EventManager.RegisterRoutedEvent(
+//                "Error",
+//                RoutingStrategy.Bubble,
+//                typeof (AnimationErrorEventHandler),
+//                typeof (AnimationBehavior));
 
-        public static void AddErrorHandler(DependencyObject d, AnimationErrorEventHandler handler)
-        {
-            (d as UIElement)?.AddHandler(ErrorEvent, handler);
-        }
+//        public static void AddErrorHandler(DependencyObject d, AnimationErrorEventHandler handler)
+//        {
+//            (d as UIElement)?.AddHandler(ErrorEvent, handler);
+//        }
 
-        public static void RemoveErrorHandler(DependencyObject d, AnimationErrorEventHandler handler)
-        {
-            (d as UIElement)?.RemoveHandler(ErrorEvent, handler);
-        }
-#elif WINRT || WINDOWS_PHONE_APP || SILVERLIGHT
+ //       public static void RemoveErrorHandler(DependencyObject d, AnimationErrorEventHandler handler)
+ //       {
+ //           (d as UIElement)?.RemoveHandler(ErrorEvent, handler);
+ //       }
+//#elif WINRT || WINDOWS_PHONE_APP || SILVERLIGHT
         // WinRT doesn't support custom attached events, use a normal CLR event instead
         public static event EventHandler<AnimationErrorEventArgs> Error;
-#endif
+//#endif
 
         internal static void OnError(Image image, Exception exception, AnimationErrorKind kind)
         {
-#if WPF
-            image.RaiseEvent(new AnimationErrorEventArgs(image, exception, kind));
-#elif WINRT || WINDOWS_PHONE_APP || SILVERLIGHT
+//#if WPF
+//            image.RaiseEvent(new AnimationErrorEventArgs(image, exception, kind));
+//#elif WINRT || WINDOWS_PHONE_APP || SILVERLIGHT
             Error.Invoke(image, new AnimationErrorEventArgs(image, exception, kind));
-#endif
+//#endif
         }
 
         private static void AnimatorError(object sender, AnimationErrorEventArgs e)
         {
-#if WPF
-            var source = e.Source as UIElement;
-            source?.RaiseEvent(e);
-#elif WINRT || WINDOWS_PHONE_APP || SILVERLIGHT
+//#if WPF
+//            var source = e.Source as UIElement;
+//            source?.RaiseEvent(e);
+//#elif WINRT || WINDOWS_PHONE_APP || SILVERLIGHT
             Error.Invoke(sender, e);
-#endif
+//#endif
         }
 
         #endregion
 
         #region DownloadProgress
 
-#if WPF
+/*#if WPF
         public static readonly RoutedEvent DownloadProgressEvent =
             EventManager.RegisterRoutedEvent(
                 "DownloadProgress",
@@ -240,24 +240,24 @@ namespace XamlAnimatedGif
             (d as UIElement)?.RemoveHandler(DownloadProgressEvent, handler);
         }
 
-#elif WINRT || WINDOWS_PHONE_APP || SILVERLIGHT
+#elif WINRT || WINDOWS_PHONE_APP || SILVERLIGHT*/
         // WinRT doesn't support custom attached events, use a normal CLR event instead
         public static event EventHandler<DownloadProgressEventArgs> DownloadProgress;
-#endif
+//#endif
 
         internal static void OnDownloadProgress(Image image, int downloadPercentage)
         {
-#if WPF
-            image.RaiseEvent(new DownloadProgressEventArgs(image, downloadPercentage));
-#elif WINRT || WINDOWS_PHONE_APP || SILVERLIGHT
+//#if WPF
+//            image.RaiseEvent(new DownloadProgressEventArgs(image, downloadPercentage));
+//#elif WINRT || WINDOWS_PHONE_APP || SILVERLIGHT
             DownloadProgress.Invoke(image, new DownloadProgressEventArgs(downloadPercentage));
-#endif
+//#endif
         }
         #endregion
 
         #region Loaded
 
-#if WPF
+/*#if WPF
         public static readonly RoutedEvent LoadedEvent =
             EventManager.RegisterRoutedEvent(
                 "Loaded",
@@ -274,18 +274,18 @@ namespace XamlAnimatedGif
         {
             (d as UIElement)?.RemoveHandler(LoadedEvent, handler);
         }
-#elif WINRT || WINDOWS_PHONE_APP || SILVERLIGHT
+#elif WINRT || WINDOWS_PHONE_APP || SILVERLIGHT*/
         // WinRT doesn't support custom attached events, use a normal CLR event instead
         public static event EventHandler Loaded;
-#endif
+//#endif
 
         private static void OnLoaded(Image sender)
         {
-#if WPF
-            sender.RaiseEvent(new RoutedEventArgs(LoadedEvent, sender));
-#elif WINRT || WINDOWS_PHONE_APP || SILVERLIGHT
+//#if WPF
+//            sender.RaiseEvent(new RoutedEventArgs(LoadedEvent, sender));
+//#elif WINRT || WINDOWS_PHONE_APP || SILVERLIGHT
             Loaded?.Invoke(sender, EventArgs.Empty);
-#endif
+//#endif
         }
 
         #endregion
@@ -414,11 +414,11 @@ namespace XamlAnimatedGif
 
         private static bool IsLoaded(FrameworkElement element)
         {
-#if WPF
-            return element.IsLoaded;
-#elif WINRT || WINDOWS_PHONE_APP || SILVERLIGHT
+//#if WPF
+//            return element.IsLoaded;
+//#elif WINRT || WINDOWS_PHONE_APP || SILVERLIGHT
             return VisualTreeHelper.GetParent(element) != null;
-#endif
+//#endif
         }
 
         private static Uri GetAbsoluteUri(Image image)
@@ -426,14 +426,14 @@ namespace XamlAnimatedGif
             var uri = GetSourceUri(image);
             if (uri == null)
                 return null;
-#if !SILVERLIGHT
+//#if !SILVERLIGHT
             if (!uri.IsAbsoluteUri)
             {
-#if WPF
-                var baseUri = ((IUriContext)image).BaseUri;
-#elif WINRT || WINDOWS_PHONE_APP
+//#if WPF
+//                var baseUri = ((IUriContext)image).BaseUri;
+//#elif WINRT || WINDOWS_PHONE_APP
                 var baseUri = image.BaseUri;
-#endif
+//#endif
                 if (baseUri != null)
                 {
                     uri = new Uri(baseUri, uri);
@@ -443,7 +443,7 @@ namespace XamlAnimatedGif
                     throw new InvalidOperationException("Relative URI can't be resolved");
                 }
             }
-#endif
+//#endif
             return uri;
         }
 
@@ -529,13 +529,13 @@ namespace XamlAnimatedGif
         // ReSharper disable once UnusedParameter.Local (used in WPF)
         private static bool IsInDesignMode(DependencyObject obj)
         {
-#if WPF
-            return DesignerProperties.GetIsInDesignMode(obj);
-#elif WINRT || WINDOWS_PHONE_APP
+//#if WPF
+//            return DesignerProperties.GetIsInDesignMode(obj);
+//#elif WINRT || WINDOWS_PHONE_APP
             return DesignMode.DesignModeEnabled;
-#elif SILVERLIGHT
-            return DesignerProperties.IsInDesignTool;
-#endif
+//#elif SILVERLIGHT
+//            return DesignerProperties.IsInDesignTool;
+//#endif
         }
 
         private static async Task SetStaticImageAsync(Image image, Uri sourceUri)
@@ -569,15 +569,15 @@ namespace XamlAnimatedGif
         {
             stream.Seek(0, SeekOrigin.Begin);
             var bmp = new BitmapImage();
-#if WPF
-            bmp.BeginInit();
-            bmp.StreamSource = stream;
-            bmp.EndInit();
-#elif WINRT || WINDOWS_PHONE_APP
+//#if WPF
+//            bmp.BeginInit();
+//            bmp.StreamSource = stream;
+//            bmp.EndInit();
+//#elif WINRT || WINDOWS_PHONE_APP
             bmp.SetSource(stream.AsRandomAccessStream());
-#elif SILVERLIGHT
-            bmp.SetSource(stream);
-#endif
+//#elif SILVERLIGHT
+//            bmp.SetSource(stream);
+//#endif
             image.Source = bmp;
         }
     }
