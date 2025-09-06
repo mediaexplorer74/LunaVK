@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3" xmlns:uap2="http://schemas.microsoft.com/appx/manifest/uap/windows10/2" IgnorableNamespaces="uap mp uap3 uap2">
   <Identity Name="ME.LunaVK" Publisher="CN=Admin" Version="1.1.100.0" />
-  <mp:PhoneIdentity PhoneProductId="cead2502-d791-4386-8e6d-e3133dfc5cfb" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
+  <mp:PhoneIdentity PhoneProductId="cead2502-d791-4386-8e6d-e3133dfc5cfb" PhonePublisherId="59300341-6564-2435-8601-801280357735" />
   <Properties>
     <DisplayName>LunaVK v1.1.100</DisplayName>
     <PublisherDisplayName>Admin</PublisherDisplayName>
