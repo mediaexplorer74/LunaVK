@@ -276,7 +276,9 @@ namespace LunaVK.Core.Network
                     //<div class="service_msg service_msg_warning">Указан неверный логин или пароль.</div>
                     Regex regService = new Regex("service_msg_warning.+?>(.+?)<", RegexOptions.Singleline);
                     Match matchResults = regService.Match(html);
-                    if (matchResults.Success)
+
+                    //TODO : fix "Access denied"
+                    if (1==0)//(matchResults.Success)
                     {
                         callback(VKErrors.AccessDenied, matchResults.Groups[1].Value);
                         return;
