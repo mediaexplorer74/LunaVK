@@ -104,7 +104,7 @@ namespace LunaVK.Core.Utils
                         {
                             tttt = "Luna VK";
                             break;
-                        }
+                        }                    
                 }
 
                 if (string.IsNullOrEmpty(tttt))

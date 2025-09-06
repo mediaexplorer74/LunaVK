@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Windows.UI.Popups;
 using Windows.UI.Xaml.Controls;
+using VkLib.Error; // Added for VkLib exceptions
 
 namespace LunaVK.Core.Network
 {
@@ -110,16 +111,6 @@ namespace LunaVK.Core.Network
 #endif
         }
 
-
-
-
-
-
-
-
-
-
-
         /// <summary>
         /// Исправляем ответ сервера [] => {}
         /// </summary>
@@ -198,27 +189,53 @@ namespace LunaVK.Core.Network
 
         public static void DispatchLoginRequest(string login, string password, Action<VKErrors, string> callback)
         {
-            #region Delete cookie
-            Windows.Web.Http.Filters.HttpBaseProtocolFilter myFilter = new Windows.Web.Http.Filters.HttpBaseProtocolFilter();
-            var cookieManager = myFilter.CookieManager;
-
-            Windows.Web.Http.HttpCookieCollection myCookieJar = cookieManager.GetCookies(new Uri("https://www.vk.com/"));
-            foreach (Windows.Web.Http.HttpCookie cookie in myCookieJar)
-                cookieManager.DeleteCookie(cookie);
-            #endregion
-
-            // Шаг 1: получаем страницу входа (на ней важны скрытые поля у кнопки входа)
-            string requestUriString = string.Format("https://oauth.vk.com/authorize?client_id={0}&scope={1}&redirect_uri={2}&display=mobile&v={3}&response_type=token", VKConstants.ApplicationID, VKConstants.Scope, VKConstants.Redirect, VKConstants.API_VERSION);
-
-            JsonWebRequest.SendHTTPRequestAsync(requestUriString, (html, result) =>
+            // Use VkLib direct authentication instead of the complex OAuth flow
+            Task.Run(async () =>
             {
-                if (result)
+                try
                 {
-                    ProcessInputPage(html, login, password, callback);
+                    var token = await VkService.Instance.Auth.Login(login, password,
+                        VkLib.Auth.VkScopeSettings.CanAccessFriends |
+                        VkLib.Auth.VkScopeSettings.CanAccessGroups |
+                        VkLib.Auth.VkScopeSettings.CanAccessMessages |
+                        VkLib.Auth.VkScopeSettings.CanAccessWall |
+                        VkLib.Auth.VkScopeSettings.CanAccessVideos |
+                        VkLib.Auth.VkScopeSettings.CanAccessPhotos |
+                        VkLib.Auth.VkScopeSettings.CanAccessDocs |
+                        VkLib.Auth.VkScopeSettings.CanAccessAudios |
+                        VkLib.Auth.VkScopeSettings.Offline);
+
+                    if (token != null)
+                    {
+                        // Convert VkLib token to LunaVK format
+                        string result = $"access_token={token.Token}&expires_in={token.ExpiresIn.Ticks}&user_id={token.UserId}";
+                        // Replace this line inside DispatchLoginRequest:
+                        // Execute.ExecuteOnUIThread(() => callback(VKErrors.None, result));
+
+                        // With this line:
+                        Framework.Execute.ExecuteOnUIThread(() => callback(VKErrors.None, result));
+                        //Execute.ExecuteOnUIThread(() => callback(VKErrors.None, result));
+                    }
+                    else
+                    {
+                        Framework.Execute.ExecuteOnUIThread(() => callback(VKErrors.AccessDenied, "Не удалось получить токен доступа"));
+                    }
                 }
-                else
+                catch (VkCaptchaNeededException ex)
                 {
-                    callback(VKErrors.NoNetwork, "Не удалось загрузить страницу oauth.vk.com");
+                    Framework.Execute.ExecuteOnUIThread(() => callback(VKErrors.CaptchaNeeded, $"Требуется капча: {ex.CaptchaImg}"));
+                }
+                catch (VkInvalidClientException ex)
+                {
+                    Framework.Execute.ExecuteOnUIThread(() => callback(VKErrors.AccessDenied, "Неверный логин или пароль"));
+                }
+                catch (VkNeedValidationException ex)
+                {
+                    Framework.Execute.ExecuteOnUIThread(() => callback(VKErrors.NeedValidation, "Требуется подтверждение безопасности"));
+                }
+                catch (Exception ex)
+                {
+                    Framework.Execute.ExecuteOnUIThread(() => callback(VKErrors.UnknownError, $"Ошибка авторизации: {ex.Message}"));
                 }
             });
         }

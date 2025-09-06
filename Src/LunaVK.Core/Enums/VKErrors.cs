@@ -321,5 +321,6 @@ namespace LunaVK.Core.Enums
         NoNetwork = 90909,
 
         DeserializationError = 90910,
+        NeedValidation = 90911,
     }
 }

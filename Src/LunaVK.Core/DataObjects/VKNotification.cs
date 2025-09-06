@@ -99,7 +99,13 @@ namespace LunaVK.Core.DataObjects
             {
                 if (this._parsedFeedback != null)
                     return this._parsedFeedback;
-                string str = this.feedback.ToString();
+                
+                string str = "";
+                if (this.feedback == null)
+                    return "";
+                else
+                    str = this.feedback.ToString();
+
                 switch (this.type)
                 {
                     case NotificationType.follow:

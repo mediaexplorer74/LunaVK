@@ -118,6 +118,7 @@
     <Compile Include="Library\GenericCollectionViewModelSql.cs" />
     <None Include="Library\ISupportCache.cs" />
     <Compile Include="Library\StatsService.cs" />
+    <Compile Include="Network\VkService.cs" />
     <Compile Include="VKConstants.cs" />
     <Compile Include="CountersService.cs" />
     <Compile Include="DataObjects\AppButton.cs" />
@@ -382,7 +383,12 @@
       <Version>13.0.3</Version>
     </PackageReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\VkLib\VkLib.csproj">
+      <Project>{e38445be-31cc-add6-2923-3a82b4a4b20b}</Project>
+      <Name>VkLib</Name>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>

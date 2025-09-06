@@ -24,7 +24,7 @@ using Windows.Storage;
 using Windows.ApplicationModel.Background;
 using Windows.Foundation.Metadata;
 using LunaVK.Common;
- 
+using VkLib.Error; // Added for VkLib exceptions
 
 namespace LunaVK
 {
@@ -105,27 +105,64 @@ namespace LunaVK
             this.PerformLoginAttempt();
         }
 
-        private void PerformLoginAttempt()
+        private async void PerformLoginAttempt()
         {
             this._error.Text = "";
             this._error.Opacity = 0;
             this._progressRing.IsActive = true;
             this.passwordBox.IsEnabled = this.textBoxUsername.IsEnabled = this.LoginBtn.IsEnabled = false;
             
-            VKRequestsDispatcher.DispatchLoginRequest(this.textBoxUsername.Text, this.passwordBox.Password, this.Callback);
+            // Use VkLib direct authentication instead of the complex OAuth flow
+            try
+            {
+                var token = await VkService.Instance.Auth.Login(this.textBoxUsername.Text, this.passwordBox.Password, 
+                    VkLib.Auth.VkScopeSettings.CanAccessFriends |
+                    VkLib.Auth.VkScopeSettings.CanAccessGroups |
+                    VkLib.Auth.VkScopeSettings.CanAccessMessages |
+                    VkLib.Auth.VkScopeSettings.CanAccessWall |
+                    VkLib.Auth.VkScopeSettings.CanAccessVideos |
+                    VkLib.Auth.VkScopeSettings.CanAccessPhotos |
+                    VkLib.Auth.VkScopeSettings.CanAccessDocs |
+                    VkLib.Auth.VkScopeSettings.CanAccessAudios |
+                    VkLib.Auth.VkScopeSettings.Offline);
+
+                if (token != null)
+                {
+                    // Convert VkLib token to LunaVK format
+                    Settings.AccessToken = token.Token;
+                    Settings.UserId = (uint)token.UserId;
+                    
+                    // Continue with the rest of the login process
+                    this.Callback(VKErrors.None, "");
+                }
+                else
+                {
+                    this.Callback(VKErrors.AccessDenied, "Не удалось получить токен доступа");
+                }
+            }
+            catch (VkCaptchaNeededException ex)
+            {
+                this.Callback(VKErrors.CaptchaNeeded, $"Требуется капча: {ex.CaptchaImg}");
+            }
+            catch (VkInvalidClientException ex)
+            {
+                this.Callback(VKErrors.AccessDenied, "Неверный логин или пароль");
+            }
+            catch (VkNeedValidationException ex)
+            {
+                this.Callback(VKErrors.NeedValidation, "Требуется подтверждение безопасности");
+            }
+            catch (Exception ex)
+            {
+                this.Callback(VKErrors.UnknownError, $"Ошибка авторизации: {ex.Message}");
+            }
         }
 
         private void Callback(VKErrors error, string description)
         {
             if (error == VKErrors.None)
             {
-                Regex QueryStringRegex = new Regex("access_token=(?<access_token>.+)&.+user_id=(?<user_id>\\d+)");
-                Match m = QueryStringRegex.Match(description);
-                string access_token = m.Groups["access_token"].Value;
-                uint user_id = uint.Parse(m.Groups["user_id"].Value);
-                
-                Settings.AccessToken = access_token;
-                Settings.UserId = user_id;
+                // No need to parse access_token from description since we already have it
                 LongPollServerService.Instance.Restart();
                 PushNotifications.Instance.UpdateDeviceRegistration();
 

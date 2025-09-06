@@ -4150,6 +4150,10 @@
       <Project>{ac3f2441-a0a3-4d9f-a35e-e2debb393c13}</Project>
       <Name>ToastNotificationComponent</Name>
     </ProjectReference>
+    <ProjectReference Include="..\VkLib\VkLib.csproj">
+      <Project>{e38445be-31cc-add6-2923-3a82b4a4b20b}</Project>
+      <Name>VkLib</Name>
+    </ProjectReference>
     <ProjectReference Include="..\XamlAnimatedGif\XamlAnimatedGif.csproj">
       <Project>{7409419c-0d51-4aa3-8c04-6ee9b3961821}</Project>
       <Name>XamlAnimatedGif</Name>

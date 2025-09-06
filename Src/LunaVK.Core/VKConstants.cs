@@ -7,7 +7,7 @@
         /// </summary>
         public static readonly string API_VERSION = "5.120";
 
-        public static readonly string ApplicationID = "6244854";
+        public static readonly string ApplicationID = "2274003";//"6244854";
         public static readonly string Scope = "audio,friends,docs,groups,messages,notes,notifications,notify,offline,pages,photos,stats,status,video,wall,stories,market";
         public static readonly string Redirect = "https://oauth.vk.com/blank.html";
 

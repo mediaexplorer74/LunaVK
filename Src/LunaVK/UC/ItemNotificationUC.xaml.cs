@@ -192,7 +192,7 @@ namespace LunaVK.UC
             //    int i = 0;
             //}
             user = this.Notification.Owner;
-            Debug.Assert(user != null);
+            //Debug.Assert(user != null);
             if (user != null)
             {
                 //todo:get user
