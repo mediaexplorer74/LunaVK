@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using LunaVK.Core;
 using LunaVK.Core.ViewModels;
 using LunaVK.ViewModels;
@@ -31,13 +31,8 @@ namespace LunaVK
             if (pageState != null && pageState.ContainsKey("Data"))
             {
                 base.DataContext = pageState["Data"];
-                int selected = (int)pageState["Page"];
-                this._pivot.SelectedIndex = selected;
-
                 if (this.VM.FeedbackVM.Items.Count > 0)
                     this._listFeedBack.NeedReload = false;
-                if (this.VM.CommentsVM.Items.Count > 0)
-                    this._listComments.NeedReload = false;
             }
             else
             {
@@ -48,7 +43,6 @@ namespace LunaVK
         protected override void SaveState(Dictionary<String, Object> pageState)
         {
             pageState["Data"] = this.VM;
-            pageState["Page"] = this._pivot.SelectedIndex;
         }
 
         private void _view_Tap(object sender, TappedRoutedEventArgs e)

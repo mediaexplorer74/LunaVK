@@ -88,13 +88,17 @@ namespace LunaVK.Core.Library
 
                         if (item.ParsedFeedback is List<FeedbackUser> list)
                         {
-                            if (list[0].from_id > 0)
+                            if (list != null && list.Count > 0)
                             {
-                                owner = result.response.profiles.Find((u) => u.id == list[0].from_id);
-                            }
-                            else
-                            {
-                                owner = result.response.groups.Find((g) => g.id == (-list[0].from_id));
+                                int actorId = list[0].from_id != 0 ? list[0].from_id : list[0].owner_id;
+                                if (actorId > 0)
+                                {
+                                    owner = result.response.profiles.Find((u) => u.id == actorId);
+                                }
+                                else if (actorId < 0)
+                                {
+                                    owner = result.response.groups.Find((g) => g.id == (-actorId));
+                                }
                             }
                         }
                         else if (item.ParsedFeedback is VKComment comment)
@@ -121,14 +125,17 @@ namespace LunaVK.Core.Library
                         }
                         else if (item.ParsedFeedback is List<FeedbackCopyInfo> info)
                         {
-                            var post2 = info[0];
-                            if (post2.from_id > 0)
+                            if (info != null && info.Count > 0)
                             {
-                                owner = result.response.profiles.Find((u) => u.id == post2.from_id);
-                            }
-                            else
-                            {
-                                owner = result.response.groups.Find((g) => g.id == (-post2.from_id));
+                                long rawId = info[0].from_id != 0 ? info[0].from_id : info[0].owner_id;
+                                if (rawId > 0)
+                                {
+                                    owner = result.response.profiles.Find((u) => u.id == (int)rawId);
+                                }
+                                else if (rawId < 0)
+                                {
+                                    owner = result.response.groups.Find((g) => g.id == (int)(-rawId));
+                                }
                             }
                         }
                         

@@ -1,0 +1,42 @@
+<Page
+    x:Class="Colibri.Shell"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Colibri.Controls"
+    mc:Ignorable="d"
+    x:Name="rootElement">
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <!-- subtle backdrop area -->
+        <Grid x:Name="BackgroundArtGrid" Opacity="0.15" IsHitTestVisible="False">
+            <Rectangle Fill="{ThemeResource SystemControlAcrylicWindowBrush}" />
+        </Grid>
+
+        <!-- New layout without hamburger: content + mini player + bottom navigation -->
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Main content -->
+            <Frame x:Name="ContentFrame" Grid.Row="0" />
+
+            <!-- Mini player above navigation -->
+            <controls:PlayerMiniControl Grid.Row="1"/>
+
+            <!-- Bottom navigation -->
+            <CommandBar Grid.Row="2">
+                <AppBarButton x:Name="NavNews" Icon="World" Label="Новости" Click="NavNews_Click"/>
+                <AppBarButton x:Name="NavDialogs" Icon="Contact" Label="Беседы" Click="NavDialogs_Click"/>
+                <AppBarButton x:Name="NavMusic" Icon="Audio" Label="Музыка" Click="NavMusic_Click"/>
+                <AppBarButton x:Name="NavVideo" Icon="Video" Label="Видео" Click="NavVideo_Click"/>
+                <AppBarButton x:Name="NavSettings" Icon="Setting" Label="Настройки" Click="NavSettings_Click"/>
+                <AppBarButton x:Name="NavProfile" Icon="Contact2" Label="Профиль" Click="NavProfile_Click"/>
+            </CommandBar>
+        </Grid>
+    </Grid>
+</Page>

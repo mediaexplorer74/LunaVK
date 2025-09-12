@@ -9,8 +9,7 @@
     xmlns:uc="using:LunaVK.UC"
     xmlns:attach="using:LunaVK.UC.Attachment"
     xmlns:controls="using:LunaVK.UC.Controls"
-    xmlns:framework="using:LunaVK.Framework"
-    
+    xmlns:framework="using:LunaVK.Framework" 
     >
 
     <Grid Background="{ThemeResource BaseBackgroundBrush}">

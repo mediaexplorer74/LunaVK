@@ -101,7 +101,8 @@ namespace LunaVK
 
         private void Links_OnClicked(object sender, TappedRoutedEventArgs e)
         {
-            Library.NavigatorImpl.Instance.NavigateToCommunityManagementLinks(this.VM.Id);
+            //TODO
+            //Library.NavigatorImpl.Instance.NavigateToCommunityManagementLinks(this.VM.Id);
         }
 
         private void Services_OnClicked(object sender, TappedRoutedEventArgs e)

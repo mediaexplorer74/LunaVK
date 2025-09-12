@@ -82,7 +82,7 @@ namespace VkLib.Core
         {
             if (parameters != null && parameters.Count > 0)
             {
-                var paramStr = string.Join("&", parameters.Select(kp => $"{Uri.EscapeDataString(kp.Key)}={Uri.EscapeDataString(kp.Value)}"));
+                var paramStr = string.Join("&", parameters.Where(kp => kp.Key != null && kp.Value != null).Select(kp => $"{Uri.EscapeDataString(kp.Key)}={Uri.EscapeDataString(kp.Value)}"));
 
                 return new Uri(string.Concat(baseUri, "?", paramStr));
             }

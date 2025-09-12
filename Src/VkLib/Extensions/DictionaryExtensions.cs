@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -8,7 +8,7 @@ namespace VkLib.Extensions
     {
         public static string ToUrlParams(this Dictionary<string, string> input)
         {
-            var paramStr = string.Join("&", input.Select(kp => string.Format("{0}={1}", Uri.EscapeDataString(kp.Key), Uri.EscapeDataString(kp.Value))));
+            var paramStr = string.Join("&", input.Where(kp => kp.Key != null && kp.Value != null).Select(kp => string.Format("{0}={1}", Uri.EscapeDataString(kp.Key), Uri.EscapeDataString(kp.Value))));
             return paramStr;
         }
     }

@@ -63,7 +63,8 @@ namespace LunaVK
 
         private void ConversationMaterials_OnClicked(object sender, TappedRoutedEventArgs e)
         {
-            Library.NavigatorImpl.Instance.NavigateToConversationMaterials(this.VM.ChatId + 2000000000);
+            //TODO
+            //Library.NavigatorImpl.Instance.NavigateToConversationMaterials(this.VM.ChatId + 2000000000);
         }
 
         private void Border_Tapped(object sender, TappedRoutedEventArgs e)

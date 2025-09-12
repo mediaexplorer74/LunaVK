@@ -295,7 +295,8 @@ namespace LunaVK
 
         private void TextBlock_Tapped_1(object sender, TappedRoutedEventArgs e)
         {
-            NavigatorImpl.Instance.NavigateToRegistrationPage();
+            //TODO
+           // NavigatorImpl.Instance.NavigateToRegistrationPage();
         }
     }
 }

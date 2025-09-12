@@ -1,0 +1,5 @@
+How to find XAML error to solve error:
+powershell -NoProfile -ExecutionPolicy Bypass .\scan_xaml_errors.ps1
+
+Example of result:
+BAD|............Src\LunaVK\NotificationsPage.xaml|FirstNonWsByte=0xEF|HEAD=﻿﻿<local:PageBase      x:Class="LunaVK.NotificationsPage"      xmlns="http://schemas.microsoft.c

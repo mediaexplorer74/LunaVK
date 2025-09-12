@@ -101,8 +101,18 @@ namespace LunaVK.ViewModels
                 VKRequestsDispatcher.DispatchRequestToVK<VKPlaylist>("execute.getPlaylist", parameters,(result)=> {
                     if(result.error.error_code == VKErrors.None)
                     {
-                        base._totalCount = (uint)result.response.audios.Count;
-                        callback(result.error, result.response.audios);
+                        // Ensure response and audios are not null to avoid exceptions
+                        if(result.response != null && result.response.audios != null)
+                        {
+                            base._totalCount = (uint)result.response.audios.Count;
+                            callback(result.error, result.response.audios);
+                        }
+                        else
+                        {
+                            // No audios returned — treat as empty playlist
+                            base._totalCount = 0;
+                            callback(result.error, new List<VKAudio>());
+                        }
                     }
                     else
                     {

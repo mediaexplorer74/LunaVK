@@ -1,4 +1,4 @@
-﻿<UserControl
+<UserControl
     x:Class="LunaVK.UC.ItemNotificationUC"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -33,6 +33,9 @@
             <TextBlock Name="action" FontSize="{StaticResource FontSizeContent}" Foreground="{ThemeResource TextBrushMedium}"/>
             <local:ScrollableTextBlock x:Name="comment" IsHitTestVisible="False"/>-->
             <Grid Name="ContentGrid"/>
+            
+            <!-- Панель с деталями уведомления (полный текст/доп. сведения), по умолчанию скрыта -->
+            <StackPanel x:Name="DetailsPanel" Visibility="Collapsed" Margin="0 6 0 6"/>
             
             <TextBlock Name="date" FontSize="16" Foreground="{ThemeResource TextBrushMedium}" Text="Yestarday" Opacity="0.5"/>
         </StackPanel>

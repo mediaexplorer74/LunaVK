@@ -135,7 +135,6 @@ namespace LunaVK.Library
         {
             Dictionary<string, int> QueryString = new Dictionary<string, int>();
 
-
             QueryString["PeerId"] = peerId;
             //QueryString["FromLookup"] =
             QueryString["MessageId"] = messageId;
@@ -339,90 +338,6 @@ namespace LunaVK.Library
         public void NavigateToVideoWithComments(int ownerId, uint videoId, string accessKey = "", VKVideoBase video = null, object sender = null)
         {
             VideoViewerUC.Show(ownerId, videoId, accessKey, video, sender);
-
-
-
-
-            /*
-
-
-
-            var temp = CustomFrame.Instance.VideoViewerElement;
-
-            if (sender == null)//переход по ссылке
-            {
-                VideoCommentsViewModel vm0 = temp.DataContext as VideoCommentsViewModel;
-                
-                if (vm0 == null)
-                {
-                    vm0 = new VideoCommentsViewModel(ownerId, videoId, accessKey);
-                    temp.InitViewModel(vm0);
-                }
-
-                PopUpService pop0 = new PopUpService();
-                pop0.Child = new VideoViewerUC() { DataContext = vm0 };
-                pop0.OverrideBackKey = true;
-                pop0.AnimationTypeChild = PopUpService.AnimationTypes.Fade;
-                pop0.BackgroundBrush = null;
-                pop0.Show();
-
-                
-                CompositeTransform renderTransform0 = temp.RenderTransform as CompositeTransform;
-                if(renderTransform0==null)
-                {
-                    renderTransform0 = new CompositeTransform();
-                    temp.RenderTransform = renderTransform0;
-                }
-                temp.MakeNormal();
-
-                if (renderTransform0 != null)
-                {
-                    var ease = new Windows.UI.Xaml.Media.Animation.QuarticEase() { EasingMode = Windows.UI.Xaml.Media.Animation.EasingMode.EaseOut };
-
-                    renderTransform0.Animate(renderTransform0.TranslateX, 0, "TranslateX", 600, 0, ease);
-                    renderTransform0.Animate(renderTransform0.TranslateY, 0, "TranslateY", 600, 0, ease);
-                    renderTransform0.Animate(renderTransform0.ScaleX, 1, "ScaleX", 600, 0, ease);
-                    renderTransform0.Animate(renderTransform0.ScaleY, 1, "ScaleY", 600, 0, ease);
-                }
-
-                return;
-            }
-
-
-            Debug.Assert(sender != null);
-
-            VideoCommentsViewModel vm = new VideoCommentsViewModel(ownerId, videoId, accessKey);
-
-            PopUpService pop = new PopUpService();
-            pop.Child = new UC.VideoViewerUC() { DataContext = vm };
-            pop.OverrideBackKey = true;
-            pop.AnimationTypeChild = PopUpService.AnimationTypes.Fade;
-            pop.BackgroundBrush = null;
-            pop.Show();
-
-            
-            //temp.DataContext = vm;
-            temp.InitViewModel(vm);
-            CompositeTransform renderTransform = temp.RenderTransform as CompositeTransform;
-
-            if (renderTransform == null )
-            {
-                if (sender != null)
-                {
-                    Common.ImageAnimator imageAnimator = new Common.ImageAnimator(200, null);
-                    imageAnimator.AnimateIn((sender as FrameworkElement), temp);
-                }
-            }
-            else
-            {
-                temp.MakeNormal();
-
-                renderTransform.Animate(renderTransform.TranslateX, 0, "TranslateX", 600, 0, null);
-                renderTransform.Animate(renderTransform.TranslateY, 0, "TranslateY", 600, 0, null);
-                renderTransform.Animate(renderTransform.ScaleX, 1, "ScaleX", 600, 0, null, null);
-                renderTransform.Animate(renderTransform.ScaleY, 1, "ScaleY", 600, 0, null, null);
-            }
-            */
         }
 
         public void NavigateToPhotoWithComments(int ownerId, uint photoId, string accessKey = "", VKPhoto photo = null)
@@ -448,25 +363,7 @@ namespace LunaVK.Library
             QueryString.Add("AdminLevel", adminLevel);
             this.Navigate(typeof(GroupManagementPage), QueryString);//Management/MainPage.xaml
         }
-        /*
-        public void NavigateToMarketPage()
-        {
-            this.Navigate(typeof(MarketPage));
-        }
-        */
-        public void NavigateToMarket(int ownerId)
-        {
-            this.Navigate(typeof(MarketMainPage), ownerId);
-        }
-        public void NavigateToConversationMaterials(int peerId)
-        {
-            this.Navigate(typeof(ConversationMaterialsPage), peerId);
-        }
 
-        /// <summary>
-        /// Переход к заявкам в группу
-        /// </summary>
-        /// <param name="communityId"></param>
         public void NavigateToCommunityManagementRequests(uint communityId)
         {
             this.Navigate(typeof(Pages.Group.Management.RequestsPage), communityId);
@@ -759,76 +656,45 @@ namespace LunaVK.Library
 
             this.Navigate(typeof(NewPostPage), QueryString);
         }
-        /*
-        public void NavigateToCreateEditPoll(int ownerId, int pollId = 0, VKPoll poll = null)
+
+       /* public void NavigateToGroupRecommendations(object sender)//(int categoryId, string categoryName)
+        {
+            this.Navigate(typeof(RecommendedGroupsPage));
+        }
+
+        public void NavigateToSuggestedSourcesPage(object sender)
+        {
+            this.Navigate(typeof(SuggestedSourcesPage));
+        }
+
+        public void NavigateToUsersSearch(string query = "")
+        {
+            this.Navigate(typeof(SearchResultsPage), query); //UsersSearchResultsPage
+        }
+
+        public void NavigateToCommunityManagement(uint communityId, VKGroupType communityType, VKAdminLevel adminLevel)
         {
             Dictionary<string, object> QueryString = new Dictionary<string, object>();
-
-            if (poll != null)
-                QueryString.Add("Poll", poll);
-            this.Navigate(string.Format("/VKClient.Common;component/CreateEditPollPage.xaml?OwnerId={0}&PollId={1}", ownerId, pollId) + "&IsPopupNavigation=True");
+            QueryString.Add("CommunityId", communityId);
+            QueryString.Add("CommunityType", communityType);
+            QueryString.Add("AdminLevel", adminLevel);
+            this.Navigate(typeof(GroupManagementPage), QueryString);//Management/MainPage.xaml
         }
-        */
 
-        public void NavigateToPostsSearch(int ownerId, string nameGen = "", string q = "", string domain = "")
+        public void NavigateToCommunityManagementManagers(uint communityId)
         {
-            Dictionary<string, object> QueryString = new Dictionary<string, object>();
-            QueryString.Add("OwnerId", ownerId);
-            QueryString.Add("NameGen", nameGen);
-            QueryString.Add("Query", q);
-            QueryString.Add("Domain", domain);
-            this.Navigate(typeof(Pages.Group.PostsSearchPage), QueryString);
+            this.Navigate(typeof(Pages.Group.Management.ManagersPage), communityId);
         }
 
-        public void NavigateToStoryCreate()
+        public void NavigateToCommunityManagementInformation(uint communityId)
         {
-            this.Navigate(typeof(CreateStoryPage));
+//            this.Navigate(typeof(Pages.Group.Management.CommunityInformationPage),communityId);
         }
 
-        public void NavigateToCommunityManagementLinks(uint communityId)
+        public void NavigateToCommunityManagementServices(uint communityId)
         {
-            this.Navigate(typeof(Pages.Group.Management.LinksPage), communityId);
-        }
-
-        public void NavigateToManageSources(bool hidenSourcesMode)
-        {
-            this.Navigate(typeof(ManageSourcesPage), hidenSourcesMode);
-        }
-
-        public void NavigateToGroupWikiPages(uint groupId, string title = "")
-        {
-            Dictionary<string, object> QueryString = new Dictionary<string, object>();
-            QueryString.Add("GroupId", groupId);
-            QueryString.Add("Title", title);
-            this.Navigate(typeof(Pages.Group.WikiListPage), QueryString);
-        }
-
-        public void NavigateToProduct(int ownerId, uint productId)
-        {
-            Dictionary<string, object> QueryString = new Dictionary<string, object>();
-            QueryString.Add("OwnerId", ownerId);
-            QueryString.Add("ProductId", productId);
-            this.Navigate(typeof(Pages.ProductPage), QueryString);
-        }
-
-        public void NavigateToStickersStore(long userOrChatId = 0, bool isChat = false)
-        {
-            this.Navigate(typeof(StickersStorePage));
-        }
-
-        private static void ShowStickersPack(string stickersPackName)
-        {
-            stickersPackName = stickersPackName.Replace("/", "");
-            if (string.IsNullOrWhiteSpace(stickersPackName))
-                return;
-            StickersPackViewUC.Show(stickersPackName, "link");
-        }
-
-        public void NavigateToRegistrationPage()
-        {
-            this.Navigate(typeof(RegistrationPage));
-        }
-        
+            this.Navigate(typeof(Pages.Group.Management.ServicesPage),communityId);
+        }*/
 
         #region WEB_PARCER
         /// <summary>
@@ -994,6 +860,31 @@ namespace LunaVK.Library
             return true;
         }
 
+        public void NavigateToPostsSearch(int v1, string v2, string v3, string v4)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void NavigateToMarket(int ownerId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void NavigateToProduct(int ownerId, uint id2)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void NavigateToStickersStore(int v1, bool v2)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static void ShowStickersPack(string objSub)
+        {
+            throw new NotImplementedException();
+        }
+
         private static bool IsVKUri(string uri)
         {
             uri = uri.ToLowerInvariant();
@@ -1101,7 +992,6 @@ namespace LunaVK.Library
             }
             return NavigatorImpl.NavType.none;
         }
-
 
 
 
@@ -1249,6 +1139,26 @@ namespace LunaVK.Library
             QueryString.Add("FirstNameGen", firstNameGen);
 
             this.Navigate(typeof(GiftsPage), QueryString);
+        }
+
+        public void NavigateToConversationMaterials(int id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void NavigateToManageSources(bool v)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void NavigateToGroupWikiPages(uint id, string wikiPageText)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void NavigateToStoryCreate()
+        {
+            throw new NotImplementedException();
         }
 
         #region REGex

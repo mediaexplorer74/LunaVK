@@ -9,6 +9,7 @@ using System.IO;
 using System.Net.Http;
 using Windows.UI.Xaml.Media;
 using LunaVK.Core;
+using System.Diagnostics;
 
 namespace LunaVK.Framework
 {
@@ -63,7 +64,15 @@ namespace LunaVK.Framework
 
                     ImageExtensions.ImageFromCache3(newCacheUri.AbsoluteUri, (cacheUri) => //Get image from cache (download and set in cache if needed)
                     {
-                        image.Source = new Windows.UI.Xaml.Media.Imaging.BitmapImage(new Uri(cacheUri)); //Set cache uri as source for the image
+                        Debug.WriteLine($"[UriDebug] ImageExtensions.ImageFromCache3 returned: '{cacheUri}'");
+                        if(Uri.TryCreate(cacheUri, UriKind.Absolute, out Uri cacheUriObj))
+                        {
+                            image.Source = new Windows.UI.Xaml.Media.Imaging.BitmapImage(cacheUriObj); //Set cache uri as source for the image
+                        }
+                        else
+                        {
+                            Debug.WriteLine($"[UriDebug] Invalid cache uri: '{cacheUri}'");
+                        }
                     });
                 }
                 catch (Exception)
@@ -87,7 +96,11 @@ namespace LunaVK.Framework
                 {
                     ImageExtensions.ImageFromCache3(newCacheUri, (cacheUri) => //Get image from cache (download and set in cache if needed)
                     {
-                        imageBrush.ImageSource = new Windows.UI.Xaml.Media.Imaging.BitmapImage(new Uri(cacheUri)); //Set cache uri as source for the image
+                        Debug.WriteLine($"[UriDebug] ImageExtensions.ImageFromCache3 returned for brush: '{cacheUri}'");
+                        if(Uri.TryCreate(cacheUri, UriKind.Absolute, out Uri cacheUriObj))
+                            imageBrush.ImageSource = new Windows.UI.Xaml.Media.Imaging.BitmapImage(cacheUriObj); //Set cache uri as source for the image
+                        else
+                            Debug.WriteLine($"[UriDebug] Invalid cache uri for brush: '{cacheUri}'");
                     });
                 }
                 catch (Exception)
@@ -135,13 +148,20 @@ namespace LunaVK.Framework
             {
                 StorageFile storageFile = await localFolder.CreateFileAsync(new_path, CreationCollisionOption.OpenIfExists);
 
-                Uri Website = new Uri(path);
+#if DEBUG
+                Debug.WriteLine($"[UriDebug] ImageFromCache2 downloading: '{path}'");
+#endif
+                if (!Uri.TryCreate(path, UriKind.Absolute, out Uri websiteUri))
+                {
+#if DEBUG
+                    Debug.WriteLine($"[UriDebug] Invalid website uri: '{path}'");
+#endif
+                    return null;
+                }
+
                 HttpClient http = new HttpClient();
                 // TODO: Check connection. Return message on fail.
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine("Downloading started for " + path);
-#endif
-                byte[] image_from_web_as_bytes = await http.GetByteArrayAsync(Website);
+                byte[] image_from_web_as_bytes = await http.GetByteArrayAsync(websiteUri);
 
                 MakeFolders(localFolder, path.Substring(ru));
 

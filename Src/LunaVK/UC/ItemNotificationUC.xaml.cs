@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -62,7 +62,7 @@ namespace LunaVK.UC
             this.ContentGrid.Children.Clear();
             this.ContentGrid.ColumnDefinitions.Clear();
 
-            if (this.Data == null)
+            if (this.Data == null || this.Notification == null)
                 return;
 
             this.icon.Glyph = this.SetIcon();
@@ -71,22 +71,55 @@ namespace LunaVK.UC
 
             string highlightedText = this.GetHighlightedText();
 
-            this.date.Text = UIStringFormatterHelper.FormatDateTimeForUI(this.Notification.date);
+            try
+            {
+                this.date.Text = UIStringFormatterHelper.FormatDateTimeForUI(this.Notification.date);
+            }
+            catch
+            {
+                this.date.Text = string.Empty;
+            }
 
             ScrollableTextBlock tb = new ScrollableTextBlock();
             string text = "";
-            if(this.Notification.type == VKNotification.NotificationType.reply_comment)
+            
+            // Ensure user is not null before formatting text
+            if (user != null)
             {
-                text = string.Format("[id{0}|{1}]\n{2} {3} {4}", user.Id, user.Title, (this.Notification.ParsedFeedback as VKComment).text , this.GetLocalizableText(), highlightedText);
-            }
-            else if (this.Notification.type == VKNotification.NotificationType.comment_post)
-            {
-                text = string.Format("[id{0}|{1}] оставил комментарий:\n{2} {3} от {4}", user.Id, user.Title, (this.Notification.ParsedFeedback as VKComment).text, this.GetLocalizableText(), (this.Notification.ParsedFeedback as VKComment).date.ToString("d MMM yyyy"));
+                if(this.Notification.type == VKNotification.NotificationType.reply_comment)
+                {
+                    VKComment feedbackComment = this.Notification.ParsedFeedback as VKComment;
+                    if (feedbackComment != null && !string.IsNullOrEmpty(feedbackComment.text))
+                    {
+                        text = string.Format("[id{0}|{1}]\n{2} {3} {4}", user.Id, user.Title, feedbackComment.text, this.GetLocalizableText(), highlightedText);
+                    }
+                    else
+                    {
+                        text = string.Format("[id{0}|{1}] {2} {3}", user.Id, user.Title, this.GetLocalizableText(), highlightedText);
+                    }
+                }
+                else if (this.Notification.type == VKNotification.NotificationType.comment_post)
+                {
+                    VKComment feedbackComment = this.Notification.ParsedFeedback as VKComment;
+                    if (feedbackComment != null && !string.IsNullOrEmpty(feedbackComment.text))
+                    {
+                        string dateStr = feedbackComment.date > DateTime.MinValue ? feedbackComment.date.ToString("d MMM yyyy") : "";
+                        text = string.Format("[id{0}|{1}] оставил комментарий:\n{2} {3} от {4}", user.Id, user.Title, feedbackComment.text, this.GetLocalizableText(), dateStr);
+                    }
+                    else
+                    {
+                        text = string.Format("[id{0}|{1}] {2} {3}", user.Id, user.Title, this.GetLocalizableText(), highlightedText);
+                    }
+                }
+                else
+                {
+                    text = string.Format("[id{0}|{1}] {2} {3}", user.Id, user.Title, this.GetLocalizableText(), highlightedText);
+                }
             }
             else
             {
-                if (this.user != null)
-                    text = string.Format("[id{0}|{1}] {2} {3}", user.Id, user.Title, this.GetLocalizableText(), highlightedText);
+                // Fallback text if user is null
+                text = string.Format("{0} {1}", this.GetLocalizableText(), highlightedText);
             }
             
             tb.Text = text;
@@ -96,16 +129,30 @@ namespace LunaVK.UC
             string thumb = this.GetThumb();
             if(!string.IsNullOrEmpty(thumb))
             {
-                ContentGrid.ColumnDefinitions.Add(new ColumnDefinition());
-                ContentGrid.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(64) });
+                // normalize protocol-relative URL
+                if (thumb.StartsWith("//"))
+                    thumb = "https:" + thumb;
 
-                Image img = new Image();
-                img.Source = new BitmapImage(new Uri(thumb));
-                
-               // img.Margin = new Thickness(0,0,15,0);
-                Grid.SetColumn(img, 1);
+                if (Uri.TryCreate(thumb, UriKind.Absolute, out Uri thumbUri))
+                {
+                    ContentGrid.ColumnDefinitions.Add(new ColumnDefinition());
+                    ContentGrid.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(64) });
 
-                ContentGrid.Children.Add(img);
+                    Image img = new Image();
+                    try
+                    {
+                        img.Source = new BitmapImage(thumbUri);
+                    }
+                    catch
+                    {
+                        // ignore invalid image
+                    }
+
+                   // img.Margin = new Thickness(0,0,15,0);
+                    Grid.SetColumn(img, 1);
+
+                    ContentGrid.Children.Add(img);
+                }
             }
         }
 
@@ -115,17 +162,20 @@ namespace LunaVK.UC
         /// <returns></returns>
         private string GetThumb()
         {
+            if (this.Notification == null)
+                return string.Empty;
+
             if (this.Notification.ParsedParent is VKWallPost parsedParent)
             {
                 if (parsedParent.attachments != null && parsedParent.attachments.Count > 0)
                 {
                     if(parsedParent.attachments[0].type == VKAttachmentType.Photo)
                     {
-                        return parsedParent.attachments[0].photo.photo_130;
+                        return parsedParent.attachments[0].photo?.photo_130 ?? string.Empty;
                     }
                     else if (parsedParent.attachments[0].type == VKAttachmentType.Video)
                     {
-                        return parsedParent.attachments[0].video.photo_130;
+                        return parsedParent.attachments[0].video?.photo_130 ?? string.Empty;
                     }
                 }
             }
@@ -146,21 +196,21 @@ namespace LunaVK.UC
                 {
                     if (parsedParent4.attachments[0].type == VKAttachmentType.Photo)
                     {
-                        return parsedParent4.attachments[0].photo.photo_130;
+                        return parsedParent4.attachments[0].photo?.photo_130 ?? string.Empty;
                     }
                     else if (parsedParent4.attachments[0].type == VKAttachmentType.Video)
                     {
-                        return parsedParent4.attachments[0].video.photo_130;
+                        return parsedParent4.attachments[0].video?.photo_130 ?? string.Empty;
                     }
                     else if (parsedParent4.attachments[0].type == VKAttachmentType.Market)
                     {
-                        return parsedParent4.attachments[0].market.thumb_photo;//.photo.photo_130;
+                        return parsedParent4.attachments[0].market?.thumb_photo ?? string.Empty;
                     }
                 }
 
             }
 
-            return "";
+            return string.Empty;
         }
 
         /// <summary>
@@ -168,73 +218,81 @@ namespace LunaVK.UC
         /// </summary>
         private void GenerateLayout()
         {
-            string str = "";
+            string str = string.Empty;
 
-            //if (this.Notification.ParsedFeedback is List<FeedbackUser> list)
-            //{
-            //    //todo:больше идов?
+            if (this.Notification == null)
+                return;
 
-            //    Debug.Assert(list[0].from_id > 0);
-            //    user = UsersService.Instance.GetCachedUser((uint)list[0].from_id);
-            //    if(user == null)
-            //        user = UsersService.Instance.GetCachedUser((uint)list[0].owner_id);
-            //}
-            //else if(this.Notification.ParsedFeedback is VKComment comment)
-            //{
-            //    user = UsersService.Instance.GetCachedUser((uint)comment.from_id);
-            //}
-            //else if(this.Notification.ParsedFeedback is VKWallPost post)
-            //{
-            //    user = UsersService.Instance.GetCachedUser((uint)post.from_id);
-            //}
-            //else if (this.Notification.ParsedFeedback is List<FeedbackCopyInfo>)
-            //{
-            //    int i = 0;
-            //}
-            user = this.Notification.Owner;
-            //Debug.Assert(user != null);
+            // Properly retrieve user information based on notification type
+            if (this.Notification.ParsedFeedback is List<FeedbackUser> list)
+            {
+                // For follow, like, and copy notifications which can be grouped
+                if (list.Count > 0)
+                {
+                    int actorId = list[0].from_id != 0 ? list[0].from_id : list[0].owner_id;
+                    user = UsersService.Instance.GetCachedUser((uint)Math.Abs(actorId));
+                }
+            }
+            else if(this.Notification.ParsedFeedback is VKComment comment)
+            {
+                user = UsersService.Instance.GetCachedUser((uint)Math.Abs(comment.from_id));
+            }
+            else if(this.Notification.ParsedFeedback is VKWallPost post)
+            {
+                user = UsersService.Instance.GetCachedUser((uint)Math.Abs(post.from_id));
+            }
+            else if (this.Notification.ParsedFeedback is List<FeedbackCopyInfo> info)
+            {
+                if (info.Count > 0)
+                {
+                    long rawId = info[0].from_id != 0 ? info[0].from_id : info[0].owner_id;
+                    user = UsersService.Instance.GetCachedUser((uint)Math.Abs((int)rawId));
+                }
+            }
+            
+            // Fallback to Notification.Owner if user is still null
+            if (user == null)
+            {
+                user = this.Notification.Owner;
+            }
+            
             if (user != null)
             {
-                //todo:get user
-                str = user.MinPhoto;
-//                this.from.Text = user.Title;
+                str = user.MinPhoto ?? string.Empty;
             }
-            else
+
+            // Normalize protocol-relative URLs
+            if (!string.IsNullOrEmpty(str) && str.StartsWith("//"))
+                str = "https:" + str;
+
+            BitmapImage bmp = null;
+            if (!string.IsNullOrWhiteSpace(str) && Uri.TryCreate(str, UriKind.Absolute, out Uri uri))
             {
-                int i = 0;
+                try { bmp = new BitmapImage(uri); } catch { bmp = null; }
             }
 
-            if (!string.IsNullOrEmpty(str))
-                img_from.ImageSource = new BitmapImage(new Uri(str));
+            if (bmp == null)
+            {
+                try { bmp = new BitmapImage(new Uri("ms-appx:///Assets/Icons/appbar.user.png")); } catch { bmp = null; }
+            }
 
-//            this.action.Text = this.GetLocalizableText();
+            img_from.ImageSource = bmp;
         }
-
-        
 
         private VKUserSex GetGender()
         {
             //VKBaseDataForGroupOrUser user = null;
-            if (this.Notification.ParsedFeedback is VKCountedItemsObject<FeedbackUser> list)
+            if (this.Notification?.ParsedFeedback is VKCountedItemsObject<FeedbackUser> list)
             {
                 if (list.count > 1)
                     return VKUserSex.Unknown;
-//                user = (VKBaseDataForGroupOrUser)Enumerable.FirstOrDefault<User>(this._users, (Func<User, bool>)(u => u.uid == list[0].owner_id));
             }
-//            else if (this.Notyfication.ParsedFeedback is VKComment)
-//                user = (VKBaseDataForGroupOrUser)Enumerable.FirstOrDefault<User>(this._users, (Func<User, bool>)(u => u.uid == (this.Notyfication.ParsedFeedback as VKComment).from_id));
-            else if (this.Notification.ParsedFeedback is List<FeedbackCopyInfo> info)
+            else if (this.Notification?.ParsedFeedback is List<FeedbackCopyInfo> info)
             {
                 if (info.Count > 1)
                     return VKUserSex.Unknown;
-                //user =(VKBaseDataForGroupOrUser)Enumerable.FirstOrDefault<VKBaseDataForGroupOrUser>(this._users, (Func<User, bool>)(u => u.uid == list[0].owner_id));
             }
-            //else if (this.Notyfication.ParsedFeedback is MoneyTransfer)
-            //{
-            //    MoneyTransfer moneyTransfer = (MoneyTransfer)this.Notyfication.ParsedFeedback;
-            //    user = moneyTransfer.IsOutbox ? (User)Enumerable.FirstOrDefault<User>(this._users, (Func<User, bool>)(u => u.uid == moneyTransfer.to_id)) : (User)Enumerable.FirstOrDefault<User>(this._users, (Func<User, bool>)(u => u.uid == moneyTransfer.from_id));
-            //}
-            //Logger.Instance.Assert(user != null, "User is null in GetGender");
+
             if (user == null || user is VKGroup)
                 return VKUserSex.Unknown;
             return ((VKUser)user).sex;
@@ -576,77 +634,93 @@ namespace LunaVK.UC
             Library.NavigatorImpl.Instance.NavigateToProfilePage(user.Id);
         }
 
+        private bool _detailsExpanded = false;
+
         private void Content_Tapped(object sender, TappedRoutedEventArgs e)
         {
-            this.ProcessNavigationTap(sender);
+            // Переключаем разворачивание деталей
+            _detailsExpanded = !_detailsExpanded;
+            ToggleDetails();
         }
 
-        private void ProcessNavigationTap(object sender)
+        private void ToggleDetails()
         {
-            if (this.Notification.ParsedParent is VKWallPost || this.Notification.ParsedParent is VKComment)
+            if (DetailsPanel == null)
+                return;
+
+            if (_detailsExpanded)
             {
-                VKWallPost wallPost = this.Notification.ParsedParent as VKWallPost;
-                if (wallPost == null)
+                // Построим подробный контент
+                DetailsPanel.Children.Clear();
+
+                var fullTextBlock = new ScrollableTextBlock();
+                //fullTextBlock.TextWrapping = TextWrapping.Wrap;
+                fullTextBlock.Margin = new Thickness(0, 4, 0, 0);
+                fullTextBlock.IsHitTestVisible = false;
+
+                string fullText = BuildFullDetailsText();
+                fullTextBlock.Text = fullText;
+
+                DetailsPanel.Children.Add(fullTextBlock);
+                DetailsPanel.Visibility = Visibility.Visible;
+
+                // Простая анимация появления
+                var sb = new Windows.UI.Xaml.Media.Animation.Storyboard();
+                var fade = new Windows.UI.Xaml.Media.Animation.DoubleAnimation
                 {
-                    VKComment parsedParent = this.Notification.ParsedParent as VKComment;
-                    if (parsedParent.post != null)
-                    {
-                        wallPost = parsedParent.post;
-                    }
-                    else
-                    {
-                        if (parsedParent.photo != null)
-                        {
-                            NavigatorImpl.Instance.NavigateToPhotoWithComments(parsedParent.photo.owner_id, parsedParent.photo.id,"", parsedParent.photo);
-                            return;
-                        }
-                        if (parsedParent.video != null)
-                        {
-                            NavigatorImpl.Instance.NavigateToVideoWithComments(parsedParent.video.owner_id, parsedParent.video.id, parsedParent.video.access_key, parsedParent.video);
-                            return;
-                        }
-                        if (parsedParent.topic != null)
-                        {
-                            NavigatorImpl.Instance.NavigateToGroupDiscussion((uint)-parsedParent.topic.owner_id, parsedParent.topic.id, parsedParent.topic.title, parsedParent.topic.is_closed == false);
-                            return;
-                        }
-                        //if (parsedParent.market != null)
-                        //{
-                        //    CurrentMarketItemSource.Source = MarketItemSource.feed;
-                        //    NavigatorImpl.Instance.NavigateToProduct(parsedParent.market.owner_id, parsedParent.market.id);
-                        //}
-                    }
-                }
-                if (wallPost == null)
-                    return;
-                NavigatorImpl.Instance.NavigateToWallPostComments(wallPost.owner_id == 0 ? wallPost.from_id : wallPost.owner_id, wallPost.id);
-            }
-            else if (this.Notification.ParsedParent is VKPhoto)
-            {
-                VKPhoto parsedParent = this.Notification.ParsedParent as VKPhoto;
-                NavigatorImpl.Instance.NavigateToPhotoWithComments(parsedParent.owner_id, parsedParent.id, "", parsedParent);
-            }
-            else if (this.Notification.ParsedParent is VKVideoBase)
-            {
-                VKVideoBase parsedParent = this.Notification.ParsedParent as VKVideoBase;
-                NavigatorImpl.Instance.NavigateToVideoWithComments(parsedParent.owner_id, parsedParent.id, "", parsedParent, sender);
-            }
-            else if (this.Notification.ParsedParent is VKTopic)
-            {
-                VKTopic parsedParent = this.Notification.ParsedParent as VKTopic;
-                VKComment parsedFeedback = this.Notification.ParsedFeedback as VKComment;
-                uint commentId = 0;
-                if (parsedFeedback != null)
-                    commentId = parsedFeedback.id;
-                NavigatorImpl.Instance.NavigateToGroupDiscussion((uint)-parsedParent.owner_id, parsedParent.id, parsedParent.title, parsedParent.is_closed == false, commentId);
+                    From = 0,
+                    To = 1,
+                    Duration = new Duration(TimeSpan.FromMilliseconds(120))
+                };
+                Windows.UI.Xaml.Media.Animation.Storyboard.SetTarget(fade, DetailsPanel);
+                Windows.UI.Xaml.Media.Animation.Storyboard.SetTargetProperty(fade, "Opacity");
+                sb.Children.Add(fade);
+                sb.Begin();
             }
             else
             {
+                DetailsPanel.Visibility = Visibility.Collapsed;
+                DetailsPanel.Children.Clear();
+            }
+        }
+
+        private string BuildFullDetailsText()
+        {
+            // Полный текст: стараемся показать исходный текст родителя/коммента без обрезки + базовое форматирование
+            try
+            {
+                string actor = user != null ? user.Title : "";
+                string action = GetLocalizableText();
+                string parentText = GetHighlightedText();
+
+                // Пытаемся вытянуть текст из ParsedFeedback, если там комментарий
+                if (this.Notification?.ParsedFeedback is VKComment c && !string.IsNullOrEmpty(c.text))
+                {
+                    parentText = string.IsNullOrEmpty(parentText) ? c.text : parentText + "\n\n" + c.text;
+                }
+
+                string result = string.Empty;
+                if (!string.IsNullOrEmpty(actor))
+                    result += actor + ": ";
+
+                result += action;
+
+                if (!string.IsNullOrWhiteSpace(parentText))
+                    result += "\n\n" + parentText;
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("BuildFullDetailsText error: " + ex);
+                return string.Empty;
+            }
+       
                 //if (!(this.Notification.ParsedFeedback is MoneyTransfer))
                 //    return;
                 //MoneyTransfer parsedFeedback = (MoneyTransfer)this.Notification.ParsedFeedback;
                 //TransferCardView.Show(parsedFeedback.id, parsedFeedback.from_id, parsedFeedback.to_id);
-            }
+           
         }
     }
 }

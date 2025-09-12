@@ -120,12 +120,15 @@ namespace LunaVK.ViewModels
                     this.ProfilePostsText = LocalizedStrings.GetString("Group_CommunityPosts");
             }
             else
-                this.ProfilePostsText = Settings.UserId == this._profileData.Id ? LocalizedStrings.GetString("User_MyPosts") : string.Format(LocalizedStrings.GetString("User_ProfilePostsFrm"), nameGen);
+                this.ProfilePostsText = Settings.UserId == this._profileData.Id 
+                    ? LocalizedStrings.GetString("User_MyPosts")
+                    : string.Format(LocalizedStrings.GetString("User_ProfilePostsFrm"), nameGen);
         }
 
         public void NavigateToSearch()
         {
-            NavigatorImpl.Instance.NavigateToPostsSearch(this._profileData.Id, this.NameGen);
+            // TODO
+           // NavigatorImpl.Instance.NavigateToPostsSearch(this._profileData.Id, this.NameGen);
         }
 
         public void UpdateAllPostsText(uint count)

@@ -64,44 +64,64 @@ namespace LunaVK.Framework
             string ret = null;
             //Windows.Storage.Streams.IRandomAccessStream rs = null;
 
+            if (string.IsNullOrWhiteSpace(uri))
+            {
+                // nothing to do
+                return;
+            }
+
             if (ProfileImageLoader._downloadedDictionary.ContainsKey(uri))
             {
                 ret = ProfileImageLoader._downloadedDictionary[uri];
             }
             else
             {
-                HttpClient http = new HttpClient();
-                byte[] image_from_web_as_bytes = await http.GetByteArrayAsync(uri);
-                //ret = await CacheManager.TrySaveRawCachedData(image_from_web_as_bytes, uri.GetHashCode().ToString() + ".jpg");
+                try
+                {
+                    if (!Uri.TryCreate(uri, UriKind.Absolute, out Uri remoteUri))
+                    {
+                        return;
+                    }
 
-                //https://vk.com/sticker/1-12969-512b
-                //Regex r = new Regex("-(\\d*)-");
-                //Match m = r.Match(uri);
-                //string temp = m.Groups[1].Value;
-                var sf = await CacheManager2.WriteToCache(new Uri(uri), "Cache/Stickers/" + uri.GetHashCode().ToString() + ".jpg");
-                ret = sf.Path;
-                //rs = await sf.OpenReadAsync();
+                    HttpClient http = new HttpClient();
+                    byte[] image_from_web_as_bytes = await http.GetByteArrayAsync(remoteUri);
+
+                    var sf = await CacheManager2.WriteToCache(remoteUri, "Cache/Stickers/" + uri.GetHashCode().ToString() + ".jpg");
+                    ret = sf?.Path;
+                }
+                catch
+                {
+                    // ignore network/cache errors
+                    ret = null;
+                }
             }
             if (ret == null )
             {
+                ProfileImageLoader._currentRequest = null;
                 return;
             }
             Execute.ExecuteOnUIThread(()=>
                 {
                     BitmapImage bitmapImage = new BitmapImage();
                     bitmapImage.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
-                    
-                    //if(rs != null)
-                    //    bitmapImage.SetSource(rs);
-                   // else
-                        bitmapImage.UriSource = new Uri(ret);
-                    ProfileImageLoader._currentRequest.Image.Source = bitmapImage;
+
+                    // set UriSource only if valid
+                    if (Uri.TryCreate(ret, UriKind.Absolute, out Uri localUri))
+                    {
+                        bitmapImage.UriSource = localUri;
+                        ProfileImageLoader._currentRequest.Image.Source = bitmapImage;
+                    }
+                    else
+                    {
+                        ProfileImageLoader._currentRequest.Image.Source = null;
+                    }
+
                     ProfileImageLoader._currentRequest = null;
 
-                    if (!ProfileImageLoader._downloadedDictionary.ContainsKey(uri))
+                    if (!ProfileImageLoader._downloadedDictionary.ContainsKey(uri) && ret != null)
                         ProfileImageLoader._downloadedDictionary.Add(uri, ret);
                 });
-            
+
         }
 
         public static void SetUriSource(Image image, string value)
@@ -117,33 +137,22 @@ namespace LunaVK.Framework
             {
                 BitmapImage bitmapImage = new BitmapImage();
                 bitmapImage.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
-                bitmapImage.UriSource = new Uri(ProfileImageLoader._downloadedDictionary[value]);
-                image.Source = bitmapImage;
+                if(Uri.TryCreate(ProfileImageLoader._downloadedDictionary[value], UriKind.Absolute, out Uri cachedUri))
+                {
+                    bitmapImage.UriSource = cachedUri;
+                    image.Source = bitmapImage;
+                }
+                else
+                {
+                    image.Source = null;
+                }
             }
             else
             {
                 ProfileImageLoader.AddPendingRequest(image, value);
             }
         }
-        /*
-        public static void SaveState()
-        {
 
-            ProfileImageLoader.SerializedData serializedData = new ProfileImageLoader.SerializedData() { DownloadedUris = (List<string>)Enumerable.ToList<string>(Enumerable.Take<string>(Enumerable.Skip<string>(VeryLowProfileImageLoader._downloadedList, Math.Max(0, Enumerable.Count<string>(VeryLowProfileImageLoader._downloadedList) - 1000)), 1000)) };
-                CacheManager.TrySerialize(serializedData, "VeryLowProfileImageLoaderData", false, CacheManager.DataType.CachedData);
-            
-        }
-
-        public static void RestoreState()
-        {
-            ProfileImageLoader.SerializedData serializedData = new ProfileImageLoader.SerializedData();
-                CacheManager.TryDeserialize(serializedData, "VeryLowProfileImageLoaderData", CacheManager.DataType.CachedData);
-                VeryLowProfileImageLoader._downloadedList = serializedData.DownloadedUris;
-                foreach (string downloaded in VeryLowProfileImageLoader._downloadedList)
-                    VeryLowProfileImageLoader._downloadedDictionary[downloaded] = "";
-           
-        }
-        */
         private static void AddPendingRequest(Image image, string uri)
         {
             lock (ProfileImageLoader._syncBlock)
@@ -171,30 +180,7 @@ namespace LunaVK.Framework
             {
                 this.Image = image;
                 this.Uri = uri;
-                //this.CreatedTimstamp = DateTime.Now;
-                //this.UniqueId = Guid.NewGuid();
-                //this.CurrentAttempt = currentAttempt;
             }
         }
-        /*
-        public class SerializedData : IBinarySerializable
-        {
-            public List<string> DownloadedUris { get; set; }
-
-            public SerializedData()
-            {
-                this.DownloadedUris = new List<string>();
-            }
-
-            public void Write(BinaryWriter writer)
-            {
-                writer.WriteList(this.DownloadedUris);
-            }
-
-            public void Read(BinaryReader reader)
-            {
-                this.DownloadedUris = reader.ReadList();
-            }
-        }*/
     }
 }

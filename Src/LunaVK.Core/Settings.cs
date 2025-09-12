@@ -1,16 +1,46 @@
 ﻿using System;
 using LunaVK.Core.DataObjects;
 using LunaVK.Core.Library;
+using LunaVK.Core.Network;
 
 namespace LunaVK.Core
 {
     //AppGlobalStateData
     public static class Settings
     {
+        static Settings()
+        {
+            try
+            {
+                // Ensure VkService has the stored access token on startup
+                var token = SettingsHelper.Get<string>();
+                if (!string.IsNullOrEmpty(token))
+                {
+                    VkService.Instance.AccessToken.Token = token;
+                }
+            }
+            catch
+            {
+                // ignore
+            }
+        }
+
         public static string AccessToken
         {
             get { return SettingsHelper.Get<string>(); }
-            set { SettingsHelper.Set(value); }
+            set
+            {
+                SettingsHelper.Set(value);
+                try
+                {
+                    // propagate to VkLib service so it will include access_token in requests
+                    if (VkService.Instance != null && VkService.Instance.AccessToken != null)
+                        VkService.Instance.AccessToken.Token = value ?? string.Empty;
+                }
+                catch
+                {
+                }
+            }
         }
 
         public static uint UserId

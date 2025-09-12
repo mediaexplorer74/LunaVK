@@ -148,7 +148,6 @@ namespace LunaVK.ViewModels
         public void PlayTrack(VKAudio track)
         {
             this.CurentTrackId = this.Tracks.IndexOf(track);
-//            Debug.WriteLine("PlayTrack {0} {1} {2}", this.CurentTrackId, track.artist, track.title);
             if (this.CurentTrackId == -1)//после восстановления из кеша список иной
             {
                 var tt = this.Tracks.FirstOrDefault((t) => t.ToString() == track.ToString());
@@ -158,10 +157,6 @@ namespace LunaVK.ViewModels
                     this.CurentTrackId = 0;
             }
 
-            //            Debug.Assert(this.CurentTrackId >= 0);
-            //            mediaPlaybackList.MoveTo((uint)this.CurentTrackId);
-
-            //            media.Play();
             base.NotifyPropertyChanged(nameof(this.PositionStr));
             base.NotifyPropertyChanged(nameof(this.TrackName));
             base.NotifyPropertyChanged(nameof(this.ArtistName));
@@ -182,9 +177,12 @@ namespace LunaVK.ViewModels
                         VKAudio a = result.response;
                         track.url = a.url;
                         track.duration = a.duration;
-                        //args.SetUri(new Uri(track.url));
-                        this.media.Source = MediaSource.CreateFromUri(new Uri(track.url));
-                        this.media.Play();
+                        // validate URL before creating MediaSource
+                        if(!string.IsNullOrEmpty(track.url) && Uri.TryCreate(track.url, UriKind.Absolute, out Uri u))
+                        {
+                            this.media.Source = MediaSource.CreateFromUri(u);
+                            this.media.Play();
+                        }
                     }
                 });
             }
@@ -194,16 +192,39 @@ namespace LunaVK.ViewModels
                 {
                     if (result)
                     {
-                        this.media.Source = MediaSource.CreateFromUri(new Uri(this.Tracks[this.CurentTrackId].url));//args.SetUri(new Uri(track.url));
-                        this.media.Play();
+                        var url = this.Tracks[this.CurentTrackId].url;
+                        if(!string.IsNullOrEmpty(url) && Uri.TryCreate(url, UriKind.Absolute, out Uri u))
+                        {
+                            this.media.Source = MediaSource.CreateFromUri(u);
+                            this.media.Play();
+                        }
                     }
                 });
             }
             else
             {
-                //args.SetUri(new Uri(track.url));
-                this.media.Source = MediaSource.CreateFromUri(new Uri(this.Tracks[this.CurentTrackId].url));
-                this.media.Play();
+                var url = this.Tracks[this.CurentTrackId].url;
+                if(!string.IsNullOrEmpty(url) && Uri.TryCreate(url, UriKind.Absolute, out Uri u))
+                {
+                    this.media.Source = MediaSource.CreateFromUri(u);
+                    this.media.Play();
+                }
+                else
+                {
+                    // invalid url: attempt reload small batch
+                    this.ProcessAudio(this.CurentTrackId, (success) =>
+                    {
+                        if (success)
+                        {
+                            var url2 = this.Tracks[this.CurentTrackId].url;
+                            if (!string.IsNullOrEmpty(url2) && Uri.TryCreate(url2, UriKind.Absolute, out Uri u2))
+                            {
+                                this.media.Source = MediaSource.CreateFromUri(u2);
+                                this.media.Play();
+                            }
+                        }
+                    });
+                }
             }
         }
 
@@ -230,15 +251,12 @@ namespace LunaVK.ViewModels
 #endif
                         }
 
-                        
-//                        this.InProcess = false;
                         callback(true);
 
                     });
                 }
                 else
                 {
-//                    this.InProcess = false;
                     callback(false);
                 }
             });
@@ -331,14 +349,6 @@ namespace LunaVK.ViewModels
             {
                 if (media == null)
                     return Visibility.Collapsed;
-                /*
-#if USE_PlaybackSession
-                if ( (media.PlaybackSession.PlaybackState != MediaPlaybackState.Playing && media.PlaybackSession.PlaybackState != MediaPlaybackState.Paused) || string.IsNullOrWhiteSpace(this.TrackName))
-#else
-                if ((media.CurrentState != MediaPlayerState.Playing && media.CurrentState != MediaPlayerState.Paused) || string.IsNullOrWhiteSpace(this.TrackName))
-#endif
-                    return Visibility.Collapsed;
-                    */
                 return Visibility.Visible;
             }
         }
@@ -406,7 +416,6 @@ namespace LunaVK.ViewModels
             this.systemControls.DisplayUpdater.Type = MediaPlaybackType.Music;
             this.systemControls.DisplayUpdater.MusicProperties.Title = audio == null ? "" : audio.title;
             this.systemControls.DisplayUpdater.MusicProperties.Artist = audio == null ? "" : audio.artist;
-            //systemControls.DisplayUpdater.MusicProperties.AlbumArtist = "album artist";
 
             this.systemControls.IsPauseEnabled = this.systemControls.IsPlayEnabled = this.Tracks.Count > 0;//this.CurentTrackId != -1;
             this.systemControls.IsNextEnabled = this.CurentTrackId + 1 < this.Tracks.Count;
@@ -414,9 +423,16 @@ namespace LunaVK.ViewModels
 
             if (audio != null && !string.IsNullOrEmpty(audio.cover))
             {
-                // Set the album art thumbnail.
-                RandomAccessStreamReference r = RandomAccessStreamReference.CreateFromUri(new Uri(audio.cover));
-                systemControls.DisplayUpdater.Thumbnail = r;
+                // Validate cover URI before creating RandomAccessStreamReference
+                string cover = audio.cover;
+                if (cover.StartsWith("//"))
+                    cover = "https:" + cover;
+
+                if (Uri.TryCreate(cover, UriKind.Absolute, out Uri coverUri))
+                {
+                    RandomAccessStreamReference r = RandomAccessStreamReference.CreateFromUri(coverUri);
+                    systemControls.DisplayUpdater.Thumbnail = r;
+                }
             }
             else if (systemControls.DisplayUpdater.Thumbnail != null)
             {
@@ -483,7 +499,7 @@ namespace LunaVK.ViewModels
                 if (this.CurrentTrack == null)
                     return 0;
                 if (this.CurrentTrack.duration == 0)
-#if USE_PlaybackSession
+#if USE_PLAYBACKSESSION
                     return (int)this.media.PlaybackSession.NaturalDuration.TotalSeconds;
 #else
                     return (int)this.media.NaturalDuration.TotalSeconds;
@@ -500,7 +516,7 @@ namespace LunaVK.ViewModels
                 if (this.CurrentTrack == null)
                     return new TimeSpan();
                 if (this.CurrentTrack.duration == 0)
-#if USE_PlaybackSession
+#if USE_PLAYBACKSESSION
                     return this.media.PlaybackSession.NaturalDuration;
 #else
                     return this.media.NaturalDuration;
@@ -533,7 +549,7 @@ namespace LunaVK.ViewModels
                 {
                     if (this.media == null)
                         return new TimeSpan();
-#if USE_PlaybackSession
+#if USE_PLAYBACKSESSION
                     return this.media.PlaybackSession.Position;
 #else
                     return this.media.Position;
@@ -548,7 +564,7 @@ namespace LunaVK.ViewModels
             {
                 try
                 {
-#if USE_PlaybackSession
+#if USE_PLAYBACKSESSION
                     media.PlaybackSession.Position = value;
 #else
                     media.Position = value;
@@ -580,12 +596,7 @@ namespace LunaVK.ViewModels
             }
             set
             {
-                //if (this.PreventPositionUpdates)
-                //    return;
-                //this._manualPositionSeconds = value;
                 this.Position = TimeSpan.FromSeconds(value);
-                //this._lastTimeManualPositionSet = DateTime.Now;
-                //this.NotifyPropertyChanged<double>((Expression<Func<double>>)(() => this.PositionSeconds));
                 base.NotifyPropertyChanged(nameof(this.PositionStr));
             }
         }
@@ -673,8 +684,6 @@ namespace LunaVK.ViewModels
             this._localTimer.Stop();
             this._localTimer = null;
 
-
-            
             Window.Current.VisibilityChanged -= this.Current_VisibilityChanged;
 
             this.systemControls.ButtonPressed -= this.SystemControls_ButtonPressed;
@@ -850,7 +859,8 @@ namespace LunaVK.ViewModels
                 //this._trackIdOfArtwork = tag;
                 Execute.ExecuteOnUIThread(() =>
                 {
-                    this.Artwork = new BitmapImage(new Uri(res));
+                    if(Uri.TryCreate(res, UriKind.Absolute, out Uri artUri))
+                        this.Artwork = new BitmapImage(artUri);
                 });
             }));
         }

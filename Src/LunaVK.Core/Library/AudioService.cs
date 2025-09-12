@@ -1,4 +1,4 @@
-﻿using LunaVK.Core.DataObjects;
+using LunaVK.Core.DataObjects;
 using LunaVK.Core.Framework;
 using LunaVK.Core.Network;
 using LunaVK.Core.Utils;
@@ -10,6 +10,9 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using VkLib.Core.Audio; // Added for VkLib audio support
+using VkLib.Error;
+using LunaVK.Core;
 
 namespace LunaVK.Core.Library
 {
@@ -26,24 +29,102 @@ namespace LunaVK.Core.Library
                 return AudioService._instance ?? (AudioService._instance = new AudioService());
             }
         }
-        /*
-        public void GetLyrics(int lyrics_id, Action<VKResponse<Lyrics>> callback)
+
+        // Helper: execute a VkLib async call, retrying once after applying stored Settings.AccessToken if VkInvalidTokenException is thrown
+        private async Task<T> ExecuteWithTokenRetry<T>(Func<Task<T>> func)
         {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters["lyrics_id"] = lyrics_id.ToString();
-            VKRequestsDispatcher.DispatchRequestToVK<Lyrics>("audio.getLyrics", parameters, callback);
+            try
+            {
+                return await func();
+            }
+            catch (VkInvalidTokenException)
+            {
+                try
+                {
+                    // Apply stored token and retry once
+                    if (!string.IsNullOrEmpty(Settings.AccessToken))
+                        VkService.Instance.AccessToken.Token = Settings.AccessToken;
+                    return await func();
+                }
+                catch (VkInvalidTokenException)
+                {
+                    // give up
+                    return default(T);
+                }
+            }
         }
-        */
+
         public void GetAllTracksAndAlbums(int userOrGroupId, int offset, int count, Action<VKResponse<AudioPageGet>> callback)
         {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters["owner_id"] = userOrGroupId.ToString();
-            //parameters["need_owner"] = "1";
-            //parameters["need_playlists"] = "1";
-            //parameters["playlists_count"] = "12";
-            parameters["audio_offset"] = offset.ToString();
-            parameters["audio_count"] = count.ToString();
-            VKRequestsDispatcher.DispatchRequestToVK<AudioPageGet>("execute.getMusicPage", parameters, callback);
+            // Using VkLib directly instead of custom execute method
+            Task.Run(async () =>
+            {
+                try
+                {
+                    // Get audios
+                    var audioResponse = await ExecuteWithTokenRetry(() => VkService.Instance.Audio.Get(userOrGroupId, 0, count, offset));
+
+                    // Get albums/playlists
+                    var albumResponse = await ExecuteWithTokenRetry(() => VkService.Instance.Audio.GetPlaylists(userOrGroupId, 0, 0));
+
+                    if (audioResponse != null && audioResponse.Items != null)
+                    {
+                        var result = new AudioPageGet
+                        {
+                            audios_count = (uint)(audioResponse.TotalCount > 0 ? audioResponse.TotalCount : audioResponse.Items.Count),
+                            audios = audioResponse.Items.Select(a => new VKAudio
+                            {
+                                id = (uint)a.Id,
+                                owner_id = (int)a.OwnerId,
+                                artist = a.Artist,
+                                title = a.Title,
+                                duration = (int)a.Duration.TotalSeconds,
+                                url = a.Url,
+                                // Map album_id instead of album object
+                                album_id = a.Album != null ? (int)a.Album.Id : 0
+                            }).ToList(),
+                            albums_count = (uint)(albumResponse?.TotalCount ?? 0),
+                            albums = albumResponse?.Items?.Select(p => new VKPlaylist
+                            {
+                                id = (int)p.Id,  // Cast long to int
+                                owner_id = (int)p.OwnerId,  // Cast long to int
+                                title = p.Title
+                            }).ToList() ?? new List<VKPlaylist>()
+                        };
+
+                        Execute.ExecuteOnUIThread(() =>
+                        {
+                            callback(new VKResponse<AudioPageGet>
+                            {
+                                error = new VKError { error_code = Enums.VKErrors.None },
+                                response = result
+                            });
+                        });
+                    }
+                    else
+                    {
+                        Execute.ExecuteOnUIThread(() =>
+                        {
+                            callback(new VKResponse<AudioPageGet>
+                            {
+                                error = new VKError { error_code = Enums.VKErrors.UnknownError },
+                                response = null
+                            });
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Execute.ExecuteOnUIThread(() =>
+                    {
+                        callback(new VKResponse<AudioPageGet>
+                        {
+                            error = new VKError { error_code = Enums.VKErrors.UnknownError, error_msg = ex.Message },
+                            response = null
+                        });
+                    });
+                }
+            });
         }
         
         public void MoveToAlbum(List<uint> aids, uint albumId, Action<VKResponse<object>> callback)
@@ -78,86 +159,420 @@ namespace LunaVK.Core.Library
 
         public void GetAllAudio(Action<VKResponse<VKCountedItemsObject<VKAudio>>> callback, int? userOrGroupId = null, int? albumId = null, int offset = 0, int count = 0)
         {
-            
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            if (userOrGroupId.HasValue && userOrGroupId.Value > 0)
-                parameters["user_id"] = userOrGroupId.Value.ToString();
-            if (userOrGroupId.HasValue && userOrGroupId.Value < 0)
-                parameters["group_id"] = userOrGroupId.Value.ToString();
-            if (albumId.HasValue)
-                parameters["album_id"] = albumId.Value.ToString();
-            parameters["offset"] = offset.ToString();
-            VKRequestsDispatcher.DispatchRequestToVK<VKCountedItemsObject<VKAudio>>("audio.get", parameters, callback);
+            Task.Run(async () =>
+            {
+                try
+                {
+                    long ownerId = 0;
+                    if (userOrGroupId.HasValue)
+                        ownerId = userOrGroupId.Value;
+
+                    long albumIdLong = 0;
+                    if (albumId.HasValue)
+                        albumIdLong = albumId.Value;
+
+                    var response = await ExecuteWithTokenRetry(() => VkService.Instance.Audio.Get(ownerId, albumIdLong, count, offset));
+                    
+                    if (response != null)
+                    {
+                        var vkAudios = response.Items.Select(a => new VKAudio
+                        {
+                            id = (uint)a.Id,
+                            owner_id = (int)a.OwnerId,
+                            artist = a.Artist,
+                            title = a.Title,
+                            duration = (int)a.Duration.TotalSeconds,
+                            url = a.Url,
+                            // Map album_id instead of album object
+                            album_id = a.Album != null ? (int)a.Album.Id : 0
+                        }).ToList();
+
+                        Execute.ExecuteOnUIThread(() =>
+                        {
+                            callback(new VKResponse<VKCountedItemsObject<VKAudio>>
+                            {
+                                error = new VKError { error_code = Enums.VKErrors.None },
+                                response = new VKCountedItemsObject<VKAudio>
+                                {
+                                    count = (uint)response.TotalCount,
+                                    items = vkAudios
+                                }
+                            });
+                        });
+                    }
+                    else
+                    {
+                        Execute.ExecuteOnUIThread(() =>
+                        {
+                            callback(new VKResponse<VKCountedItemsObject<VKAudio>>
+                            {
+                                error = new VKError { error_code = Enums.VKErrors.UnknownError },
+                                response = null
+                            });
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Execute.ExecuteOnUIThread(() =>
+                    {
+                        callback(new VKResponse<VKCountedItemsObject<VKAudio>>
+                        {
+                            error = new VKError { error_code = Enums.VKErrors.UnknownError, error_msg = ex.Message },
+                            response = null
+                        });
+                    });
+                }
+            });
         }
 
         public void GetRecommended(int uid, int offset, int count, Action<VKResponse<List<VKAudio>>> callback)
         {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters["user_id"] = uid.ToString();
-            parameters["offset"] = offset.ToString();
-            parameters["count"] = count.ToString();
-            VKRequestsDispatcher.DispatchRequestToVK<List<VKAudio>>("audio.getRecommendations", parameters, callback);
+            Task.Run(async () =>
+            {
+                try
+                {
+                    var response = await VkService.Instance.Audio.GetRecommendations(null, count, offset, uid);
+                    
+                    if (response != null && response.Items != null)
+                    {
+                        var vkAudios = response.Items.Select(a => new VKAudio
+                        {
+                            id = (uint)a.Id,
+                            owner_id = (int)a.OwnerId,
+                            artist = a.Artist,
+                            title = a.Title,
+                            duration = (int)a.Duration.TotalSeconds,
+                            url = a.Url,
+                            // Map album_id instead of album object
+                            album_id = a.Album != null ? (int)a.Album.Id : 0
+                        }).ToList();
+
+                        Execute.ExecuteOnUIThread(() =>
+                        {
+                            callback(new VKResponse<List<VKAudio>>
+                            {
+                                error = new VKError { error_code = Enums.VKErrors.None },
+                                response = vkAudios
+                            });
+                        });
+                    }
+                    else
+                    {
+                        Execute.ExecuteOnUIThread(() =>
+                        {
+                            callback(new VKResponse<List<VKAudio>>
+                            {
+                                error = new VKError { error_code = Enums.VKErrors.UnknownError },
+                                response = null
+                            });
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Execute.ExecuteOnUIThread(() =>
+                    {
+                        callback(new VKResponse<List<VKAudio>>
+                        {
+                            error = new VKError { error_code = Enums.VKErrors.UnknownError, error_msg = ex.Message },
+                            response = null
+                        });
+                    });
+                }
+            });
         }
 
         public void GetPopular(int offset, int count, Action<VKResponse<List<VKAudio>>> callback)
         {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters["offset"] = offset.ToString();
-            parameters["count"] = count.ToString();
-            VKRequestsDispatcher.DispatchRequestToVK<List<VKAudio>>("audio.getPopular", parameters, callback);
+            Task.Run(async () =>
+            {
+                try
+                {
+                    var response = await VkService.Instance.Audio.GetPopular(false, count, offset);
+                    
+                    if (response != null && response.Items != null)
+                    {
+                        var vkAudios = response.Items.Select(a => new VKAudio
+                        {
+                            id = (uint)a.Id,
+                            owner_id = (int)a.OwnerId,
+                            artist = a.Artist,
+                            title = a.Title,
+                            duration = (int)a.Duration.TotalSeconds,
+                            url = a.Url,
+                            // Map album_id instead of album object
+                            album_id = a.Album != null ? (int)a.Album.Id : 0
+                        }).ToList();
+
+                        Execute.ExecuteOnUIThread(() =>
+                        {
+                            callback(new VKResponse<List<VKAudio>>
+                            {
+                                error = new VKError { error_code = Enums.VKErrors.None },
+                                response = vkAudios
+                            });
+                        });
+                    }
+                    else
+                    {
+                        Execute.ExecuteOnUIThread(() =>
+                        {
+                            callback(new VKResponse<List<VKAudio>>
+                            {
+                                error = new VKError { error_code = Enums.VKErrors.UnknownError },
+                                response = null
+                            });
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Execute.ExecuteOnUIThread(() =>
+                    {
+                        callback(new VKResponse<List<VKAudio>>
+                        {
+                            error = new VKError { error_code = Enums.VKErrors.UnknownError, error_msg = ex.Message },
+                            response = null
+                        });
+                    });
+                }
+            });
         }
 
         public void GetUserAlbums(Action<VKResponse<VKCountedItemsObject<VKPlaylist>>> callback, int? userOrGroupId = null, bool isGroup = false, int offset = 0, int count = 0)
         {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            if (userOrGroupId.HasValue && !isGroup)
-                parameters["user_id"] = userOrGroupId.Value.ToString();
-            if (userOrGroupId.HasValue & isGroup)
-                parameters["group_id"] = userOrGroupId.Value.ToString();
-            parameters["offset"] = offset.ToString();
-            //parameters["count"] = count == 0 ? VKConstants.AlbumsReadCount.ToString() : count.ToString();
-            VKRequestsDispatcher.DispatchRequestToVK<VKCountedItemsObject<VKPlaylist>>("audio.getAlbums", parameters, callback);
+            Task.Run(async () =>
+            {
+                try
+                {
+                    long ownerId = 0;
+                    if (userOrGroupId.HasValue)
+                        ownerId = userOrGroupId.Value;
+
+                    var response = await ExecuteWithTokenRetry(() => VkService.Instance.Audio.GetPlaylists(ownerId, count, offset));
+                    
+                    if (response != null)
+                    {
+                        var vkPlaylists = response.Items.Select(p => new VKPlaylist
+                        {
+                            id = (int)p.Id,  // Cast long to int
+                            owner_id = (int)p.OwnerId,
+                            title = p.Title
+                        }).ToList();
+
+                        Execute.ExecuteOnUIThread(() =>
+                        {
+                            callback(new VKResponse<VKCountedItemsObject<VKPlaylist>>
+                            {
+                                error = new VKError { error_code = Enums.VKErrors.None },
+                                response = new VKCountedItemsObject<VKPlaylist>
+                                {
+                                    count = (uint)response.TotalCount,
+                                    items = vkPlaylists
+                                }
+                            });
+                        });
+                    }
+                    else
+                    {
+                        Execute.ExecuteOnUIThread(() =>
+                        {
+                            callback(new VKResponse<VKCountedItemsObject<VKPlaylist>>
+                            {
+                                error = new VKError { error_code = Enums.VKErrors.UnknownError },
+                                response = null
+                            });
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Execute.ExecuteOnUIThread(() =>
+                    {
+                        callback(new VKResponse<VKCountedItemsObject<VKPlaylist>>
+                        {
+                            error = new VKError { error_code = Enums.VKErrors.UnknownError, error_msg = ex.Message },
+                            response = null
+                        });
+                    });
+                }
+            });
         }
 
         public void GetAllAudioForUser(int uid, int guid, int albumId, List<int> aids, int count, int offset, Action<VKResponse<List<VKAudio>>> callback)
         {
+            // This method is not used, but keeping it for compatibility
             VKRequestsDispatcher.DispatchRequestToVK<List<VKAudio>>("audio.get", new Dictionary<string, string>(), callback);
         }
 
         public void SearchTracks(string query, int offset, int count, Action<VKResponse<AudioPageSearch>> callback)
         {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters["q"] = query;
-            parameters["count"] = count.ToString();
-            parameters["offset"] = offset.ToString();
-            parameters["search_own"] = "1";
-            
-            VKRequestsDispatcher.DispatchRequestToVK<AudioPageSearch>("audio.search", parameters, callback);
+            Task.Run(async () =>
+            {
+                try
+                {
+                    var response = await VkService.Instance.Audio.Search(query, count, offset);
+                    
+                    if (response != null)
+                    {
+                        var result = new AudioPageSearch
+                        {
+                            audios_count = (uint)response.TotalCount,  // Fixed type conversion
+                            audios = response.Items.Select(a => new VKAudio
+                            {
+                                id = (uint)a.Id,
+                                owner_id = (int)a.OwnerId,
+                                artist = a.Artist,
+                                title = a.Title,
+                                duration = (int)a.Duration.TotalSeconds,
+                                url = a.Url,
+                                // Map album_id instead of album object
+                                album_id = a.Album != null ? (int)a.Album.Id : 0
+                            }).ToList(),
+                            // Note: VkLib's search doesn't return albums or artists directly
+                            albums_count = 0,
+                            albums = new List<VKPlaylist>(),
+                            artists_count = 0,
+                            artists = new List<VKGroup>()
+                        };
+
+                        Execute.ExecuteOnUIThread(() =>
+                        {
+                            callback(new VKResponse<AudioPageSearch>
+                            {
+                                error = new VKError { error_code = Enums.VKErrors.None },
+                                response = result
+                            });
+                        });
+                    }
+                    else
+                    {
+                        Execute.ExecuteOnUIThread(() =>
+                        {
+                            callback(new VKResponse<AudioPageSearch>
+                            {
+                                error = new VKError { error_code = Enums.VKErrors.UnknownError },
+                                response = null
+                            });
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Execute.ExecuteOnUIThread(() =>
+                    {
+                        callback(new VKResponse<AudioPageSearch>
+                        {
+                            error = new VKError { error_code = Enums.VKErrors.UnknownError, error_msg = ex.Message },
+                            response = null
+                        });
+                    });
+                }
+            });
         }
         
         public void GetAudio(int ownerId, uint aid, Action<VKResponse<VKAudio>> callback)
         {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters["owner_id"] = ownerId.ToString();
-            parameters["audio_id"] = aid.ToString();
-            VKRequestsDispatcher.DispatchRequestToVK<List<VKAudio>>("audio.getById", parameters, (result)=> {
-                if(result.error.error_code == Enums.VKErrors.None)
+            Task.Run(async () =>
+            {
+                try
                 {
-                    callback(new VKResponse<VKAudio>() { error = result.error, execute_errors = result.execute_errors, response = result.response[0]});
+                    var response = await VkService.Instance.Audio.GetById(new List<string> { $"{ownerId}_{aid}" });
+                    
+                    if (response != null && response.Count > 0)
+                    {
+                        var a = response[0];
+                        var vkAudio = new VKAudio
+                        {
+                            id = (uint)a.Id,
+                            owner_id = (int)a.OwnerId,
+                            artist = a.Artist,
+                            title = a.Title,
+                            duration = (int)a.Duration.TotalSeconds,
+                            url = a.Url,
+                            // Map album_id instead of album object
+                            album_id = a.Album != null ? (int)a.Album.Id : 0
+                        };
+
+                        Execute.ExecuteOnUIThread(() =>
+                        {
+                            callback(new VKResponse<VKAudio>
+                            {
+                                error = new VKError { error_code = Enums.VKErrors.None },
+                                response = vkAudio
+                            });
+                        });
+                    }
+                    else
+                    {
+                        Execute.ExecuteOnUIThread(() =>
+                        {
+                            callback(new VKResponse<VKAudio>
+                            {
+                                error = new VKError { error_code = Enums.VKErrors.UnknownError },
+                                response = null
+                            });
+                        });
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    callback(new VKResponse<VKAudio>() { error = result.error, execute_errors = result.execute_errors, response = null });
+                    Execute.ExecuteOnUIThread(() =>
+                    {
+                        callback(new VKResponse<VKAudio>
+                        {
+                            error = new VKError { error_code = Enums.VKErrors.UnknownError, error_msg = ex.Message },
+                            response = null
+                        });
+                    });
                 }
             });
         }
         
         public void AddAudio(int ownerId, int aid, Action<VKResponse<int>> callback)
         {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters["owner_id"] = ownerId.ToString();
-            parameters["audio_id"] = aid.ToString();
-            VKRequestsDispatcher.DispatchRequestToVK<int>("audio.add", parameters, callback);
+            Task.Run(async () =>
+            {
+                try
+                {
+                    var response = await VkService.Instance.Audio.Add(aid, ownerId);
+                    
+                    if (response > 0)
+                    {
+                        Execute.ExecuteOnUIThread(() =>
+                        {
+                            callback(new VKResponse<int>
+                            {
+                                error = new VKError { error_code = Enums.VKErrors.None },
+                                response = (int)response // Cast long to int
+                            });
+                        });
+                    }
+                    else
+                    {
+                        Execute.ExecuteOnUIThread(() =>
+                        {
+                            callback(new VKResponse<int>
+                            {
+                                error = new VKError { error_code = Enums.VKErrors.UnknownError },
+                                response = 0
+                            });
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Execute.ExecuteOnUIThread(() =>
+                    {
+                        callback(new VKResponse<int>
+                        {
+                            error = new VKError { error_code = Enums.VKErrors.UnknownError, error_msg = ex.Message },
+                            response = 0
+                        });
+                    });
+                }
+            });
         }
 
         public void DeleteAudios(int aid, int ownerId, Action<VKResponse<int>> callback)
@@ -171,10 +586,33 @@ namespace LunaVK.Core.Library
             
             VKRequestsDispatcher.Execute<VKClient.Common.Backend.DataObjects.ResponseWithId>(str, callback, (Func<string, VKClient.Common.Backend.DataObjects.ResponseWithId>)(jsonStr => new VKClient.Common.Backend.DataObjects.ResponseWithId()), false, true, cancellationToken);
             */
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters["audio_id"] = aid.ToString();
-            parameters["owner_id"] = ownerId.ToString();
-            VKRequestsDispatcher.DispatchRequestToVK<int>("audio.delete", parameters, callback);
+            Task.Run(async () =>
+            {
+                try
+                {
+                    var response = await VkService.Instance.Audio.Delete(aid, ownerId);
+                    
+                    Execute.ExecuteOnUIThread(() =>
+                    {
+                        callback(new VKResponse<int>
+                        {
+                            error = new VKError { error_code = Enums.VKErrors.None },
+                            response = response ? 1 : 0
+                        });
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Execute.ExecuteOnUIThread(() =>
+                    {
+                        callback(new VKResponse<int>
+                        {
+                            error = new VKError { error_code = Enums.VKErrors.UnknownError, error_msg = ex.Message },
+                            response = 0
+                        });
+                    });
+                }
+            });
         }
 
         public void ReorderAudio(int aid, int oid, int album_id, int after, int before, Action<VKResponse<int>> callback)

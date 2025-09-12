@@ -92,7 +92,7 @@ namespace LunaVK.Core.ViewModels
             {
                 this.nextFrom = temp.response.next_from;
 
-                UsersService.Instance.SetCachedUsers(temp.response.groups);
+                GroupsService.Instance.SetCachedGroups(temp.response.groups);
                 UsersService.Instance.SetCachedUsers(temp.response.profiles);
 
                 foreach (VKNotification p in temp.response.items)
