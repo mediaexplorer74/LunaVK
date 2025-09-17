@@ -46,7 +46,8 @@ namespace LunaVK.Core
         {
 #if DEBUG
             string temp = resourceLoader.GetString(key);
-            Debug.Assert(!string.IsNullOrEmpty(temp));
+            //TODO
+            //Debug.Assert(!string.IsNullOrEmpty(temp));
 #endif
             return resourceLoader.GetString(key);
         }

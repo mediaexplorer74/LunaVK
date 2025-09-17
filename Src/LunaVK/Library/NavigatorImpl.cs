@@ -23,7 +23,7 @@ using Windows.Foundation.Metadata;
 
 namespace LunaVK.Library
 {
-    public class NavigatorImpl
+    public partial class NavigatorImpl
     {
         private static NavigatorImpl _instance;
         public static NavigatorImpl Instance
@@ -1161,183 +1161,140 @@ namespace LunaVK.Library
             throw new NotImplementedException();
         }
 
-        #region REGex
-        private static readonly Regex _friendsReg = new Regex("/friends(\\?id=[0-9])?");
-        private static readonly Regex _communitiesReg = new Regex("/groups(\\s|$)");
-        private static readonly Regex _dialogsReg = new Regex("/(im|mail)(\\s|$)");
-        private static readonly Regex _dialogReg = new Regex("/write[-0-9]+");
-        private static readonly Regex _wallReplyReg = new Regex("/wall[-0-9]+_[0-9]+\\?reply=[0-9]+");
-        private static readonly Regex _wallReg = new Regex("/wall[-0-9]+_[0-9]+");
-        private static readonly Regex _feedWallReg = new Regex("/feed?w=wall[-0-9]+_[0-9]+");
-        private static readonly Regex _audiosReg = new Regex("/audios[-0-9]+");
-        private static readonly Regex _newsReg = new Regex("/feed(\\s|$)");
-        private static readonly Regex _recommendedNewsReg = new Regex("/feed\\?section=recommended(\\s|$)");
-        private static readonly Regex _feedbackReg = new Regex("/feed\\?section=notifications(\\s|$)");
-        private static readonly Regex _profileReg = new Regex("/(id|wall)[0-9]+");
-        private static readonly Regex _communityReg = new Regex("/(club|event|public|wall)[-0-9]+");
-        private static readonly Regex _photosReg = new Regex("/(photos|albums)[-0-9]+");
-        private static readonly Regex _photoReg = new Regex("/photo[-0-9]+_[0-9]+");
-        private static readonly Regex _albumReg = new Regex("/album[-0-9]+_[0-9]+");
-        private static readonly Regex _tagReg = new Regex("/tag[0-9]+");
-        private static readonly Regex _videosReg = new Regex("/videos[-0-9]+");
-        private static readonly Regex _videoReg = new Regex("/video[-0-9]+_[0-9]+");
-        private static readonly Regex _videoTimeReg = new Regex("/video[-0-9]+_[0-9]+?t=(\\s|$)");
-        private static readonly Regex _boardReg = new Regex("/board[0-9]+");
-        private static readonly Regex _topicReg = new Regex("/topic[-0-9]+_[0-9]+");
-        private static readonly Regex _stickersSettingsReg = new Regex("/stickers/settings(\\s|$)");
-        private static readonly Regex _settingsReg = new Regex("/settings(\\s|$)");
-        private static readonly Regex _stickersReg = new Regex("/stickers(\\s|\\?|$)");
-        private static readonly Regex _stickersPackReg = new Regex("/stickers([\\/A-Za-z0-9]+)");
-        private static readonly Regex _faveReg = new Regex("/fave(\\s|$)");
-        private static readonly Regex _appsReg = new Regex("/apps(\\s|$)");
-        private static readonly Regex _appReg = new Regex("/app[-0-9]+_[-0-9]+");
-        private static readonly Regex _marketAlbumReg = new Regex("/market[-0-9]+\\?section=album_[-0-9]+");
-        private static readonly Regex _marketReg = new Regex("/market[-0-9]+");
-        private static readonly Regex _productReg = new Regex("/product[-0-9]+_[0-9]+");
-        private static readonly Regex _giftsReg = new Regex("/gifts[0-9]+");
-        private static readonly Regex _giftsCatalog = new Regex("/gifts(\\s|$)");
-        private static readonly Regex _namedObjReg = new Regex("/[A-Za-z0-9\\\\._-]+");
-        //
-        private static readonly Regex _podcastsReg = new Regex("/podcasts[-0-9]+");
-        //
-        public static readonly Regex Regex_Mention = new Regex("\\[(id|club)(\\d+)(?:\\:([a-z0-9_\\-]+))?\\|([^\\$]+?)\\]", RegexOptions.IgnoreCase);
-        public static readonly Regex Regex_DomainMention = new Regex("(\\*|@)((id|club|event|public)\\d+)\\s*\\((.+?)\\)", RegexOptions.IgnoreCase);
-
-        private readonly List<NavigatorImpl.NavigationTypeMatch> _navTypesList = new List<NavigatorImpl.NavigationTypeMatch>()
+        public void NavigateToNotificationDetail(VKNotification notification)
         {
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._friendsReg, NavigatorImpl.NavType.friends),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._communitiesReg, NavigatorImpl.NavType.communities),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._dialogsReg, NavigatorImpl.NavType.dialogs),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._dialogReg, NavigatorImpl.NavType.dialog),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._wallReplyReg, NavigatorImpl.NavType.wallPost),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._wallReg, NavigatorImpl.NavType.wallPost),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._feedWallReg, NavigatorImpl.NavType.wallPost),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._audiosReg, NavigatorImpl.NavType.audios),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._newsReg, NavigatorImpl.NavType.news),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._recommendedNewsReg, NavigatorImpl.NavType.recommendedNews),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._feedbackReg, NavigatorImpl.NavType.feedback),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._profileReg, NavigatorImpl.NavType.profile),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._communityReg, NavigatorImpl.NavType.community),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._photosReg, NavigatorImpl.NavType.albums),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._photoReg, NavigatorImpl.NavType.photo),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._albumReg, NavigatorImpl.NavType.album),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._tagReg, NavigatorImpl.NavType.tagPhoto),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._videosReg, NavigatorImpl.NavType.videos),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._videoReg, NavigatorImpl.NavType.video),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._videoTimeReg, NavigatorImpl.NavType.video),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._boardReg, NavigatorImpl.NavType.board),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._topicReg, NavigatorImpl.NavType.topic),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._stickersSettingsReg, NavigatorImpl.NavType.stickersSettings),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._settingsReg, NavigatorImpl.NavType.settings),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._faveReg, NavigatorImpl.NavType.fave),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._appsReg, NavigatorImpl.NavType.apps),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._appReg, NavigatorImpl.NavType.app),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._marketAlbumReg, NavigatorImpl.NavType.marketAlbum),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._marketReg, NavigatorImpl.NavType.market),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._productReg, NavigatorImpl.NavType.product),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._stickersReg, NavigatorImpl.NavType.stickers),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._stickersPackReg, NavigatorImpl.NavType.stickersPack),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._giftsReg, NavigatorImpl.NavType.gifts),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._giftsCatalog, NavigatorImpl.NavType.giftsCatalog),
-            //
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._podcastsReg, NavigatorImpl.NavType.podcasts),
-            //
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._namedObjReg, NavigatorImpl.NavType.namedObject),
-        };
+            if (notification == null)
+                return;
 
-        public class NavigationTypeMatch
-        {
-            private readonly Regex _idsRegEx = new Regex("\\-?[0-9]+");
-            private readonly Regex _queryParamsRegex = new Regex("(\\?|\\&)([^=]+)\\=([^&]+)");
-
-            private readonly Regex _regEx;
-            public NavigatorImpl.NavType MatchType { get; private set; }
-
-            public int Id1 { get; private set; }
-            public int Id2 { get; private set; }
-            public int Id3 { get; private set; }
-            public List<string> SubTypes { get; private set; }
-            public string ObjName { get; private set; }
-            public string ObjSubName { get; private set; }
-
-            public NavigationTypeMatch(Regex regExp, NavigatorImpl.NavType navType)
+            try
             {
-                this._regEx = regExp;
-                this.MatchType = navType;
+                var parsedParent = notification.ParsedParent;
+                var parsedFeedback = notification.ParsedFeedback;
+
+                // Wall post parent -> open comments
+                if (parsedParent is VKWallPost wp)
+                {
+                    int ownerId = wp.owner_id;
+                    uint postId = (wp.reply_post_id != 0) ? (uint)wp.reply_post_id : wp.id;
+                    uint commentId = 0;
+                    if (parsedFeedback is VKComment fb)
+                        commentId = fb.id;
+
+                    this.NavigateToWallPostComments(ownerId, postId, commentId, wp);
+                    return;
+                }
+
+                // Parent is a comment -> open post comments and scroll to comment
+                if (parsedParent is VKComment parentComment)
+                {
+                    int ownerId = parentComment.owner_id != 0 ? parentComment.owner_id : parentComment.from_id;
+                    uint postId = parentComment.post_id != 0 ? parentComment.post_id : parentComment.id;
+                    uint commentId = parentComment.id;
+
+                    this.NavigateToWallPostComments(ownerId, postId, commentId);
+                    return;
+                }
+
+                // Parent is a topic (discussion)
+                if (parsedParent is VKTopic topic)
+                {
+                    // Try to get topic id and group id if available
+                    uint topicId = 0;
+                    uint groupIdParam = 0;
+                    try { topicId = topic.id; } catch { }
+                    try { groupIdParam = (topic.owner_id < 0) ? (uint)(-topic.owner_id) : 0; } catch { }
+
+                    uint commentId = 0;
+                    if (parsedFeedback is VKComment fb2)
+                        commentId = fb2.id;
+
+                    if (groupIdParam != 0 && topicId != 0)
+                    {
+                        this.NavigateToGroupDiscussion(groupIdParam, topicId, topic.title ?? string.Empty, true, commentId);
+                        return;
+                    }
+                }
+
+                // Parent is photo
+                if (parsedParent is VKPhoto photo)
+                {
+                    int ownerId = 0;
+                    uint photoId = 0;
+                    try { ownerId = photo.owner_id; } catch { }
+                    try { photoId = photo.id; } catch { }
+
+                    if (photoId != 0)
+                    {
+                        this.NavigateToPhotoWithComments(ownerId, photoId, string.Empty, photo);
+                        return;
+                    }
+                }
+
+                // Parent is video
+                if (parsedParent is VKVideoBase video)
+                {
+                    int ownerId = 0;
+                    uint videoId = 0;
+                    try { ownerId = video.owner_id; } catch { }
+                    try { videoId = video.id; } catch { }
+
+                    if (videoId != 0)
+                    {
+                        this.NavigateToVideoWithComments(ownerId, videoId);
+                        return;
+                    }
+                }
+
+                // If feedback itself is a comment, try routing based on it
+                if (parsedFeedback is VKComment feedbackComment)
+                {
+                    uint commentId = feedbackComment.id;
+                    int ownerId = feedbackComment.owner_id != 0 ? feedbackComment.owner_id : feedbackComment.from_id;
+                    uint postId = feedbackComment.post_id != 0 ? feedbackComment.post_id : 0;
+
+                    if (postId != 0)
+                    {
+                        this.NavigateToWallPostComments(ownerId, postId, commentId);
+                        return;
+                    }
+
+                    // try photo/video ids on comment if present
+                    try
+                    {
+                        if (feedbackComment.photo != null)
+                        {
+                            uint photoId = feedbackComment.photo.id;
+                            if (photoId != 0)
+                            {
+                                this.NavigateToPhotoWithComments(ownerId, photoId);
+                                return;
+                            }
+                        }
+                    }
+                    catch { }
+
+                    try
+                    {
+                        if (feedbackComment.video != null)
+                        {
+                            uint videoId = feedbackComment.video.id;
+                            if (videoId != 0)
+                            {
+                                this.NavigateToVideoWithComments(ownerId, videoId);
+                                return;
+                            }
+                        }
+                    }
+                    catch { }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("NavigateToNotificationDetail error: " + ex);
             }
 
-            public bool Check(string uri)
-            {
-                MatchCollection matchCollection1 = this._regEx.Matches(uri);
-                if (matchCollection1.Count == 0)
-                    return false;
-                Match match1 = matchCollection1[0];
-                this.ObjName = match1.Value;
-                if (match1.Groups.Count > 0)
-                    this.ObjSubName = match1.Groups[match1.Groups.Count - 1].Value;
-                MatchCollection matchCollection2 = this._idsRegEx.Matches(this.ObjName);
-                if (matchCollection2.Count > 0)
-                {
-                    int result;
-                    this.Id1 = int.TryParse(matchCollection2[0].Value, out result) ? result : 0;
-                }
-                if (matchCollection2.Count > 1)
-                {
-                    int result;
-                    this.Id2 = int.TryParse(matchCollection2[1].Value, out result) ? result : 0;
-                }
-                if (matchCollection2.Count > 2)
-                {
-                    int result;
-                    this.Id3 = int.TryParse(matchCollection2[2].Value, out result) ? result : 0;
-                }
-                MatchCollection matchCollection3 = this._queryParamsRegex.Matches(uri);
-                this.SubTypes = new List<string>();
-                foreach (Match match2 in matchCollection3)
-                {
-                    if (match2.Groups.Count == 4 && match2.Groups[2].Value == "w")
-                        this.SubTypes.Add("/" + match2.Groups[match2.Groups.Count - 1].Value);
-                }
-                return true;
-            }
-        }
-#endregion
-        public enum NavType
-        {
-            none,
-            friends,
-            communities,
-            dialogs,
-            news,
-            tagPhoto,
-            albums,
-            profile,
-            dialog,
-            community,
-            board,
-            album,
-            video,
-            audios,
-            topic,
-            photo,
-            wallPost,
-            namedObject,
-            stickersSettings,
-            settings,
-            feedback,
-            videos,
-            fave,
-            apps,
-            marketAlbum,
-            market,
-            product,
-            stickers,
-            stickersPack,
-            recommendedNews,
-            app,
-            gifts,
-            giftsCatalog,
-            podcasts,
+            // Fallback to notifications list
+            this.NavigateToFeedback();
         }
     }
 }

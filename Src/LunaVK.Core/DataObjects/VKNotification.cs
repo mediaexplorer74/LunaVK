@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using LunaVK.Core.Network;
 
 namespace LunaVK.Core.DataObjects
@@ -43,6 +44,9 @@ namespace LunaVK.Core.DataObjects
         /// Отсутствует, если пользователь ещё не давал ответа. 
         /// </summary>
         public object reply { get; set; }
+
+        [JsonProperty("_raw_item")]
+        public JObject RawItem { get; set; }
 
         public object ParsedParent
         {

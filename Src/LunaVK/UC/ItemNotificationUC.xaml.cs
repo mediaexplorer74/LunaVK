@@ -7,6 +7,7 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
+using System.Reflection;
 
 using LunaVK.Core.DataObjects;
 using LunaVK.Core;
@@ -15,8 +16,10 @@ using LunaVK.Library;
 using LunaVK.Core.Network;
 using LunaVK.Core.Utils;
 using LunaVK.Core.Library;
+using LunaVK.Core.Framework; // added for Execute
 using Windows.UI.Xaml.Media.Imaging;
 using System.Diagnostics;
+using Newtonsoft.Json.Linq;
 
 namespace LunaVK.UC
 {
@@ -59,11 +62,18 @@ namespace LunaVK.UC
 
         private void ProcessData()
         {
+            Debug.WriteLine($"ItemNotificationUC.ProcessData start. Data is null? {this.Data==null}");
+
             this.ContentGrid.Children.Clear();
             this.ContentGrid.ColumnDefinitions.Clear();
 
             if (this.Data == null || this.Notification == null)
+            {
+                Debug.WriteLine("ItemNotificationUC.ProcessData: no notification data, returning.");
                 return;
+            }
+
+            Debug.WriteLine($"ItemNotificationUC.ProcessData: Notification type={this.Notification.type} date={this.Notification.date} parsedParent={this.Notification.ParsedParent?.GetType().Name} parsedFeedback={this.Notification.ParsedFeedback?.GetType().Name}");
 
             this.icon.Glyph = this.SetIcon();
 
@@ -122,11 +132,19 @@ namespace LunaVK.UC
                 text = string.Format("{0} {1}", this.GetLocalizableText(), highlightedText);
             }
             
-            tb.Text = text;
+            try
+            {
+                tb.Text = UIStringFormatterHelper.SubstituteMentionsWithNames(text);
+            }
+            catch
+            {
+                tb.Text = text;
+            }
 
             ContentGrid.Children.Add(tb);
 
             string thumb = this.GetThumb();
+            Debug.WriteLine($"ItemNotificationUC.ProcessData: GetThumb -> '{thumb}'");
             if(!string.IsNullOrEmpty(thumb))
             {
                 // normalize protocol-relative URL
@@ -141,11 +159,23 @@ namespace LunaVK.UC
                     Image img = new Image();
                     try
                     {
-                        img.Source = new BitmapImage(thumbUri);
+                        var bitmap = new BitmapImage();
+                        bitmap.UriSource = thumbUri;
+                        // If loading fails, set fallback image
+                        bitmap.ImageFailed += (s, e) =>
+                        {
+                            Debug.WriteLine($"ItemNotificationUC: thumbnail ImageFailed for '{thumbUri}'");
+                            try { img.Source = new BitmapImage(new Uri("ms-appx:///Assets/Icons/appbar.user.png")); } catch { }
+                        };
+
+                        img.Source = bitmap;
+                        Debug.WriteLine($"ItemNotificationUC: thumbnail BitmapImage assigned for '{thumbUri}'");
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        // ignore invalid image
+                        Debug.WriteLine($"ItemNotificationUC: exception creating thumbnail BitmapImage: {ex}");
+                        // ignore invalid image - set fallback
+                        try { img.Source = new BitmapImage(new Uri("ms-appx:///Assets/Icons/appbar.user.png")); } catch { img.Source = null; }
                     }
 
                    // img.Margin = new Thickness(0,0,15,0);
@@ -153,6 +183,14 @@ namespace LunaVK.UC
 
                     ContentGrid.Children.Add(img);
                 }
+                else
+                {
+                    Debug.WriteLine($"ItemNotificationUC: GetThumb returned non-absolute URL: '{thumb}'");
+                }
+            }
+            else
+            {
+                Debug.WriteLine("ItemNotificationUC: no thumb available for this notification");
             }
         }
 
@@ -213,47 +251,315 @@ namespace LunaVK.UC
             return string.Empty;
         }
 
+        // Reflection helpers to read common id properties from parsed objects
+        private static bool TryGetIntProperty(object obj, out int value, params string[] names)
+        {
+            value = 0;
+            if (obj == null)
+                return false;
+            Type t = obj.GetType();
+            foreach (var name in names)
+            {
+                var p = t.GetProperty(name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                if (p != null)
+                {
+                    try
+                    {
+                        var v = p.GetValue(obj);
+                        if (v == null) continue;
+                        value = Convert.ToInt32(v);
+                        return true;
+                    }
+                    catch { }
+                }
+            }
+            return false;
+        }
+
+        private static bool TryGetUIntProperty(object obj, out uint value, params string[] names)
+        {
+            value = 0;
+            if (obj == null)
+                return false;
+            Type t = obj.GetType();
+            foreach (var name in names)
+            {
+                var p = t.GetProperty(name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                if (p != null)
+                {
+                    try
+                    {
+                        var v = p.GetValue(obj);
+                        if (v == null) continue;
+                        value = Convert.ToUInt32(v);
+                        return true;
+                    }
+                    catch { }
+                }
+            }
+            return false;
+        }
+
         /// <summary>
         /// Задаём аватарку и запоминаем пользователя
         /// </summary>
         private void GenerateLayout()
         {
+            // Reset user to null at the beginning of each layout generation
+            user = null;
+            Debug.WriteLine("GenerateLayout: start");
+            
             string str = string.Empty;
 
             if (this.Notification == null)
+            {
+                Debug.WriteLine("GenerateLayout: Notification is null, returning.");
                 return;
+            }
 
-            // Properly retrieve user information based on notification type
-            if (this.Notification.ParsedFeedback is List<FeedbackUser> list)
+            // If ParsedFeedback is a raw JSON string (some notifications are raw), try to parse a photo directly
+            try
             {
-                // For follow, like, and copy notifications which can be grouped
-                if (list.Count > 0)
+                if (this.Notification.ParsedFeedback is string rawFeedbackStr && !string.IsNullOrWhiteSpace(rawFeedbackStr))
                 {
-                    int actorId = list[0].from_id != 0 ? list[0].from_id : list[0].owner_id;
-                    user = UsersService.Instance.GetCachedUser((uint)Math.Abs(actorId));
+                    Debug.WriteLine("GenerateLayout: ParsedFeedback is raw string, attempting JSON parse to find photo fields");
+                    try
+                    {
+                        var token = JToken.Parse(rawFeedbackStr);
+                        JToken first = null;
+                        if (token.Type == JTokenType.Array)
+                            first = token.First;
+                        else if (token["items"] != null && token["items"].Type == JTokenType.Array)
+                            first = token["items"].First;
+                        else
+                            first = token;
+
+                        if (first != null)
+                        {
+                            JToken photoToken = first.SelectToken("photo_100") ?? first.SelectToken("photo_200") ?? first.SelectToken("photo_50") ?? first.SelectToken("photo_130") ?? first.SelectToken("photo") ?? first.SelectToken("photo_604");
+                            if (photoToken != null)
+                            {
+                                string photoUrl = photoToken.ToString();
+                                Debug.WriteLine($"GenerateLayout: extracted photo from raw feedback = '{photoUrl}'");
+                                if (!string.IsNullOrEmpty(photoUrl) && photoUrl.StartsWith("//"))
+                                    photoUrl = "https:" + photoUrl;
+
+                                if (Uri.TryCreate(photoUrl, UriKind.Absolute, out Uri photoUri))
+                                {
+                                    try
+                                    {
+                                        var extractedBmp = new BitmapImage();
+                                        extractedBmp.UriSource = photoUri;
+                                        extractedBmp.ImageFailed += (s, e) => { Debug.WriteLine($"GenerateLayout: extracted-photo ImageFailed for '{photoUri}'"); };
+                                        img_from.ImageSource = extractedBmp;
+                                        avatarGlyph.Visibility = Visibility.Collapsed;
+                                        Debug.WriteLine("GenerateLayout: avatar set from raw ParsedFeedback photo and returning");
+                                        return; // done
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Debug.WriteLine($"GenerateLayout: exception creating BitmapImage from extracted photo: {ex}");
+                                    }
+                                }
+                            }
+
+                            // If no photo found, try extract actor id from raw JSON so we can fetch user/group
+                            long? actorIdFromRaw = first.Value<long?>("from_id") ?? first.Value<long?>("owner_id") ?? first.Value<long?>("user_id") ?? first.Value<long?>("id");
+                            if (actorIdFromRaw.HasValue)
+                            {
+                                long rawId = actorIdFromRaw.Value;
+                                Debug.WriteLine($"GenerateLayout: extracted actor id from raw ParsedFeedback: {rawId}");
+                                if (rawId > 0)
+                                {
+                                    uint uid = (uint)rawId;
+                                    var cached = UsersService.Instance.GetCachedUser(uid);
+                                    Debug.WriteLine($"GenerateLayout: cached user for uid={uid} is null? {cached==null}");
+                                    if (cached != null)
+                                    {
+                                        user = cached;
+                                    }
+                                    else
+                                    {
+                                        // fetch and update avatar when ready
+                                        Debug.WriteLine($"GenerateLayout: fetching user info for uid={uid} (from raw ParsedFeedback)");
+                                        UsersService.Instance.GetUsers(new List<uint> { uid }, (res) =>
+                                        {
+                                            Debug.WriteLine($"UsersService.GetUsers callback (rawParsed): result null? {res==null} count={(res!=null?res.Count:0)} for uid={uid}");
+                                            if (res != null && res.Count > 0)
+                                            {
+                                                var fetched = res[0];
+                                                Execute.ExecuteOnUIThread(() =>
+                                                {
+                                                    user = fetched;
+                                                    UpdateAvatarFromUser(user);
+                                                });
+                                            }
+                                        });
+                                    }
+                                }
+                                else if (rawId < 0)
+                                {
+                                    uint gid = (uint)(-rawId);
+                                    var cachedGroup = GroupsService.Instance.GetCachedGroup(gid);
+                                    Debug.WriteLine($"GenerateLayout: cached group for gid={gid} is null? {cachedGroup==null}");
+                                    if (cachedGroup != null)
+                                    {
+                                        user = cachedGroup;
+                                    }
+                                    else
+                                    {
+                                        Debug.WriteLine($"GenerateLayout: fetching group info for gid={gid} (from raw ParsedFeedback)");
+                                        GroupsService.Instance.GetGroupInfo(gid, true, (grRes) =>
+                                        {
+                                            Debug.WriteLine($"GroupsService.GetGroupInfo callback (rawParsed): res null? {grRes==null}");
+                                            if (grRes != null && grRes.error.error_code == VKErrors.None && grRes.response != null)
+                                            {
+                                                Execute.ExecuteOnUIThread(() =>
+                                                {
+                                                    user = grRes.response;
+                                                    UpdateAvatarFromUser(user);
+                                                });
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"GenerateLayout: failed to parse ParsedFeedback JSON: {ex}");
+                    }
                 }
             }
-            else if(this.Notification.ParsedFeedback is VKComment comment)
+            catch (Exception ex)
             {
-                user = UsersService.Instance.GetCachedUser((uint)Math.Abs(comment.from_id));
+                Debug.WriteLine($"GenerateLayout: unexpected error while handling raw ParsedFeedback: {ex}");
             }
-            else if(this.Notification.ParsedFeedback is VKWallPost post)
+
+            long? actorIdNullable = null;
+            bool actorIsGroup = false;
+
+            // Extract actor id from various ParsedFeedback shapes
+            if (this.Notification.ParsedFeedback is VKCountedItemsObject<FeedbackUser> countedFeedback && countedFeedback.count > 0)
             {
-                user = UsersService.Instance.GetCachedUser((uint)Math.Abs(post.from_id));
+                var first = countedFeedback.items[0];
+                long actorId = first.from_id != 0 ? first.from_id : first.owner_id;
+                actorIdNullable = Math.Abs(actorId);
+                actorIsGroup = actorId < 0;
+                Debug.WriteLine($"GenerateLayout: countedFeedback actorId={actorId} abs={actorIdNullable} isGroup={actorIsGroup}");
             }
-            else if (this.Notification.ParsedFeedback is List<FeedbackCopyInfo> info)
+            else if (this.Notification.ParsedFeedback is List<FeedbackCopyInfo> listCopy && listCopy.Count > 0)
             {
-                if (info.Count > 0)
+                var first = listCopy[0];
+                long actorId = first.from_id != 0 ? first.from_id : first.owner_id;
+                actorIdNullable = Math.Abs(actorId);
+                actorIsGroup = actorId < 0;
+                Debug.WriteLine($"GenerateLayout: listCopy actorId={actorId} abs={actorIdNullable} isGroup={actorIsGroup}");
+            }
+            else if (this.Notification.ParsedFeedback is VKComment comment)
+            {
+                actorIdNullable = (long?)Math.Abs((long)comment.from_id);
+                actorIsGroup = comment.from_id < 0;
+                Debug.WriteLine($"GenerateLayout: VKComment from_id={comment.from_id}");
+            }
+            else if (this.Notification.ParsedFeedback is VKWallPost post)
+            {
+                // For publications prefer owner_id (the community/user whose page contains the post)
+                long actor = post.owner_id != 0 ? post.owner_id : post.from_id;
+                actorIdNullable = (long?)Math.Abs(actor);
+                actorIsGroup = actor < 0;
+                Debug.WriteLine($"GenerateLayout: VKWallPost owner_id={post.owner_id} from_id={post.from_id} chosenActor={actor} isGroup={actorIsGroup}");
+            }
+            else if (this.Notification.ParsedFeedback is VKCountedItemsObject<FeedbackCopyInfo> countedCopy && countedCopy.count > 0)
+            {
+                var first = countedCopy.items[0];
+                long actorId = first.from_id != 0 ? first.from_id : first.owner_id;
+                actorIdNullable = Math.Abs(actorId);
+                actorIsGroup = actorId < 0;
+                Debug.WriteLine($"GenerateLayout: countedCopy actorId={actorId} abs={actorIdNullable} isGroup={actorIsGroup}");
+            }
+            else if (this.Notification.ParsedFeedback is List<FeedbackCopyInfo> listCopy2 && listCopy2.Count > 0)
+            {
+                var first = listCopy2[0];
+                long actorId = first.from_id != 0 ? first.from_id : first.owner_id;
+                actorIdNullable = Math.Abs(actorId);
+                actorIsGroup = actorId < 0;
+                Debug.WriteLine($"GenerateLayout: listCopy2 actorId={actorId} abs={actorIdNullable} isGroup={actorIsGroup}");
+            }
+
+            // Try retrieve from cache if we found actor id
+            if (actorIdNullable.HasValue)
+            {
+                uint uid = (uint)actorIdNullable.Value;
+                Debug.WriteLine($"GenerateLayout: resolved actor uid={uid} isGroup={actorIsGroup}");
+                if (!actorIsGroup)
                 {
-                    long rawId = info[0].from_id != 0 ? info[0].from_id : info[0].owner_id;
-                    user = UsersService.Instance.GetCachedUser((uint)Math.Abs((int)rawId));
+                    user = UsersService.Instance.GetCachedUser(uid);
+                    Debug.WriteLine($"GenerateLayout: cached user for uid={uid} is null? {user==null}");
+                    if (user == null)
+                    {
+                        Debug.WriteLine($"GenerateLayout: fetching user info for uid={uid}");
+                        // fetch user async and update image when ready
+                        UsersService.Instance.GetUsers(new List<uint> { uid }, (result) =>
+                        {
+                            Debug.WriteLine($"UsersService.GetUsers callback: result null? {result==null} count={(result!=null?result.Count:0)} for uid={uid}");
+                            if (result != null && result.Count > 0)
+                            {
+                                var fetched = result[0];
+                                // update UI
+                                Execute.ExecuteOnUIThread(() =>
+                                {
+                                    Debug.WriteLine($"UsersService.GetUsers: fetched id={fetched.Id} MinPhoto='{fetched.MinPhoto}'");
+                                    user = fetched;
+                                    UpdateAvatarFromUser(user);
+                                });
+                            }
+                        });
+                    }
+                }
+                else
+                {
+                    Debug.WriteLine($"GenerateLayout: actor is group, trying to use Notification.Owner or fetch group info");
+                    // actor is group — try fallback to Notification.Owner or fetch group info if needed
+                    if (this.Notification.Owner is VKGroup g && g.id == (int)actorIdNullable.Value)
+                    {
+                        user = this.Notification.Owner;
+                        Debug.WriteLine($"GenerateLayout: Notification.Owner is group id={g.id}");
+                    }
+                    else
+                    {
+                        uint gid = (uint)actorIdNullable.Value;
+                        // Try to use Notification.Owner first
+                        if (this.Notification.Owner != null)
+                            user = this.Notification.Owner;
+                        else
+                        {
+                            Debug.WriteLine($"GenerateLayout: fetching group info for gid={gid}");
+                            // fetch group info
+                            GroupsService.Instance.GetGroupInfo(gid, true, (res) =>
+                            {
+                                Debug.WriteLine($"GroupsService.GetGroupInfo callback: res null? {res==null}");
+                                if (res != null && res.error.error_code == VKErrors.None && res.response != null)
+                                {
+                                    Execute.ExecuteOnUIThread(() =>
+                                    {
+                                        Debug.WriteLine($"GroupsService.GetGroupInfo: fetched group id={res.response.id} MinPhoto='{res.response.MinPhoto}'");
+                                        user = res.response;
+                                        UpdateAvatarFromUser(user);
+                                    });
+                                }
+                            });
+                        }
+                    }
                 }
             }
-            
-            // Fallback to Notification.Owner if user is still null
+
+            // If we still don't have user, fallback to Notification.Owner
             if (user == null)
             {
                 user = this.Notification.Owner;
+                Debug.WriteLine($"GenerateLayout: fallback to Notification.Owner is null? {user==null}");
             }
             
             if (user != null)
@@ -261,14 +567,28 @@ namespace LunaVK.UC
                 str = user.MinPhoto ?? string.Empty;
             }
 
+            Debug.WriteLine($"GenerateLayout: chosen MinPhoto='{str}'");
+
             // Normalize protocol-relative URLs
             if (!string.IsNullOrEmpty(str) && str.StartsWith("//"))
                 str = "https:" + str;
 
+            Debug.WriteLine($"GenerateLayout: normalized MinPhoto='{str}'");
+
             BitmapImage bmp = null;
             if (!string.IsNullOrWhiteSpace(str) && Uri.TryCreate(str, UriKind.Absolute, out Uri uri))
             {
-                try { bmp = new BitmapImage(uri); } catch { bmp = null; }
+                try {
+                    Debug.WriteLine($"GenerateLayout: creating BitmapImage for uri={uri}");
+                    bmp = new BitmapImage();
+                    bmp.UriSource = uri;
+                    // fallback to default avatar if loading fails
+                    bmp.ImageFailed += (s, e) =>
+                    {
+                        Debug.WriteLine($"GenerateLayout: BitmapImage ImageFailed for '{uri}'");
+                        try { img_from.ImageSource = new BitmapImage(new Uri("ms-appx:///Assets/Icons/appbar.user.png")); } catch { }
+                    };
+                } catch (Exception ex) { Debug.WriteLine($"GenerateLayout: exception creating BitmapImage: {ex}"); bmp = null; }
             }
 
             if (bmp == null)
@@ -276,7 +596,48 @@ namespace LunaVK.UC
                 try { bmp = new BitmapImage(new Uri("ms-appx:///Assets/Icons/appbar.user.png")); } catch { bmp = null; }
             }
 
-            img_from.ImageSource = bmp;
+            try { img_from.ImageSource = bmp; avatarGlyph.Visibility = Visibility.Collapsed; Debug.WriteLine("GenerateLayout: avatar image assigned and glyph hidden"); } catch { Debug.WriteLine("GenerateLayout: failed to assign avatar image"); }
+        }
+
+        private void UpdateAvatarFromUser(VKBaseDataForGroupOrUser fetchedUser)
+        {
+            Debug.WriteLine($"UpdateAvatarFromUser: called fetchedUser null? {fetchedUser==null}");
+            if (fetchedUser == null)
+                return;
+
+            string s = fetchedUser.MinPhoto ?? string.Empty;
+            Debug.WriteLine($"UpdateAvatarFromUser: MinPhoto before normalization='{s}'");
+            if (!string.IsNullOrEmpty(s) && s.StartsWith("//"))
+                s = "https:" + s;
+
+            Debug.WriteLine($"UpdateAvatarFromUser: MinPhoto normalized='{s}'");
+
+            if (!string.IsNullOrWhiteSpace(s) && Uri.TryCreate(s, UriKind.Absolute, out Uri uri))
+            {
+                try
+                {
+                    Debug.WriteLine($"UpdateAvatarFromUser: creating BitmapImage for '{uri}'");
+                    var bmp = new BitmapImage();
+                    bmp.UriSource = uri;
+                    bmp.ImageFailed += (ss, ee) =>
+                    {
+                        Debug.WriteLine($"UpdateAvatarFromUser: Bitmap ImageFailed for '{uri}'");
+                        try { img_from.ImageSource = new BitmapImage(new Uri("ms-appx:///Assets/Icons/appbar.user.png")); avatarGlyph.Visibility = Visibility.Visible; } catch { }
+                    };
+
+                    img_from.ImageSource = bmp; avatarGlyph.Visibility = Visibility.Collapsed;
+                    Debug.WriteLine($"UpdateAvatarFromUser: image source assigned for '{uri}'");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"UpdateAvatarFromUser: exception while assigning image: {ex}");
+                }
+            }
+            else
+            {
+                Debug.WriteLine("UpdateAvatarFromUser: no valid MinPhoto Uri, setting fallback and showing glyph");
+                try { img_from.ImageSource = new BitmapImage(new Uri("ms-appx:///Assets/Icons/appbar.user.png")); avatarGlyph.Visibility = Visibility.Visible; } catch { }
+            }
         }
 
         private VKUserSex GetGender()
@@ -307,6 +668,17 @@ namespace LunaVK.UC
         {
             VKUserSex gender = this.GetGender();
             string str = "";
+            // Handle wall publications explicitly
+            if (this.Notification != null && (this.Notification.type == VKNotification.NotificationType.wall || this.Notification.type == VKNotification.NotificationType.wall_publish))
+            {
+                // For groups or unknown gender use neuter form
+                if (gender == VKUserSex.Male)
+                    return "опубликовал новый пост";
+                if (gender == VKUserSex.Female)
+                    return "опубликовала новый пост";
+                return "опубликовало новый пост";
+            }
+
             switch (this.Notification.type)
             {
                 case  VKNotification.NotificationType.follow:
@@ -505,21 +877,9 @@ namespace LunaVK.UC
 
                 case VKNotification.NotificationType.wall_publish:
                     {
-                        return "опубликована ваша новость";
+                        // fallback handled above
+                        break;
                     }
-                    /*
-                case  VKNotification.NotificationType.money_transfer_received:
-                    MoneyTransfer parsedFeedback1 = (MoneyTransfer)this.Notyfication.ParsedFeedback;
-                    str = string.Format(gender == VKUserSex.Male ? "MoneyTransferSentMale : "MoneyTransferSentFemale, ((string)parsedFeedback1.amount.text).Replace(' ', ' '));
-                    break;
-                case  VKNotification.NotificationType.money_transfer_accepted:
-                    MoneyTransfer parsedFeedback2 = (MoneyTransfer)this.Notyfication.ParsedFeedback;
-                    str = string.Format(gender == VKUserSex.Male ? "MoneyTransferAcceptedMale : "MoneyTransferAcceptedFemale, ((string)parsedFeedback2.amount.text).Replace(' ', ' '));
-                    break;
-                case  VKNotification.NotificationType.money_transfer_declined:
-                    MoneyTransfer parsedFeedback3 = (MoneyTransfer)this.Notyfication.ParsedFeedback;
-                    str = string.Format(gender == VKUserSex.Male ? "MoneyTransferDeclinedMale : "MoneyTransferDeclinedFemale, ((string)parsedFeedback3.amount.text).Replace(' ', ' '));
-                    break;*/
             }
             if (string.IsNullOrEmpty(str))
                 return "";
@@ -566,7 +926,7 @@ namespace LunaVK.UC
         /// <summary>
         /// Задаём иконку и цвет иконки
         /// </summary>
-        /// <returns></returns>
+            /// <returns></returns>
         private string SetIcon()
         {
             switch (this.Notification.type)
@@ -631,6 +991,8 @@ namespace LunaVK.UC
 
         private void Avatar_Tapped(object sender, TappedRoutedEventArgs e)
         {
+            if (user == null)
+                return;
             Library.NavigatorImpl.Instance.NavigateToProfilePage(user.Id);
         }
 
@@ -638,9 +1000,13 @@ namespace LunaVK.UC
 
         private void Content_Tapped(object sender, TappedRoutedEventArgs e)
         {
-            // Переключаем разворачивание деталей
-            _detailsExpanded = !_detailsExpanded;
-            ToggleDetails();
+            // Navigate to detailed page for this notification
+            try
+            {
+                if (this.Notification != null)
+                    Library.NavigatorImpl.Instance.NavigateToNotificationDetail(this.Notification);
+            }
+            catch { }
         }
 
         private void ToggleDetails()
@@ -715,12 +1081,6 @@ namespace LunaVK.UC
                 Debug.WriteLine("BuildFullDetailsText error: " + ex);
                 return string.Empty;
             }
-       
-                //if (!(this.Notification.ParsedFeedback is MoneyTransfer))
-                //    return;
-                //MoneyTransfer parsedFeedback = (MoneyTransfer)this.Notification.ParsedFeedback;
-                //TransferCardView.Show(parsedFeedback.id, parsedFeedback.from_id, parsedFeedback.to_id);
-           
         }
     }
 }

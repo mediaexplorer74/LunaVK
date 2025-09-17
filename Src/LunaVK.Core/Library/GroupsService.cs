@@ -945,5 +945,13 @@ namespace LunaVK.Core.Library
             /// </summary>
             public string status { get; set; }
         }
+
+        public void ClearCachedGroups()
+        {
+            lock (this._lockObj)
+            {
+                this._cachedGroups.Clear();
+            }
+        }
     }
 }

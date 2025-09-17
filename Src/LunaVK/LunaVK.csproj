@@ -133,6 +133,7 @@
     <Compile Include="Library\Events\AudioTrackDownloadProgress.cs" />
     <Compile Include="Library\Events\DownloadProgressedEvent.cs" />
     <Compile Include="Library\Events\DownloadSucceededEvent.cs" />
+    <Compile Include="Library\NavigatorImpl.Partial.cs" />
     <Compile Include="Library\PrivacySettingTemplateSelector.cs" />
     <Compile Include="Network\Converters\DownloadStatusToCollapsedConverter.cs" />
     <Compile Include="Network\Converters\DownloadStatusToStringConverter.cs" />
@@ -184,6 +185,7 @@
     <Compile Include="Pages\MyLikesPage.xaml.cs">
       <DependentUpon>MyLikesPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Pages\NotificationsDetailPage.xaml.cs" />
     <Compile Include="Pages\PhotoPickerPhotos.xaml.cs">
       <DependentUpon>PhotoPickerPhotos.xaml</DependentUpon>
     </Compile>
@@ -2242,6 +2244,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Pages\NotificationsDetailPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Pages\PhotoPickerPhotos.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -4163,7 +4169,7 @@
       <Name>XamlAnimatedGif</Name>
     </ProjectReference>
     <ProjectReference Include="..\YoutubeExtractor\YoutubeExtractor.csproj">
-      <Project>{be76dc22-feaf-4ac0-816f-28a646ca83b0}</Project>
+      <Project>{2ed009b9-ca0b-4a94-a44a-fa2abfb316cc}</Project>
       <Name>YoutubeExtractor</Name>
     </ProjectReference>
   </ItemGroup>

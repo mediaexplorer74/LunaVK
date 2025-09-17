@@ -40,7 +40,7 @@ namespace LunaVK.ViewModels
 
         public string Title
         {
-            get { return this.Playlist.title; }
+            get { return string.IsNullOrEmpty(this.Playlist?.title) ? "Альбом" : this.Playlist.title; }
         }
 
         public string SubTitle

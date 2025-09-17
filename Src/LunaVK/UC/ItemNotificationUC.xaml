@@ -22,6 +22,9 @@
                 </Ellipse.Fill>
             </Ellipse>
 
+            <!-- Fallback glyph shown when image not available -->
+            <local:IconUC x:Name="avatarGlyph" Glyph="\xE77B" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="White" IsHitTestVisible="False"/>
+
             <Grid VerticalAlignment="Bottom" HorizontalAlignment="Right">
                 <Border Width="21" Height="21" CornerRadius="10" BorderBrush="{ThemeResource BaseBackgroundBrush}" BorderThickness="2" Background="OrangeRed" Name="FeedBackIconBorder"/>
                 <local:IconUC FontSize="8" VerticalAlignment="Center" HorizontalAlignment="Center" x:Name="icon" Foreground="White" FontWeight="ExtraBold" Glyph="&#xEB52;"/>
@@ -29,9 +32,6 @@
         </Grid>
         
         <StackPanel Grid.Column="1" Margin="0 0 15 30" Tapped="Content_Tapped">
-            <!--<TextBlock Name="from" Text="Title" FontSize="{StaticResource FontSizeContent}" Foreground="{ThemeResource AccentBrushHigh}"/>
-            <TextBlock Name="action" FontSize="{StaticResource FontSizeContent}" Foreground="{ThemeResource TextBrushMedium}"/>
-            <local:ScrollableTextBlock x:Name="comment" IsHitTestVisible="False"/>-->
             <Grid Name="ContentGrid"/>
             
             <!-- Панель с деталями уведомления (полный текст/доп. сведения), по умолчанию скрыта -->

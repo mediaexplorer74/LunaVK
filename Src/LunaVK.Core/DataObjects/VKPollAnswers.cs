@@ -14,7 +14,7 @@ namespace LunaVK.Core.DataObjects
         /// <summary>
         /// Идентификатор ответа на вопрос.
         /// </summary>
-        public int id { get; set; }
+        public uint id { get; set; }
 
         /// <summary>
         /// Текст ответа на вопрос.
@@ -136,7 +136,7 @@ namespace LunaVK.Core.DataObjects
         public void Read(BinaryReader reader)
         {
             reader.ReadInt32();
-            this.id = reader.ReadInt32();
+            this.id = reader.ReadUInt32();
             this.text = reader.ReadString();
             this.votes = reader.ReadInt32();
             this.rate = reader.ReadDouble();

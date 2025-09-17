@@ -115,6 +115,18 @@ namespace LunaVK.Core.Utils
                 writer.Write(0);
         }
 
+        public static void WriteList(this BinaryWriter writer, List<uint> list)
+        {
+            if (list != null)
+            {
+                writer.Write(list.Count);
+                foreach (uint num in list)
+                    writer.Write(num);
+            }
+            else
+                writer.Write(0);
+        }
+
         public static void Write<T>(this BinaryWriter writer, T value, bool trim = false) where T : IBinarySerializable
         {
             if (value != null)
@@ -173,6 +185,17 @@ namespace LunaVK.Core.Utils
             for (int index = 0; index < num; ++index)
                 intList.Add(reader.ReadInt32());
             return intList;
+        }
+
+        public static List<uint> ReadListUInt(this BinaryReader reader)
+        {
+            int num = reader.ReadInt32();
+            if (num <= 0)
+                return new List<uint>();
+            List<uint> uintList = new List<uint>();
+            for (int index = 0; index < num; ++index)
+                uintList.Add(reader.ReadUInt32());
+            return uintList;
         }
 
         public static Dictionary<string, string> ReadDictionary(this BinaryReader reader)

@@ -171,8 +171,49 @@ namespace LunaVK
         
         private void Album_Tapped(object sender, TappedRoutedEventArgs e)
         {
-            var vm = (sender as FrameworkElement).DataContext as VKPlaylist;
-            NavigatorImpl.Instance.NavigateToAlbum(vm);
+            var fe = sender as FrameworkElement;
+            if (fe == null)
+                return;
+
+            var data = fe.DataContext;
+            if (data == null)
+                return;
+
+            // If it's already a playlist - navigate directly
+            if (data is VKPlaylist playlist)
+            {
+                NavigatorImpl.Instance.NavigateToAlbum(playlist);
+                return;
+            }
+
+            // If it's a track and contains album id - construct minimal playlist wrapper
+            if (data is VKAudio audio)
+            {
+                if (audio.album_id != 0)
+                {
+                    var pl = new VKPlaylist();
+                    pl.id = audio.album_id;
+                    pl.owner_id = audio.owner_id;
+                    pl.title = string.Empty; // leave empty so page will load real info from server
+                    NavigatorImpl.Instance.NavigateToAlbum(pl);
+                    return;
+                }
+            }
+
+            // If DataContext is a grouping or list that contains playlists, find the first playlist
+            if (data is System.Collections.IEnumerable enumerable)
+            {
+                foreach (var item in enumerable)
+                {
+                    if (item is VKPlaylist p)
+                    {
+                        NavigatorImpl.Instance.NavigateToAlbum(p);
+                        return;
+                    }
+                }
+            }
+
+            // fallback: do nothing
         }
 
         private void AudioTrackUC_CoverClick(object sender, RoutedEventArgs e)
