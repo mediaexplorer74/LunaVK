@@ -200,9 +200,28 @@ namespace LunaVK.Pages
                         }
                         else if(this.VM.WallPostData!=null)
                         {
-                            this.ucNewMessage.SetAdminLevel((int)this.VM.WallPostData.AdminLevel);
-                            if ( this.VM.WallPostData.comments.can_post == false)
+                            try
                             {
+                                // AdminLevel may be missing on a partial VKWallPost; protect against exceptions
+                                if (this.VM.WallPostData != null)
+                                {
+                                    try
+                                    {
+                                        this.ucNewMessage.SetAdminLevel((int)this.VM.WallPostData.AdminLevel);
+                                    }
+                                    catch { /* ignore if AdminLevel not available */ }
+
+                                    var commentsInfo = this.VM.WallPostData.comments;
+                                    if (commentsInfo == null || commentsInfo.can_post == false)
+                                    {
+                                        VisualStateManager.GoToState(this.ucNewMessage, "Loading", false);
+                                        break;
+                                    }
+                                }
+                            }
+                            catch (Exception)
+                            {
+                                // If any unexpected structure in partial post data, treat as loading until full data arrives
                                 VisualStateManager.GoToState(this.ucNewMessage, "Loading", false);
                                 break;
                             }

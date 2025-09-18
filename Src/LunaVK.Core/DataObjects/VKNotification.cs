@@ -121,7 +121,41 @@ namespace LunaVK.Core.DataObjects
                     case NotificationType.like_comment_photo:
                     case NotificationType.like_comment_video:
                     case NotificationType.like_comment_topic:
-                        this._parsedFeedback = JsonConvert.DeserializeObject<VKCountedItemsObject<FeedbackUser>>(str).items;
+                    case NotificationType.birthday: // birthday can be provided as list of users
+                        // Try several shapes: VKCountedItemsObject<FeedbackUser>, List<FeedbackUser>, or single FeedbackUser
+                        try
+                        {
+                            var counted = JsonConvert.DeserializeObject<VKCountedItemsObject<FeedbackUser>>(str);
+                            if (counted != null && counted.items != null)
+                            {
+                                this._parsedFeedback = counted.items;
+                                break;
+                            }
+                        }
+                        catch { }
+
+                        try
+                        {
+                            var list = JsonConvert.DeserializeObject<List<FeedbackUser>>(str);
+                            if (list != null)
+                            {
+                                this._parsedFeedback = list;
+                                break;
+                            }
+                        }
+                        catch { }
+
+                        try
+                        {
+                            var single = JsonConvert.DeserializeObject<FeedbackUser>(str);
+                            if (single != null)
+                            {
+                                this._parsedFeedback = new List<FeedbackUser> { single };
+                                break;
+                            }
+                        }
+                        catch { }
+
                         break;
                     case NotificationType.mention:
                     case NotificationType.wall:
@@ -191,6 +225,11 @@ namespace LunaVK.Core.DataObjects
             /// Была опубликована новость, предложенная пользователем в публичной странице. 
             /// </summary>
             wall_publish,
+
+            /// <summary>
+            /// Уведомление о дне рождения
+            /// </summary>
+            birthday,
 
             /// <summary>
             /// Была опубликована новость, предложенная пользователем в публичной странице

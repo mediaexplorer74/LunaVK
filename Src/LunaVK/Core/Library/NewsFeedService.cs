@@ -1,4 +1,4 @@
-п»їusing LunaVK.Core.DataObjects;
+using LunaVK.Core.DataObjects;
 using LunaVK.Core.Network;
 using LunaVK.Core.Utils;
 using System;
@@ -23,7 +23,7 @@ namespace LunaVK.Core.Library
         }
 
         /// <summary>
-        /// РџРѕР·РІРѕР»СЏРµС‚ СЃРєСЂС‹С‚СЊ РѕР±СЉРµРєС‚ РёР· Р»РµРЅС‚С‹ РЅРѕРІРѕСЃС‚РµР№. 
+        /// Позволяет скрыть объект из ленты новостей. 
         /// </summary>
         /// <param name="ignore"></param>
         /// <param name="type"></param>
@@ -37,7 +37,7 @@ namespace LunaVK.Core.Library
             parameters["owner_id"] = ownerId.ToString();
             parameters["item_id"] = itemId.ToString();
 
-            VKRequestsDispatcher.DispatchRequestToVK<int>(ignore ? "newsfeed.ignoreItem" : "newsfeed.unignoreItem", parameters, (result)=> {
+            VKRequestsDispatcher.DispatchRequestToVK<int>(ignore ? "newsfeed.ignoreItem" : "newsfeed.unignoreItem", parameters, (result) => {
                 if (result.error.error_code != Enums.VKErrors.None)
                     callback(false);
                 else
@@ -46,7 +46,7 @@ namespace LunaVK.Core.Library
         }
 
         /// <summary>
-        /// Р—Р°РїСЂРµС‰Р°РµС‚/СЂР°Р·СЂРµС€Р°РµС‚ РїРѕРєР°Р·С‹РІР°С‚СЊ РЅРѕРІРѕСЃС‚Рё РѕС‚ Р·Р°РґР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ Рё РіСЂСѓРїРї РІ Р»РµРЅС‚Рµ РЅРѕРІРѕСЃС‚РµР№ С‚РµРєСѓС‰РµРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ.
+        /// Запрещает/разрешает показывать новости от заданных пользователей и групп в ленте новостей текущего пользователя.
         /// </summary>
         /// <param name="addBan"></param>
         /// <param name="uids"></param>
@@ -60,7 +60,7 @@ namespace LunaVK.Core.Library
             if (gids != null && gids.Count > 0)
                 parameters["group_ids"] = gids.GetCommaSeparated();
 
-            VKRequestsDispatcher.DispatchRequestToVK<int>(addBan ? "newsfeed.addBan" : "newsfeed.deleteBan", parameters, (result)=> {
+            VKRequestsDispatcher.DispatchRequestToVK<int>(addBan ? "newsfeed.addBan" : "newsfeed.deleteBan", parameters, (result) => {
                 if (result.error.error_code != Enums.VKErrors.None)
                     callback(false);
                 else
@@ -190,17 +190,7 @@ namespace LunaVK.Core.Library
                         // Typed shapes
                         if (owner == null)
                         {
-                            // support counted items wrapper (VKCountedItemsObject<FeedbackUser>) as well as plain List<FeedbackUser>
-                            if (item.ParsedFeedback is VKCountedItemsObject<FeedbackUser> countedUsers && countedUsers.items != null && countedUsers.items.Count > 0)
-                            {
-                                int actorId = countedUsers.items[0].from_id != 0 ? countedUsers.items[0].from_id : countedUsers.items[0].owner_id;
-                                parsedActorId = actorId;
-                                if (actorId > 0)
-                                    owner = profiles?.Find(u => u.id == actorId);
-                                else
-                                    owner = groups?.Find(g => g.id == -actorId);
-                            }
-                            else if (item.ParsedFeedback is List<FeedbackUser> list && list.Count > 0)
+                            if (item.ParsedFeedback is List<FeedbackUser> list && list.Count > 0)
                             {
                                 int actorId = list[0].from_id != 0 ? list[0].from_id : list[0].owner_id;
                                 parsedActorId = actorId;
@@ -225,15 +215,6 @@ namespace LunaVK.Core.Library
                                 else
                                     owner = groups?.Find(g => g.id == -post.from_id);
                             }
-                            else if (item.ParsedFeedback is VKCountedItemsObject<FeedbackCopyInfo> countedCopy && countedCopy.items != null && countedCopy.items.Count > 0)
-                            {
-                                long rawId = countedCopy.items[0].from_id != 0 ? countedCopy.items[0].from_id : countedCopy.items[0].owner_id;
-                                parsedActorId = rawId;
-                                if (rawId > 0)
-                                    owner = profiles?.Find(u => u.id == (int)rawId);
-                                else
-                                    owner = groups?.Find(g => g.id == (int)(-rawId));
-                            }
                             else if (item.ParsedFeedback is List<FeedbackCopyInfo> info && info.Count > 0)
                             {
                                 long rawId = info[0].from_id != 0 ? info[0].from_id : info[0].owner_id;
@@ -248,63 +229,6 @@ namespace LunaVK.Core.Library
                     catch { }
 
                     item.Owner = owner;
-
-                    // Heuristic: some notifications are mis-typed as 'follow' while they actually announce posts.
-                    try
-                    {
-                        if ((item.type == VKNotification.NotificationType.follow || item.type == VKNotification.NotificationType.friend_accepted) && item.RawItem != null)
-                        {
-                            bool looksLikePost = false;
-
-                            // If ParsedParent/ParsedFeedback already deserialized as a wall post, treat as post
-                            if (item.ParsedParent is VKWallPost || item.ParsedFeedback is VKWallPost)
-                                looksLikePost = true;
-
-                            if (!looksLikePost)
-                            {
-                                var mainType = item.RawItem.Value<string>("main_item_type");
-                                var addType = item.RawItem.Value<string>("additional_item_type");
-                                var header = item.RawItem.Value<string>("header");
-                                var actionUrl = item.RawItem.Value<string>("action_url");
-                                var addActionUrl = item.RawItem.Value<string>("additional_action_url");
-
-                                if (!string.IsNullOrEmpty(mainType) && string.Equals(mainType, "post", StringComparison.OrdinalIgnoreCase))
-                                    looksLikePost = true;
-                                if (!looksLikePost && !string.IsNullOrEmpty(addType) && string.Equals(addType, "post", StringComparison.OrdinalIgnoreCase))
-                                    looksLikePost = true;
-
-                                // If there's an action URL that points to a wall post, treat as post
-                                if (!looksLikePost)
-                                {
-                                    try
-                                    {
-                                        string au = actionUrl ?? addActionUrl ?? string.Empty;
-                                        if (!string.IsNullOrEmpty(au))
-                                        {
-                                            var lowau = au.ToLowerInvariant();
-                                            if (lowau.Contains("/wall") || lowau.Contains("vk.com/wall") || lowau.Contains("/wall-") || lowau.Contains("/wall"))
-                                                looksLikePost = true;
-                                        }
-                                    }
-                                    catch { }
-                                }
-
-                                if (!looksLikePost && !string.IsNullOrEmpty(header))
-                                {
-                                    var low = header.ToLowerInvariant();
-                                    if (low.Contains("posted") || low.Contains("new post") || low.Contains("new posts") || low.Contains("РѕРїСѓР±Р»РёРєРѕРІР°Р»") || low.Contains("РѕРїСѓР±Р»РёРєРѕРІР°Р»Р°") || low.Contains("РѕРїСѓР±Р»РёРєРѕРІР°Р»Рѕ") || low.Contains("РѕРїСѓР±Р»РёРєРѕРІР°Р»Рё") || low.Contains("wall"))
-                                        looksLikePost = true;
-                                }
-                            }
-
-                            if (looksLikePost)
-                            {
-                                // convert to publication-type notification so UI shows "published a post"
-                                item.type = VKNotification.NotificationType.wall_publish;
-                            }
-                        }
-                    }
-                    catch { }
 
                     // If missing owner but have parsedActorId, fetch user/group (but prefer RawItem hints)
                     if (item.Owner == null && parsedActorId.HasValue)
@@ -643,8 +567,8 @@ namespace LunaVK.Core.Library
 
             }, (jsonStr) =>
             {
-                try { Debug.WriteLine($"NewsFeedService: raw notifications.get json (truncated 2000) -> {(jsonStr==null?"": (jsonStr.Length>2000? jsonStr.Substring(0,2000)+"...": jsonStr))}"); } catch { }
-                try { Debug.WriteLine($"NewsFeedService: raw notifications.get response length={(jsonStr==null?0:jsonStr.Length)}"); } catch { }
+                try { Debug.WriteLine($"NewsFeedService: raw notifications.get json (truncated 2000) -> {(jsonStr == null ? "" : (jsonStr.Length > 2000 ? jsonStr.Substring(0, 2000) + "..." : jsonStr))}"); } catch { }
+                try { Debug.WriteLine($"NewsFeedService: raw notifications.get response length={(jsonStr == null ? 0 : jsonStr.Length)}"); } catch { }
 
                 // inject lightweight raw info for each item: main_item.object_id, main_item.type, additional_item.object_id, additional_item.type, header
                 try
@@ -675,7 +599,6 @@ namespace LunaVK.Core.Library
                                     var addId = add.Value<string>("object_id");
                                     if (!string.IsNullOrEmpty(addId)) info["additional_object_id"] = addId;
                                     try { var addType = add.Value<string>("type"); if (!string.IsNullOrEmpty(addType)) info["additional_item_type"] = addType; } catch { }
-                                    try { var addAction = add["action"] as JObject; if (addAction != null) { var aurl = addAction.Value<string>("url"); if (!string.IsNullOrEmpty(aurl)) info["additional_action_url"] = aurl; } } catch { }
                                 }
                             }
                             catch { }
@@ -685,9 +608,6 @@ namespace LunaVK.Core.Library
                                 if (!string.IsNullOrEmpty(header)) info["header"] = header;
                             }
                             catch { }
-
-                            // extract top-level action url if present
-                            try { var action = it["action"] as JObject; if (action != null) { var aurl = action.Value<string>("url"); if (!string.IsNullOrEmpty(aurl)) info["action_url"] = aurl; } } catch { }
 
                             if (info.HasValues) it["_raw_item"] = info;
                         }
@@ -716,12 +636,8 @@ namespace LunaVK.Core.Library
                     parsedActor = c1.from_id;
                 else if (item.ParsedFeedback is VKWallPost p1)
                     parsedActor = p1.from_id != 0 ? p1.from_id : p1.owner_id;
-                else if (item.ParsedFeedback is VKCountedItemsObject<FeedbackUser> cfu && cfu.items != null && cfu.items.Count > 0)
-                    parsedActor = cfu.items[0].from_id != 0 ? cfu.items[0].from_id : cfu.items[0].owner_id;
                 else if (item.ParsedFeedback is List<FeedbackUser> fu && fu.Count > 0)
                     parsedActor = fu[0].from_id != 0 ? fu[0].from_id : fu[0].owner_id;
-                else if (item.ParsedFeedback is VKCountedItemsObject<FeedbackCopyInfo> cfc && cfc.items != null && cfc.items.Count > 0)
-                    parsedActor = cfc.items[0].from_id != 0 ? cfc.items[0].from_id : cfc.items[0].owner_id;
                 else if (item.ParsedFeedback is List<FeedbackCopyInfo> fc && fc.Count > 0)
                     parsedActor = fc[0].from_id != 0 ? fc[0].from_id : fc[0].owner_id;
                 else if (item.ParsedFeedback is string rawStr && !string.IsNullOrWhiteSpace(rawStr))

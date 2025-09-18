@@ -1281,6 +1281,9 @@
   <data name="HasABirthdayToday" xml:space="preserve">
     <value>has a birthday today</value>
   </data>
+  <data name="Notification_Birthday" xml:space="preserve">
+    <value>has a birthday today</value>
+  </data>
   <data name="Tomorrow" xml:space="preserve">
     <value>tomorrow</value>
   </data>

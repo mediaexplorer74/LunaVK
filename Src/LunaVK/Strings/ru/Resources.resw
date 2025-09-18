@@ -420,11 +420,11 @@
   <data name="Notification_FollowMale" xml:space="preserve">
     <value>подписался на Ваши обновления</value>
   </data>
+  <data name="Notification_Birthday" xml:space="preserve">
+    <value>сегодня день рождения</value>
+  </data>
   <data name="Notification_FollowFemale" xml:space="preserve">
     <value>подписалась на Ваши обновления</value>
-  </data>
-  <data name="Notification_FollowPlural" xml:space="preserve">
-    <value>подписались на Ваши обновления</value>
   </data>
   <data name="Notification_FriendAcceptedMale" xml:space="preserve">
     <value>принял Вашу заявку в друзья</value>
@@ -2383,7 +2383,7 @@
     <value>На стене можно писать только от имени сообщества, комментарии отключены</value>
   </data>
   <data name="GroupType_Private_Description.Text" xml:space="preserve">
-    <value>В группу можно вступить только по приглашению руководителей</value>
+    <value>В группу можно вступить только по邀请ению руководителей</value>
   </data>
   <data name="GroupType_Private.Text" xml:space="preserve">
     <value>Частная</value>
@@ -2563,7 +2563,7 @@
     <value>{0} клипа</value>
   </data>
   <data name="FiveMoreClipsFrm" xml:space="preserve">
-    <value>{0} клипов</value>
+    <value>{0} кликов</value>
   </data>
   <data name="ShowAll" xml:space="preserve">
     <value>Показать все</value>

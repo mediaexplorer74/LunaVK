@@ -129,6 +129,7 @@
     <Compile Include="Common\ParametersRepository.cs" />
     <Compile Include="Common\ThemeManager.cs" />
     <None Include="Framework\DragControlsHelper.cs" />
+    <Compile Include="Core\Library\NewsFeedService.cs" />
     <Compile Include="Library\Events\AudioPlayerStateChanged.cs" />
     <Compile Include="Library\Events\AudioTrackDownloadProgress.cs" />
     <Compile Include="Library\Events\DownloadProgressedEvent.cs" />

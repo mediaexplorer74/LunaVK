@@ -16,7 +16,8 @@ namespace LunaVK.Core.Library
         /// <summary>
         /// 30
         /// </summary>
-        public short LoadCount = 30;
+        // Reduced initial load to 15 to decrease memory / UI pressure on low-end devices
+        public short LoadCount = 15;
 
         /// <summary>
         /// 40

@@ -29,12 +29,6 @@ namespace LunaVK.UC
         public ItemNotificationUC()
         {
             this.InitializeComponent();
-            //
-            //if(Windows.ApplicationModel.DesignMode.DesignModeEnabled==true)
-            //{
-            //    img_from.ImageSource = new BitmapImage(new Uri("https://pp.userapi.com/c845520/v845520850/d6911/aTBAhpzF3eo.jpg?ava=1"));
-            //}
-            //
         }
 
         private VKBaseDataForGroupOrUser user = null;
@@ -62,18 +56,13 @@ namespace LunaVK.UC
 
         private void ProcessData()
         {
-            Debug.WriteLine($"ItemNotificationUC.ProcessData start. Data is null? {this.Data==null}");
-
             this.ContentGrid.Children.Clear();
             this.ContentGrid.ColumnDefinitions.Clear();
 
             if (this.Data == null || this.Notification == null)
             {
-                Debug.WriteLine("ItemNotificationUC.ProcessData: no notification data, returning.");
                 return;
             }
-
-            Debug.WriteLine($"ItemNotificationUC.ProcessData: Notification type={this.Notification.type} date={this.Notification.date} parsedParent={this.Notification.ParsedParent?.GetType().Name} parsedFeedback={this.Notification.ParsedFeedback?.GetType().Name}");
 
             this.icon.Glyph = this.SetIcon();
 
@@ -92,8 +81,7 @@ namespace LunaVK.UC
 
             ScrollableTextBlock tb = new ScrollableTextBlock();
             string text = "";
-            
-            // Ensure user is not null before formatting text
+
             if (user != null)
             {
                 if(this.Notification.type == VKNotification.NotificationType.reply_comment)
@@ -128,10 +116,9 @@ namespace LunaVK.UC
             }
             else
             {
-                // Fallback text if user is null
                 text = string.Format("{0} {1}", this.GetLocalizableText(), highlightedText);
             }
-            
+
             try
             {
                 tb.Text = UIStringFormatterHelper.SubstituteMentionsWithNames(text);
@@ -143,61 +130,43 @@ namespace LunaVK.UC
 
             ContentGrid.Children.Add(tb);
 
-            string thumb = this.GetThumb();
-            Debug.WriteLine($"ItemNotificationUC.ProcessData: GetThumb -> '{thumb}'");
-            if(!string.IsNullOrEmpty(thumb))
+            // Show previews (one or more). Prefer parsed attachments, then RawItem.additional_item or main_item.
+            var previewUrls = this.GetPreviewUrls();
+            if (previewUrls != null && previewUrls.Count > 0)
             {
-                // normalize protocol-relative URL
-                if (thumb.StartsWith("//"))
-                    thumb = "https:" + thumb;
+                ContentGrid.ColumnDefinitions.Add(new ColumnDefinition());
+                ContentGrid.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(84) });
 
-                if (Uri.TryCreate(thumb, UriKind.Absolute, out Uri thumbUri))
+                var panel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(8, 0, 0, 0) };
+                int idx = 0;
+                foreach (var u in previewUrls)
                 {
-                    ContentGrid.ColumnDefinitions.Add(new ColumnDefinition());
-                    ContentGrid.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(64) });
-
-                    Image img = new Image();
+                    string url = u;
+                    if (url.StartsWith("//"))
+                        url = "https:" + url;
+                    var btn = new Button { Padding = new Thickness(0), Margin = new Thickness(2), Background = null, BorderThickness = new Thickness(0) };
+                    var img = new Image { Width = 64, Height = 64, Stretch = Windows.UI.Xaml.Media.Stretch.UniformToFill };
                     try
                     {
                         var bitmap = new BitmapImage();
-                        bitmap.UriSource = thumbUri;
-                        // If loading fails, set fallback image
-                        bitmap.ImageFailed += (s, e) =>
-                        {
-                            Debug.WriteLine($"ItemNotificationUC: thumbnail ImageFailed for '{thumbUri}'");
-                            try { img.Source = new BitmapImage(new Uri("ms-appx:///Assets/Icons/appbar.user.png")); } catch { }
-                        };
-
+                        bitmap.UriSource = new Uri(url);
+                        bitmap.ImageFailed += (s, e) => { Debug.WriteLine($"ItemNotificationUC: preview ImageFailed for '{url}' Error: {e?.ErrorMessage}"); };
                         img.Source = bitmap;
-                        Debug.WriteLine($"ItemNotificationUC: thumbnail BitmapImage assigned for '{thumbUri}'");
                     }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"ItemNotificationUC: exception creating thumbnail BitmapImage: {ex}");
-                        // ignore invalid image - set fallback
-                        try { img.Source = new BitmapImage(new Uri("ms-appx:///Assets/Icons/appbar.user.png")); } catch { img.Source = null; }
-                    }
+                    catch { }
 
-                   // img.Margin = new Thickness(0,0,15,0);
-                    Grid.SetColumn(img, 1);
+                    btn.Content = img;
+                    int captureIdx = idx;
+                    btn.Tapped += (s, e) => { this.Preview_Tapped(captureIdx); };
+                    panel.Children.Add(btn);
+                    idx++;
+                }
 
-                    ContentGrid.Children.Add(img);
-                }
-                else
-                {
-                    Debug.WriteLine($"ItemNotificationUC: GetThumb returned non-absolute URL: '{thumb}'");
-                }
-            }
-            else
-            {
-                Debug.WriteLine("ItemNotificationUC: no thumb available for this notification");
+                Grid.SetColumn(panel, 1);
+                ContentGrid.Children.Add(panel);
             }
         }
 
-        /// <summary>
-        /// Возвращаем ссылку на изображение
-        /// </summary>
-        /// <returns></returns>
         private string GetThumb()
         {
             if (this.Notification == null)
@@ -246,6 +215,77 @@ namespace LunaVK.UC
                     }
                 }
 
+            }
+
+            // Try to extract preview from raw notification item (additional_item or main_item)
+            try
+            {
+                var raw = this.Notification.RawItem;
+                if (raw != null)
+                {
+                    // Try main/additional items for any image
+                    JToken add = raw.SelectToken("additional_item") ?? raw.SelectToken("additional_item.0");
+                    JToken mi = raw.SelectToken("main_item") ?? raw.SelectToken("main_item.0");
+
+                    string url = TryExtractImageFromItem(add);
+                    if (!string.IsNullOrEmpty(url))
+                        return url;
+
+                    url = TryExtractImageFromItem(mi);
+                    if (!string.IsNullOrEmpty(url))
+                        return url;
+
+                    // fallback: check arrays of image_object
+                    var ai = raw.SelectToken("additional_item.image_object") ?? raw.SelectToken("main_item.image_object");
+                    if (ai != null && ai.Type == JTokenType.Array && ai.HasValues)
+                    {
+                        var first = ai.First;
+                        string found = TryExtractImageFromItem(first);
+                        if (!string.IsNullOrEmpty(found))
+                            return found;
+                    }
+                }
+            }
+            catch { }
+
+            return string.Empty;
+        }
+
+        private string TryExtractImageFromItem(JToken item)
+        {
+            if (item == null)
+                return string.Empty;
+
+            // common fields where image url may be present
+            string[] candidates = new[] { "photo_130", "photo_100", "photo_200", "photo", "thumb_photo", "url", "src", "image_url", "image" };
+            foreach (var name in candidates)
+            {
+                var t = item.SelectToken(name);
+                if (t != null && t.Type == JTokenType.String)
+                {
+                    string s = t.ToString();
+                    if (!string.IsNullOrEmpty(s))
+                        return s.StartsWith("//") ? "https:" + s : s;
+                }
+            }
+
+            // sometimes image_object is an array of objects containing 'url'
+            var imgObj = item.SelectToken("image_object");
+            if (imgObj != null && imgObj.Type == JTokenType.Array && imgObj.HasValues)
+            {
+                foreach (var entry in imgObj)
+                {
+                    foreach (var name in candidates)
+                    {
+                        var t = entry.SelectToken(name);
+                        if (t != null && t.Type == JTokenType.String)
+                        {
+                            string s = t.ToString();
+                            if (!string.IsNullOrEmpty(s))
+                                return s.StartsWith("//") ? "https:" + s : s;
+                        }
+                    }
+                }
             }
 
             return string.Empty;
@@ -300,29 +340,27 @@ namespace LunaVK.UC
             return false;
         }
 
+        private bool _isBirthdayDetected = false;
+
         /// <summary>
         /// Задаём аватарку и запоминаем пользователя
         /// </summary>
         private void GenerateLayout()
         {
-            // Reset user to null at the beginning of each layout generation
             user = null;
-            Debug.WriteLine("GenerateLayout: start");
-            
+            _isBirthdayDetected = false;
+
             string str = string.Empty;
 
             if (this.Notification == null)
             {
-                Debug.WriteLine("GenerateLayout: Notification is null, returning.");
                 return;
             }
 
-            // If ParsedFeedback is a raw JSON string (some notifications are raw), try to parse a photo directly
             try
             {
                 if (this.Notification.ParsedFeedback is string rawFeedbackStr && !string.IsNullOrWhiteSpace(rawFeedbackStr))
                 {
-                    Debug.WriteLine("GenerateLayout: ParsedFeedback is raw string, attempting JSON parse to find photo fields");
                     try
                     {
                         var token = JToken.Parse(rawFeedbackStr);
@@ -336,11 +374,24 @@ namespace LunaVK.UC
 
                         if (first != null)
                         {
+                            try
+                            {
+                                string rawText = first.ToString();
+                                if (!string.IsNullOrEmpty(rawText))
+                                {
+                                    var low = rawText.ToLowerInvariant();
+                                    if (low.Contains("birthday") || (low.Contains("день") && low.Contains("рожд")))
+                                    {
+                                        _isBirthdayDetected = true;
+                                    }
+                                }
+                            }
+                            catch { }
+
                             JToken photoToken = first.SelectToken("photo_100") ?? first.SelectToken("photo_200") ?? first.SelectToken("photo_50") ?? first.SelectToken("photo_130") ?? first.SelectToken("photo") ?? first.SelectToken("photo_604");
                             if (photoToken != null)
                             {
                                 string photoUrl = photoToken.ToString();
-                                Debug.WriteLine($"GenerateLayout: extracted photo from raw feedback = '{photoUrl}'");
                                 if (!string.IsNullOrEmpty(photoUrl) && photoUrl.StartsWith("//"))
                                     photoUrl = "https:" + photoUrl;
 
@@ -350,42 +401,40 @@ namespace LunaVK.UC
                                     {
                                         var extractedBmp = new BitmapImage();
                                         extractedBmp.UriSource = photoUri;
-                                        extractedBmp.ImageFailed += (s, e) => { Debug.WriteLine($"GenerateLayout: extracted-photo ImageFailed for '{photoUri}'"); };
+                                        extractedBmp.ImageFailed += (s, e) => { Debug.WriteLine($"GenerateLayout: extracted-photo ImageFailed for '{photoUri}' Error: {e?.ErrorMessage}"); };
                                         img_from.ImageSource = extractedBmp;
                                         avatarGlyph.Visibility = Visibility.Collapsed;
-                                        Debug.WriteLine("GenerateLayout: avatar set from raw ParsedFeedback photo and returning");
                                         return; // done
                                     }
-                                    catch (Exception ex)
-                                    {
-                                        Debug.WriteLine($"GenerateLayout: exception creating BitmapImage from extracted photo: {ex}");
-                                    }
+                                    catch { }
                                 }
                             }
 
-                            // If no photo found, try extract actor id from raw JSON so we can fetch user/group
                             long? actorIdFromRaw = first.Value<long?>("from_id") ?? first.Value<long?>("owner_id") ?? first.Value<long?>("user_id") ?? first.Value<long?>("id");
                             if (actorIdFromRaw.HasValue)
                             {
                                 long rawId = actorIdFromRaw.Value;
-                                Debug.WriteLine($"GenerateLayout: extracted actor id from raw ParsedFeedback: {rawId}");
                                 if (rawId > 0)
                                 {
                                     uint uid = (uint)rawId;
                                     var cached = UsersService.Instance.GetCachedUser(uid);
-                                    Debug.WriteLine($"GenerateLayout: cached user for uid={uid} is null? {cached==null}");
                                     if (cached != null)
                                     {
                                         user = cached;
                                     }
                                     else
                                     {
-                                        // fetch and update avatar when ready
-                                        Debug.WriteLine($"GenerateLayout: fetching user info for uid={uid} (from raw ParsedFeedback)");
                                         UsersService.Instance.GetUsers(new List<uint> { uid }, (res) =>
                                         {
-                                            Debug.WriteLine($"UsersService.GetUsers callback (rawParsed): result null? {res==null} count={(res!=null?res.Count:0)} for uid={uid}");
-                                            if (res != null && res.Count > 0)
+                                            if (res == null)
+                                            {
+                                                Debug.WriteLine($"GenerateLayout: GetUsers returned null for uid={uid}");
+                                            }
+                                            else if (res.Count == 0)
+                                            {
+                                                Debug.WriteLine($"GenerateLayout: GetUsers returned empty list for uid={uid}");
+                                            }
+                                            else
                                             {
                                                 var fetched = res[0];
                                                 Execute.ExecuteOnUIThread(() =>
@@ -401,18 +450,27 @@ namespace LunaVK.UC
                                 {
                                     uint gid = (uint)(-rawId);
                                     var cachedGroup = GroupsService.Instance.GetCachedGroup(gid);
-                                    Debug.WriteLine($"GenerateLayout: cached group for gid={gid} is null? {cachedGroup==null}");
                                     if (cachedGroup != null)
                                     {
                                         user = cachedGroup;
                                     }
                                     else
                                     {
-                                        Debug.WriteLine($"GenerateLayout: fetching group info for gid={gid} (from raw ParsedFeedback)");
                                         GroupsService.Instance.GetGroupInfo(gid, true, (grRes) =>
                                         {
-                                            Debug.WriteLine($"GroupsService.GetGroupInfo callback (rawParsed): res null? {grRes==null}");
-                                            if (grRes != null && grRes.error.error_code == VKErrors.None && grRes.response != null)
+                                            if (grRes == null)
+                                            {
+                                                Debug.WriteLine($"GenerateLayout: GetGroupInfo returned null for gid={gid}");
+                                            }
+                                            else if (grRes.error.error_code != VKErrors.None)
+                                            {
+                                                Debug.WriteLine($"GenerateLayout: GetGroupInfo error for gid={gid} code={(int)grRes.error.error_code}");
+                                            }
+                                            else if (grRes.response == null)
+                                            {
+                                                Debug.WriteLine($"GenerateLayout: GetGroupInfo response null for gid={gid}");
+                                            }
+                                            else
                                             {
                                                 Execute.ExecuteOnUIThread(() =>
                                                 {
@@ -437,17 +495,42 @@ namespace LunaVK.UC
                 Debug.WriteLine($"GenerateLayout: unexpected error while handling raw ParsedFeedback: {ex}");
             }
 
+            try
+            {
+                if (!_isBirthdayDetected && this.Notification?.RawItem != null)
+                {
+                    var header = this.Notification.RawItem.Value<string>("header");
+                    if (!string.IsNullOrEmpty(header))
+                    {
+                        var low = header.ToLowerInvariant();
+                        if (low.Contains("birthday") || (low.Contains("день") && low.Contains("рожд")))
+                        {
+                            _isBirthdayDetected = true;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"GenerateLayout: error while checking RawItem.header: {ex}");
+            }
+
             long? actorIdNullable = null;
             bool actorIsGroup = false;
 
-            // Extract actor id from various ParsedFeedback shapes
             if (this.Notification.ParsedFeedback is VKCountedItemsObject<FeedbackUser> countedFeedback && countedFeedback.count > 0)
             {
                 var first = countedFeedback.items[0];
                 long actorId = first.from_id != 0 ? first.from_id : first.owner_id;
                 actorIdNullable = Math.Abs(actorId);
                 actorIsGroup = actorId < 0;
-                Debug.WriteLine($"GenerateLayout: countedFeedback actorId={actorId} abs={actorIdNullable} isGroup={actorIsGroup}");
+            }
+            else if (this.Notification.ParsedFeedback is List<FeedbackUser> feedbackUsers && feedbackUsers.Count > 0)
+            {
+                var first = feedbackUsers[0];
+                long actorId = first.from_id != 0 ? first.from_id : first.owner_id;
+                actorIdNullable = Math.Abs(actorId);
+                actorIsGroup = actorId < 0;
             }
             else if (this.Notification.ParsedFeedback is List<FeedbackCopyInfo> listCopy && listCopy.Count > 0)
             {
@@ -455,21 +538,17 @@ namespace LunaVK.UC
                 long actorId = first.from_id != 0 ? first.from_id : first.owner_id;
                 actorIdNullable = Math.Abs(actorId);
                 actorIsGroup = actorId < 0;
-                Debug.WriteLine($"GenerateLayout: listCopy actorId={actorId} abs={actorIdNullable} isGroup={actorIsGroup}");
             }
             else if (this.Notification.ParsedFeedback is VKComment comment)
             {
                 actorIdNullable = (long?)Math.Abs((long)comment.from_id);
                 actorIsGroup = comment.from_id < 0;
-                Debug.WriteLine($"GenerateLayout: VKComment from_id={comment.from_id}");
             }
             else if (this.Notification.ParsedFeedback is VKWallPost post)
             {
-                // For publications prefer owner_id (the community/user whose page contains the post)
                 long actor = post.owner_id != 0 ? post.owner_id : post.from_id;
                 actorIdNullable = (long?)Math.Abs(actor);
                 actorIsGroup = actor < 0;
-                Debug.WriteLine($"GenerateLayout: VKWallPost owner_id={post.owner_id} from_id={post.from_id} chosenActor={actor} isGroup={actorIsGroup}");
             }
             else if (this.Notification.ParsedFeedback is VKCountedItemsObject<FeedbackCopyInfo> countedCopy && countedCopy.count > 0)
             {
@@ -477,7 +556,6 @@ namespace LunaVK.UC
                 long actorId = first.from_id != 0 ? first.from_id : first.owner_id;
                 actorIdNullable = Math.Abs(actorId);
                 actorIsGroup = actorId < 0;
-                Debug.WriteLine($"GenerateLayout: countedCopy actorId={actorId} abs={actorIdNullable} isGroup={actorIsGroup}");
             }
             else if (this.Notification.ParsedFeedback is List<FeedbackCopyInfo> listCopy2 && listCopy2.Count > 0)
             {
@@ -485,32 +563,31 @@ namespace LunaVK.UC
                 long actorId = first.from_id != 0 ? first.from_id : first.owner_id;
                 actorIdNullable = Math.Abs(actorId);
                 actorIsGroup = actorId < 0;
-                Debug.WriteLine($"GenerateLayout: listCopy2 actorId={actorId} abs={actorIdNullable} isGroup={actorIsGroup}");
             }
 
-            // Try retrieve from cache if we found actor id
             if (actorIdNullable.HasValue)
             {
                 uint uid = (uint)actorIdNullable.Value;
-                Debug.WriteLine($"GenerateLayout: resolved actor uid={uid} isGroup={actorIsGroup}");
                 if (!actorIsGroup)
                 {
                     user = UsersService.Instance.GetCachedUser(uid);
-                    Debug.WriteLine($"GenerateLayout: cached user for uid={uid} is null? {user==null}");
                     if (user == null)
                     {
-                        Debug.WriteLine($"GenerateLayout: fetching user info for uid={uid}");
-                        // fetch user async and update image when ready
                         UsersService.Instance.GetUsers(new List<uint> { uid }, (result) =>
                         {
-                            Debug.WriteLine($"UsersService.GetUsers callback: result null? {result==null} count={(result!=null?result.Count:0)} for uid={uid}");
-                            if (result != null && result.Count > 0)
+                            if (result == null)
+                            {
+                                Debug.WriteLine($"GenerateLayout: GetUsers returned null for uid={uid}");
+                            }
+                            else if (result.Count == 0)
+                            {
+                                Debug.WriteLine($"GenerateLayout: GetUsers returned empty list for uid={uid}");
+                            }
+                            else
                             {
                                 var fetched = result[0];
-                                // update UI
                                 Execute.ExecuteOnUIThread(() =>
                                 {
-                                    Debug.WriteLine($"UsersService.GetUsers: fetched id={fetched.Id} MinPhoto='{fetched.MinPhoto}'");
                                     user = fetched;
                                     UpdateAvatarFromUser(user);
                                 });
@@ -520,31 +597,35 @@ namespace LunaVK.UC
                 }
                 else
                 {
-                    Debug.WriteLine($"GenerateLayout: actor is group, trying to use Notification.Owner or fetch group info");
-                    // actor is group — try fallback to Notification.Owner or fetch group info if needed
                     if (this.Notification.Owner is VKGroup g && g.id == (int)actorIdNullable.Value)
                     {
                         user = this.Notification.Owner;
-                        Debug.WriteLine($"GenerateLayout: Notification.Owner is group id={g.id}");
                     }
                     else
                     {
                         uint gid = (uint)actorIdNullable.Value;
-                        // Try to use Notification.Owner first
                         if (this.Notification.Owner != null)
                             user = this.Notification.Owner;
                         else
                         {
-                            Debug.WriteLine($"GenerateLayout: fetching group info for gid={gid}");
-                            // fetch group info
                             GroupsService.Instance.GetGroupInfo(gid, true, (res) =>
                             {
-                                Debug.WriteLine($"GroupsService.GetGroupInfo callback: res null? {res==null}");
-                                if (res != null && res.error.error_code == VKErrors.None && res.response != null)
+                                if (res == null)
+                                {
+                                    Debug.WriteLine($"GenerateLayout: GetGroupInfo returned null for gid={gid}");
+                                }
+                                else if (res.error.error_code != VKErrors.None)
+                                {
+                                    Debug.WriteLine($"GenerateLayout: GetGroupInfo error for gid={gid} code={(int)res.error.error_code}");
+                                }
+                                else if (res.response == null)
+                                {
+                                    Debug.WriteLine($"GenerateLayout: GetGroupInfo response null for gid={gid}");
+                                }
+                                else
                                 {
                                     Execute.ExecuteOnUIThread(() =>
                                     {
-                                        Debug.WriteLine($"GroupsService.GetGroupInfo: fetched group id={res.response.id} MinPhoto='{res.response.MinPhoto}'");
                                         user = res.response;
                                         UpdateAvatarFromUser(user);
                                     });
@@ -555,40 +636,27 @@ namespace LunaVK.UC
                 }
             }
 
-            // If we still don't have user, fallback to Notification.Owner
             if (user == null)
             {
                 user = this.Notification.Owner;
-                Debug.WriteLine($"GenerateLayout: fallback to Notification.Owner is null? {user==null}");
             }
-            
+
             if (user != null)
             {
                 str = user.MinPhoto ?? string.Empty;
             }
 
-            Debug.WriteLine($"GenerateLayout: chosen MinPhoto='{str}'");
-
-            // Normalize protocol-relative URLs
             if (!string.IsNullOrEmpty(str) && str.StartsWith("//"))
                 str = "https:" + str;
-
-            Debug.WriteLine($"GenerateLayout: normalized MinPhoto='{str}'");
 
             BitmapImage bmp = null;
             if (!string.IsNullOrWhiteSpace(str) && Uri.TryCreate(str, UriKind.Absolute, out Uri uri))
             {
                 try {
-                    Debug.WriteLine($"GenerateLayout: creating BitmapImage for uri={uri}");
                     bmp = new BitmapImage();
                     bmp.UriSource = uri;
-                    // fallback to default avatar if loading fails
-                    bmp.ImageFailed += (s, e) =>
-                    {
-                        Debug.WriteLine($"GenerateLayout: BitmapImage ImageFailed for '{uri}'");
-                        try { img_from.ImageSource = new BitmapImage(new Uri("ms-appx:///Assets/Icons/appbar.user.png")); } catch { }
-                    };
-                } catch (Exception ex) { Debug.WriteLine($"GenerateLayout: exception creating BitmapImage: {ex}"); bmp = null; }
+                    bmp.ImageFailed += (s, e) => { Debug.WriteLine($"GenerateLayout: BitmapImage ImageFailed for '{uri}' Error: {e?.ErrorMessage}"); };
+                } catch { bmp = null; }
             }
 
             if (bmp == null)
@@ -596,37 +664,31 @@ namespace LunaVK.UC
                 try { bmp = new BitmapImage(new Uri("ms-appx:///Assets/Icons/appbar.user.png")); } catch { bmp = null; }
             }
 
-            try { img_from.ImageSource = bmp; avatarGlyph.Visibility = Visibility.Collapsed; Debug.WriteLine("GenerateLayout: avatar image assigned and glyph hidden"); } catch { Debug.WriteLine("GenerateLayout: failed to assign avatar image"); }
+            try { img_from.ImageSource = bmp; avatarGlyph.Visibility = Visibility.Collapsed; } catch { }
         }
 
         private void UpdateAvatarFromUser(VKBaseDataForGroupOrUser fetchedUser)
         {
-            Debug.WriteLine($"UpdateAvatarFromUser: called fetchedUser null? {fetchedUser==null}");
             if (fetchedUser == null)
                 return;
 
             string s = fetchedUser.MinPhoto ?? string.Empty;
-            Debug.WriteLine($"UpdateAvatarFromUser: MinPhoto before normalization='{s}'");
             if (!string.IsNullOrEmpty(s) && s.StartsWith("//"))
                 s = "https:" + s;
-
-            Debug.WriteLine($"UpdateAvatarFromUser: MinPhoto normalized='{s}'");
 
             if (!string.IsNullOrWhiteSpace(s) && Uri.TryCreate(s, UriKind.Absolute, out Uri uri))
             {
                 try
                 {
-                    Debug.WriteLine($"UpdateAvatarFromUser: creating BitmapImage for '{uri}'");
                     var bmp = new BitmapImage();
                     bmp.UriSource = uri;
                     bmp.ImageFailed += (ss, ee) =>
                     {
-                        Debug.WriteLine($"UpdateAvatarFromUser: Bitmap ImageFailed for '{uri}'");
+                        Debug.WriteLine($"UpdateAvatarFromUser: Bitmap ImageFailed for '{uri}' Error: {ee?.ErrorMessage}");
                         try { img_from.ImageSource = new BitmapImage(new Uri("ms-appx:///Assets/Icons/appbar.user.png")); avatarGlyph.Visibility = Visibility.Visible; } catch { }
                     };
 
                     img_from.ImageSource = bmp; avatarGlyph.Visibility = Visibility.Collapsed;
-                    Debug.WriteLine($"UpdateAvatarFromUser: image source assigned for '{uri}'");
                 }
                 catch (Exception ex)
                 {
@@ -635,14 +697,26 @@ namespace LunaVK.UC
             }
             else
             {
-                Debug.WriteLine("UpdateAvatarFromUser: no valid MinPhoto Uri, setting fallback and showing glyph");
                 try { img_from.ImageSource = new BitmapImage(new Uri("ms-appx:///Assets/Icons/appbar.user.png")); avatarGlyph.Visibility = Visibility.Visible; } catch { }
+            }
+        }
+
+        private void Avatar_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            try
+            {
+                if (user == null)
+                    return;
+                Library.NavigatorImpl.Instance.NavigateToProfilePage(user.Id);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Avatar_Tapped: navigation failed: {ex}");
             }
         }
 
         private VKUserSex GetGender()
         {
-            //VKBaseDataForGroupOrUser user = null;
             if (this.Notification?.ParsedFeedback is VKCountedItemsObject<FeedbackUser> list)
             {
                 if (list.count > 1)
@@ -658,20 +732,95 @@ namespace LunaVK.UC
                 return VKUserSex.Unknown;
             return ((VKUser)user).sex;
         }
-        
 
-            /// <summary>
-            /// Возвращаем текст действия на основе типа уведомления
-            /// </summary>
-            /// <returns></returns>
+        private bool IsRawItemIndicatesWallPublish()
+        {
+            try
+            {
+                var raw = this.Notification?.RawItem;
+                if (raw == null)
+                    return false;
+
+                // header like "[club187062591|На максималках] posted '3' new posts"
+                var header = raw.Value<string>("header");
+                if (!string.IsNullOrEmpty(header))
+                {
+                    var low = header.ToLowerInvariant();
+                    if (low.Contains("posted") || low.Contains("new post") || low.Contains("new posts") || low.Contains("опубликовал") || low.Contains("опубликовала") || low.Contains("опубликовало") )
+                        return true;
+                }
+
+                // action URLs may point to wall- links
+                var actionUrl = raw.Value<string>("action_url") ?? raw.Value<string>("additional_action_url");
+                if (!string.IsNullOrEmpty(actionUrl))
+                {
+                    if (System.Text.RegularExpressions.Regex.IsMatch(actionUrl, @"wall-?-?\d+_\d+"))
+                        return true;
+                }
+
+                // check main_item or additional_item action.url
+                var mainAction = raw.SelectToken("main_item.action.url")?.ToString();
+                if (!string.IsNullOrEmpty(mainAction) && System.Text.RegularExpressions.Regex.IsMatch(mainAction, @"wall-?-?\d+_\d+"))
+                    return true;
+
+                var addAction = raw.SelectToken("additional_item.action.url")?.ToString() ?? raw.SelectToken("additional_item[0].action.url")?.ToString();
+                if (!string.IsNullOrEmpty(addAction) && System.Text.RegularExpressions.Regex.IsMatch(addAction, @"wall-?-?\d+_\d+"))
+                    return true;
+
+                // also inspect any image_object action urls
+                var rawStr = raw.ToString();
+                if (System.Text.RegularExpressions.Regex.IsMatch(rawStr, @"wall-?(?<owner>-?\d+)_(?<post>\d+)"))
+                    return true;
+            }
+            catch { }
+            return false;
+        }
+
         private string GetLocalizableText()
         {
             VKUserSex gender = this.GetGender();
             string str = "";
-            // Handle wall publications explicitly
+
+            if (_isBirthdayDetected || (this.Notification != null && this.Notification.type == VKNotification.NotificationType.birthday))
+            {
+                return LocalizedStrings.GetString("Notification_Birthday");
+            }
+
+            try
+            {
+                if (this.Notification?.RawItem != null)
+                {
+                    var act = this.Notification.RawItem.Value<string>("action_url");
+                    if (string.IsNullOrEmpty(act))
+                        act = this.Notification.RawItem.Value<string>("additional_action_url");
+                    if (!string.IsNullOrEmpty(act))
+                    {
+                        var low = act.ToLowerInvariant();
+                        if (low.Contains("/wall") || low.Contains("vk.com/wall") || low.Contains("/wall-"))
+                        {
+                            if (gender == VKUserSex.Male)
+                                return "опубликовал новый пост";
+                            if (gender == VKUserSex.Female)
+                                return "опубликовала новый пост";
+                            return "опубликовало новый пост";
+                        }
+                    }
+                }
+            }
+            catch { }
+
             if (this.Notification != null && (this.Notification.type == VKNotification.NotificationType.wall || this.Notification.type == VKNotification.NotificationType.wall_publish))
             {
-                // For groups or unknown gender use neuter form
+                if (gender == VKUserSex.Male)
+                    return "опубликовал новый пост";
+                if (gender == VKUserSex.Female)
+                    return "опубликовала новый пост";
+                return "опубликовало новый пост";
+            }
+
+            // Some notifications (group publications) may be delivered with type 'follow' but raw item contains wall links -> treat as wall_publish
+            if (this.Notification != null && (this.Notification.type == VKNotification.NotificationType.follow && IsRawItemIndicatesWallPublish()))
+            {
                 if (gender == VKUserSex.Male)
                     return "опубликовал новый пост";
                 if (gender == VKUserSex.Female)
@@ -681,6 +830,9 @@ namespace LunaVK.UC
 
             switch (this.Notification.type)
             {
+                case VKNotification.NotificationType.birthday:
+                    str = "Notification_Birthday";
+                    break;
                 case  VKNotification.NotificationType.follow:
                     switch (gender)
                     {
@@ -695,192 +847,192 @@ namespace LunaVK.UC
                             break;
                     }
                     break;
-                case  VKNotification.NotificationType.friend_accepted:
-                    switch (gender)
-                    {
-                        case VKUserSex.Male:
-                            str = "Notification_FriendAcceptedMale";
-                            break;
-                        case VKUserSex.Female:
-                            str = "Notification_FriendAcceptedFemale";
-                            break;
-                        case VKUserSex.Unknown:
-                            str = "Notification_FriendAcceptedPlural";
-                            break;
-                    }
-                    break;
-                case  VKNotification.NotificationType.mention_comments:
-                    if (gender != VKUserSex.Male)
-                    {
-                        if (gender == VKUserSex.Female)
-                        {
-                            str = "Notification_MentionCommentsFemale";
-                            break;
-                        }
-                        break;
-                    }
-                    str = "Notification_MentionCommentsMale";
-                    break;
-                case  VKNotification.NotificationType.comment_post:
-                    str = "Notification_CommentPost";
-                    break;
-                case  VKNotification.NotificationType.comment_photo:
-                    if (this.Notification.ParsedFeedback is VKComment comment)
-                    {
-                        if (comment.reply_to_user == Settings.UserId)
-                        {
-                            str = "Notification_ReplyCommentOrTopic";
-                            break;
-                        }
-                    }
+                 case  VKNotification.NotificationType.friend_accepted:
+                     switch (gender)
+                     {
+                         case VKUserSex.Male:
+                             str = "Notification_FriendAcceptedMale";
+                             break;
+                         case VKUserSex.Female:
+                             str = "Notification_FriendAcceptedFemale";
+                             break;
+                         case VKUserSex.Unknown:
+                             str = "Notification_FriendAcceptedPlural";
+                             break;
+                     }
+                     break;
+                 case  VKNotification.NotificationType.mention_comments:
+                     if (gender != VKUserSex.Male)
+                     {
+                         if (gender == VKUserSex.Female)
+                         {
+                             str = "Notification_MentionCommentsFemale";
+                             break;
+                         }
+                         break;
+                     }
+                     str = "Notification_MentionCommentsMale";
+                     break;
+                 case  VKNotification.NotificationType.comment_post:
+                     str = "Notification_CommentPost";
+                     break;
+                 case  VKNotification.NotificationType.comment_photo:
+                     if (this.Notification.ParsedFeedback is VKComment comment)
+                     {
+                         if (comment.reply_to_user == Settings.UserId)
+                         {
+                             str = "Notification_ReplyCommentOrTopic";
+                             break;
+                         }
+                     }
 
-                    if (gender != VKUserSex.Male)
-                    {
-                        
-                        if (gender == VKUserSex.Female)
-                        {
-                            str = "Notification_CommentPhotoFemale";
-                            break;
-                        }
-                        break;
-                    }
-                    str = "Notification_CommentPhotoMale";
-                    break;
-                case  VKNotification.NotificationType.comment_video:
-                    if (gender != VKUserSex.Male)
-                    {
-                        if (gender == VKUserSex.Female)
-                        {
-                            str = "Notification_CommentVideoFemale";
-                            break;
-                        }
-                        break;
-                    }
-                    str = "Notification_CommentVideoMale";
-                    break;
-                case  VKNotification.NotificationType.reply_comment:
-                case  VKNotification.NotificationType.reply_topic:
-                case  VKNotification.NotificationType.reply_comment_photo:
-                case  VKNotification.NotificationType.reply_comment_video:
-                case  VKNotification.NotificationType.reply_comment_market:
-                    str = "Notification_ReplyCommentOrTopic";
-                    break;
-                case  VKNotification.NotificationType.like_post:
-                    switch (gender)
-                    {
-                        case VKUserSex.Male:
-                            str = "Notification_LikePostMale";
-                            break;
-                        case VKUserSex.Female:
-                            str = "Notification_LikePostFemale";
-                            break;
-                        case VKUserSex.Unknown:
-                            str = "Notification_LikePostPlural";
-                            break;
-                    }
-                    break;
-                case  VKNotification.NotificationType.like_comment:
-                case  VKNotification.NotificationType.like_comment_photo:
-                case  VKNotification.NotificationType.like_comment_video:
-                case  VKNotification.NotificationType.like_comment_topic:
-                    switch (gender)
-                    {
-                        case VKUserSex.Male:
-                            str = "Notification_LikeCommentMale";
-                            break;
-                        case VKUserSex.Female:
-                            str = "Notification_LikeCommentFemale";
-                            break;
-                        case VKUserSex.Unknown:
-                            str = "Notification_LikeCommentPlural";
-                            break;
-                    }
-                    break;
-                case  VKNotification.NotificationType.like_photo:
-                    switch (gender)
-                    {
-                        case VKUserSex.Male:
-                            str = "Notification_LikePhotoMale";
-                            break;
-                        case VKUserSex.Female:
-                            str = "Notification_LikePhotoFemale";
-                            break;
-                        case VKUserSex.Unknown:
-                            str = "Notification_LikePhotoPlural";
-                            break;
-                    }
-                    break;
-                case VKNotification.NotificationType.like_video:
-                    switch (gender)
-                    {
-                        case VKUserSex.Male:
-                            str = "Notification_LikeVideoMale";
-                            break;
-                        case VKUserSex.Female:
-                            str = "Notification_LikeVideoFemale";
-                            break;
-                        case VKUserSex.Unknown:
-                            str = "Notification_LikeVideoPlural";
-                            break;
-                    }
-                    break;//
-                case VKNotification.NotificationType.copy_post:
-                    switch (gender)
-                    {
-                        case VKUserSex.Male:
-                            str = "Notification_CopyPostMale";
-                            break;
-                        case VKUserSex.Female:
-                            str = "Notification_CopyPostFemale";
-                            break;
-                        case VKUserSex.Unknown:
-                            str = "Notification_CopyPostPlural";
-                            break;
-                    }
-                    break;
-                case  VKNotification.NotificationType.copy_photo:
-                    switch (gender)
-                    {
-                        case VKUserSex.Male:
-                            str = "Notification_CopyPhotoMale";
-                            break;
-                        case VKUserSex.Female:
-                            str = "Notification_CopyPhotoFemale";
-                            break;
-                        case VKUserSex.Unknown:
-                            str = "Notification_CopyPhotoPlural";
-                            break;
-                    }
-                    break;
-                case  VKNotification.NotificationType.copy_video:
-                    switch (gender)
-                    {
-                        case VKUserSex.Male:
-                            str = "Notification_CopyVideoMale";
-                            break;
-                        case VKUserSex.Female:
-                            str = "Notification_CopyVideoFemale";
-                            break;
-                        case VKUserSex.Unknown:
-                            str = "Notification_CopyVideoPlural";
-                            break;
-                    }
-                    break;
-                case  VKNotification.NotificationType.mention_comment_photo:
-                    str = "Notification_MentionInPhotoComment";
-                    break;
-                case  VKNotification.NotificationType.mention_comment_video:
-                    str = "Notification_MentionInVideoComment";
-                    break;
+                     if (gender != VKUserSex.Male)
+                     {
+                         
+                         if (gender == VKUserSex.Female)
+                         {
+                             str = "Notification_CommentPhotoFemale";
+                             break;
+                         }
+                         break;
+                     }
+                     str = "Notification_CommentPhotoMale";
+                     break;
+                 case  VKNotification.NotificationType.comment_video:
+                     if (gender != VKUserSex.Male)
+                     {
+                         if (gender == VKUserSex.Female)
+                         {
+                             str = "Notification_CommentVideoFemale";
+                             break;
+                         }
+                         break;
+                     }
+                     str = "Notification_CommentVideoMale";
+                     break;
+                 case  VKNotification.NotificationType.reply_comment:
+                 case  VKNotification.NotificationType.reply_topic:
+                 case  VKNotification.NotificationType.reply_comment_photo:
+                 case  VKNotification.NotificationType.reply_comment_video:
+                 case  VKNotification.NotificationType.reply_comment_market:
+                     str = "Notification_ReplyCommentOrTopic";
+                     break;
+                 case  VKNotification.NotificationType.like_post:
+                     switch (gender)
+                     {
+                         case VKUserSex.Male:
+                             str = "Notification_LikePostMale";
+                             break;
+                         case VKUserSex.Female:
+                             str = "Notification_LikePostFemale";
+                             break;
+                         case VKUserSex.Unknown:
+                             str = "Notification_LikePostPlural";
+                             break;
+                     }
+                     break;
+                 case  VKNotification.NotificationType.like_comment:
+                 case  VKNotification.NotificationType.like_comment_photo:
+                 case  VKNotification.NotificationType.like_comment_video:
+                 case  VKNotification.NotificationType.like_comment_topic:
+                     switch (gender)
+                     {
+                         case VKUserSex.Male:
+                             str = "Notification_LikeCommentMale";
+                             break;
+                         case VKUserSex.Female:
+                             str = "Notification_LikeCommentFemale";
+                             break;
+                         case VKUserSex.Unknown:
+                             str = "Notification_LikeCommentPlural";
+                             break;
+                     }
+                     break;
+                 case  VKNotification.NotificationType.like_photo:
+                     switch (gender)
+                     {
+                         case VKUserSex.Male:
+                             str = "Notification_LikePhotoMale";
+                             break;
+                         case VKUserSex.Female:
+                             str = "Notification_LikePhotoFemale";
+                             break;
+                         case VKUserSex.Unknown:
+                             str = "Notification_LikePhotoPlural";
+                             break;
+                     }
+                     break;
+                 case VKNotification.NotificationType.like_video:
+                     switch (gender)
+                     {
+                         case VKUserSex.Male:
+                             str = "Notification_LikeVideoMale";
+                             break;
+                         case VKUserSex.Female:
+                             str = "Notification_LikeVideoFemale";
+                             break;
+                         case VKUserSex.Unknown:
+                             str = "Notification_LikeVideoPlural";
+                             break;
+                     }
+                     break;//
+                 case VKNotification.NotificationType.copy_post:
+                     switch (gender)
+                     {
+                         case VKUserSex.Male:
+                             str = "Notification_CopyPostMale";
+                             break;
+                         case VKUserSex.Female:
+                             str = "Notification_CopyPostFemale";
+                             break;
+                         case VKUserSex.Unknown:
+                             str = "Notification_CopyPostPlural";
+                             break;
+                     }
+                     break;
+                 case  VKNotification.NotificationType.copy_photo:
+                     switch (gender)
+                     {
+                         case VKUserSex.Male:
+                             str = "Notification_CopyPhotoMale";
+                             break;
+                         case VKUserSex.Female:
+                             str = "Notification_CopyPhotoFemale";
+                             break;
+                         case VKUserSex.Unknown:
+                             str = "Notification_CopyPhotoPlural";
+                             break;
+                     }
+                     break;
+                 case  VKNotification.NotificationType.copy_video:
+                     switch (gender)
+                     {
+                         case VKUserSex.Male:
+                             str = "Notification_CopyVideoMale";
+                             break;
+                         case VKUserSex.Female:
+                             str = "Notification_CopyVideoFemale";
+                             break;
+                         case VKUserSex.Unknown:
+                             str = "Notification_CopyVideoPlural";
+                             break;
+                     }
+                     break;
+                 case  VKNotification.NotificationType.mention_comment_photo:
+                     str = "Notification_MentionInPhotoComment";
+                     break;
+                 case  VKNotification.NotificationType.mention_comment_video:
+                     str = "Notification_MentionInVideoComment";
+                     break;
 
 
 
-                case VKNotification.NotificationType.wall_publish:
-                    {
-                        // fallback handled above
-                        break;
-                    }
-            }
+                 case VKNotification.NotificationType.wall_publish:
+                     {
+                         // fallback handled above
+                         break;
+                     }
+             }
             if (string.IsNullOrEmpty(str))
                 return "";
 
@@ -900,10 +1052,10 @@ namespace LunaVK.UC
             }
             VKComment parsedParent2 = this.Notification.ParsedParent as VKComment;
             if (parsedParent2 != null)
-                return parsedParent2.text;//todo null
+                return parsedParent2.text;
             VKTopic parsedParent3 = this.Notification.ParsedParent as VKTopic;
             if (parsedParent3 != null)
-                return parsedParent3.title;//todo null
+                return parsedParent3.title;
             return "";
         }
 
@@ -923,91 +1075,284 @@ namespace LunaVK.UC
             return false;
         }
 
-        /// <summary>
-        /// Задаём иконку и цвет иконки
-        /// </summary>
-            /// <returns></returns>
         private string SetIcon()
         {
-            switch (this.Notification.type)
-            {
-                case VKNotification.NotificationType.comment_post:
-                case VKNotification.NotificationType.comment_photo:
-                case VKNotification.NotificationType.comment_video:
-                    {
-                        //https://vk.com/images/svg_icons/feedback/comment.svg
-                        
-                        return "\xED63";
-                    }
-                case VKNotification.NotificationType.friend_accepted:
-                    {
-                        this.FeedBackIconBorder.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 75, 179, 75));
-                        return "\xE73E";
-                    }
-                case VKNotification.NotificationType.like_comment:
-                case VKNotification.NotificationType.like_photo:
-                case VKNotification.NotificationType.like_comment_photo:
-                case VKNotification.NotificationType.like_comment_topic:
-                case VKNotification.NotificationType.like_comment_video:
-                case VKNotification.NotificationType.like_post:
-                case VKNotification.NotificationType.like_video:
-                    {
-                        this.FeedBackIconBorder.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 230, 70, 70));
-                        return "\xEB52";
-                    }
-                case VKNotification.NotificationType.reply_comment:
-                case VKNotification.NotificationType.reply_topic:
-                case VKNotification.NotificationType.reply_comment_photo:
-                case VKNotification.NotificationType.reply_comment_video:
-                case VKNotification.NotificationType.reply_comment_market:
-                    {
-                        this.FeedBackIconBorder.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(255,75,179,75));
-                        return "\xEA21";
-                    }
-                case VKNotification.NotificationType.follow:
-                    {
-                        this.FeedBackIconBorder.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(255,92,156,230));
-                        return "\xE9AF";
-                    }
-                case VKNotification.NotificationType.wall:
-                case VKNotification.NotificationType.wall_publish:
-                    {
-                        this.FeedBackIconBorder.Background = new SolidColorBrush(Windows.UI.Colors.Orange);
-                        return "\xE874";
-                    }
-                case VKNotification.NotificationType.mention_comments:
-                    {
-                        this.FeedBackIconBorder.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 92, 156, 230));
-                        return "\xE910";
-                    }
-                case VKNotification.NotificationType.copy_post:
-                    {
-                        this.FeedBackIconBorder.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 75, 179, 75));
-                        return "\xE97A";
-                    }
-            }
-            return "";
-        }
+            // if raw item indicates wall publish, override icon selection
+            var notifType = this.Notification?.type ?? VKNotification.NotificationType.follow;
+            if (notifType == VKNotification.NotificationType.follow && IsRawItemIndicatesWallPublish())
+                notifType = VKNotification.NotificationType.wall_publish;
 
-        private void Avatar_Tapped(object sender, TappedRoutedEventArgs e)
-        {
-            if (user == null)
-                return;
-            Library.NavigatorImpl.Instance.NavigateToProfilePage(user.Id);
-        }
+            switch (notifType)
+             {
+                 case VKNotification.NotificationType.birthday:
+                     {
+                         this.FeedBackIconBorder.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 200, 100, 200));
+                         return "\xE7F4";
+                     }
+                 case VKNotification.NotificationType.comment_post:
+                 case VKNotification.NotificationType.comment_photo:
+                 case VKNotification.NotificationType.comment_video:
+                     {
+                         return "\xED63";
+                     }
+                 case VKNotification.NotificationType.friend_accepted:
+                     {
+                         this.FeedBackIconBorder.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 75, 179, 75));
+                         return "\xE73E";
+                     }
+                 case VKNotification.NotificationType.like_comment:
+                 case VKNotification.NotificationType.like_photo:
+                 case VKNotification.NotificationType.like_comment_photo:
+                 case VKNotification.NotificationType.like_comment_video:
+                 case VKNotification.NotificationType.like_post:
+                 case VKNotification.NotificationType.like_video:
+                     {
+                         this.FeedBackIconBorder.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 230, 70, 70));
+                         return "\xEB52";
+                     }
+                 case VKNotification.NotificationType.reply_comment:
+                 case VKNotification.NotificationType.reply_topic:
+                 case VKNotification.NotificationType.reply_comment_photo:
+                 case VKNotification.NotificationType.reply_comment_video:
+                 case VKNotification.NotificationType.reply_comment_market:
+                     {
+                         this.FeedBackIconBorder.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(255,75,179,75));
+                         return "\xEA21";
+                     }
+                 case VKNotification.NotificationType.follow:
+                     {
+                         this.FeedBackIconBorder.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(255,92,156,230));
+                         return "\xE9AF";
+                     }
+                 case VKNotification.NotificationType.wall:
+                 case VKNotification.NotificationType.wall_publish:
+                     {
+                         this.FeedBackIconBorder.Background = new SolidColorBrush(Windows.UI.Colors.Orange);
+                         return "\xE874";
+                     }
+             }
+             return "";
+         }
 
         private bool _detailsExpanded = false;
 
         private void Content_Tapped(object sender, TappedRoutedEventArgs e)
         {
-            // Navigate to detailed page for this notification
             try
             {
-                if (this.Notification != null)
-                    Library.NavigatorImpl.Instance.NavigateToNotificationDetail(this.Notification);
-            }
-            catch { }
-        }
+                if (this.Notification == null)
+                    return;
+
+                // helper to call navigation safely on UI thread and log exceptions
+                Action<Action> safeNav = (a) =>
+                {
+                    try
+                    {
+                        Execute.ExecuteOnUIThread(() =>
+                        {
+                            try
+                            {
+                                a();
+                            }
+                            catch (Exception navEx)
+                            {
+                                try { Logger.Instance.Error("Content_Tapped: navigation call failed", navEx); } catch { Debug.WriteLine(navEx.ToString()); }
+                            }
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        try { Logger.Instance.Error("Content_Tapped: scheduling navigation failed", ex); } catch { Debug.WriteLine(ex.ToString()); }
+                    }
+                };
+
+                // First try to navigate using ParsedParent if it's a VKWallPost
+                try
+                {
+                    var parsed = this.Notification.ParsedParent;
+                    if (parsed is VKWallPost wp)
+                    {
+                        int ownerId = 0;
+                        try
+                        {
+                            // prefer explicit owner_id/from_id when available
+                            var ownerIdProp = wp.GetType().GetProperty("owner_id");
+                            if (ownerIdProp != null)
+                                ownerId = Convert.ToInt32(ownerIdProp.GetValue(wp));
+                        }
+                        catch { }
+
+                        try
+                        {
+                            if (ownerId == 0)
+                            {
+                                var fromIdProp = wp.GetType().GetProperty("from_id");
+                                if (fromIdProp != null)
+                                    ownerId = Convert.ToInt32(fromIdProp.GetValue(wp));
+                            }
+                        }
+                        catch { }
+
+                        try
+                        {
+                            if (ownerId == 0 && wp.Owner != null)
+                            {
+                                if (wp.Owner is VKGroup g)
+                                    ownerId = (int)-g.id;
+                                else
+                                    ownerId = ((VKUser)wp.Owner).Id;
+                            }
+                        }
+                        catch { }
+
+                        uint postId = 0;
+                        try
+                        {
+                            // Try common id property names via reflection helper
+                            if (!TryGetUIntProperty(wp, out postId, "id", "post_id", "postId"))
+                            {
+                                // try field 'id' via property access fallback
+                                var idProp = wp.GetType().GetProperty("id");
+                                if (idProp != null)
+                                {
+                                    var idVal = idProp.GetValue(wp);
+                                    if (idVal != null)
+                                        postId = Convert.ToUInt32(idVal);
+                                }
+                            }
+                        }
+                        catch { postId = 0; }
+
+                        Logger.Instance.Info($"Content_Tapped: navigating to wall post via ParsedParent owner={ownerId} post={postId}");
+
+                        safeNav(() => Library.NavigatorImpl.Instance.NavigateToWallPostComments(ownerId, postId, 0, wp));
+                         return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Instance.Error("Content_Tapped: error using ParsedParent", ex);
+                }
+
+                // If no parsed parent or failed, try to extract URL from RawItem
+                string url = null;
+                try
+                {
+                    var raw = this.Notification.RawItem;
+                    if (raw != null)
+                    {
+                        url = raw.Value<string>("action_url") ?? raw.Value<string>("additional_action_url");
+                        if (string.IsNullOrEmpty(url))
+                        {
+                            // try to extract URL from header markup like [https://vk.com/wall-...|text]
+                            try
+                            {
+                                var header = raw.Value<string>("header");
+                                if (!string.IsNullOrEmpty(header))
+                                {
+                                    var mHead = System.Text.RegularExpressions.Regex.Match(header, "\\[(https?:\\/\\/[^|\\]]+)");
+                                    if (mHead.Success)
+                                    {
+                                        url = mHead.Groups[1].Value;
+                                        Logger.Instance.Info($"Content_Tapped: extracted url from header: {url}");
+                                    }
+                                }
+                            }
+                            catch (Exception exHead)
+                            {
+                                Logger.Instance.Error("Content_Tapped: failed to extract url from RawItem.header", exHead);
+                            }
+
+                            if (string.IsNullOrEmpty(url))
+                            {
+                                var additional = raw["additional_item"];
+                                if (additional != null)
+                                {
+                                    var aaction = additional["action"];
+                                    if (aaction != null)
+                                        url = aaction.Value<string>("url");
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Instance.Error("Content_Tapped: error extracting URL from RawItem", ex);
+                }
+
+                if (!string.IsNullOrEmpty(url))
+                {
+                    try
+                    {
+                        try { url = System.Net.WebUtility.UrlDecode(url); } catch { }
+
+                        // If URL points to an id- page (invalid for post), try to locate wall link inside raw item
+                        if (url.Contains("/id-") || url.Contains("id-"))
+                        {
+                            try
+                            {
+                                string rawStr = this.Notification.RawItem?.ToString() ?? string.Empty;
+                                var found = System.Text.RegularExpressions.Regex.Match(rawStr, @"wall-?(?<owner>-?\d+)_(?<post>\d+)");
+                                if (found.Success)
+                                {
+                                    int ownerId = int.Parse(found.Groups["owner"].Value);
+                                    uint postId = uint.Parse(found.Groups["post"].Value);
+                                    // prefer mobile url
+                                    string mobileUrl = $"https://m.vk.com/wall{ownerId}_{postId}";
+                                    Logger.Instance.Info($"Content_Tapped: url was id-..., extracted wall link from RawItem and navigating to mobile URL {mobileUrl}");
+                                    safeNav(() => Library.NavigatorImpl.Instance.NavigateToWallPostComments(ownerId, postId, 0, this.Notification.ParsedParent as VKWallPost));
+                                     return;
+                                }
+                                else
+                                {
+                                    Logger.Instance.Info("Content_Tapped: url contains id- but no wall- link found in RawItem");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Logger.Instance.Error("Content_Tapped: failed to extract wall link from RawItem when url contained id-", ex);
+                            }
+                        }
+
+                        var pattern = @"(?:https?:\\/\\/)?(?:w{3}\\.|m\\.)?vk\.com\/.+?wall-?(?<owner>-?\d+)_(?<post>\d+)";
+                        var m = System.Text.RegularExpressions.Regex.Match(url, pattern);
+                        if (!m.Success)
+                            m = System.Text.RegularExpressions.Regex.Match(url, @"wall-?(?<owner>-?\d+)_(?<post>\d+)");
+
+                        if (m.Success)
+                        {
+                            int ownerId = int.Parse(m.Groups["owner"].Value);
+                            uint postId = uint.Parse(m.Groups["post"].Value);
+
+                            object postData = null;
+                            try { if (this.Notification.ParsedParent is VKWallPost wp2) postData = wp2; } catch { }
+
+                            Logger.Instance.Info($"Content_Tapped: navigating to wall post owner={ownerId} post={postId}");
+                            safeNav(() => Library.NavigatorImpl.Instance.NavigateToWallPostComments(ownerId, postId, 0, postData));
+                             return;
+                        }
+                        else
+                        {
+                            Logger.Instance.Info($"Content_Tapped: NavigateToWebUri for url: {url}");
+                            safeNav(() => Library.NavigatorImpl.Instance.NavigateToWebUri(url));
+                             return;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Instance.Error("Content_Tapped: url navigation failed", ex);
+                    }
+                }
+ 
+                 // Fallback: open notification detail
+                safeNav(() => Library.NavigatorImpl.Instance.NavigateToNotificationDetail(this.Notification));
+             }
+             catch (Exception ex)
+             {
+                 Logger.Instance.Error("Content_Tapped: navigation failed", ex);
+             }
+         }
 
         private void ToggleDetails()
         {
@@ -1016,11 +1361,9 @@ namespace LunaVK.UC
 
             if (_detailsExpanded)
             {
-                // Построим подробный контент
                 DetailsPanel.Children.Clear();
 
                 var fullTextBlock = new ScrollableTextBlock();
-                //fullTextBlock.TextWrapping = TextWrapping.Wrap;
                 fullTextBlock.Margin = new Thickness(0, 4, 0, 0);
                 fullTextBlock.IsHitTestVisible = false;
 
@@ -1030,7 +1373,6 @@ namespace LunaVK.UC
                 DetailsPanel.Children.Add(fullTextBlock);
                 DetailsPanel.Visibility = Visibility.Visible;
 
-                // Простая анимация появления
                 var sb = new Windows.UI.Xaml.Media.Animation.Storyboard();
                 var fade = new Windows.UI.Xaml.Media.Animation.DoubleAnimation
                 {
@@ -1052,14 +1394,12 @@ namespace LunaVK.UC
 
         private string BuildFullDetailsText()
         {
-            // Полный текст: стараемся показать исходный текст родителя/коммента без обрезки + базовое форматирование
             try
             {
                 string actor = user != null ? user.Title : "";
                 string action = GetLocalizableText();
                 string parentText = GetHighlightedText();
 
-                // Пытаемся вытянуть текст из ParsedFeedback, если там комментарий
                 if (this.Notification?.ParsedFeedback is VKComment c && !string.IsNullOrEmpty(c.text))
                 {
                     parentText = string.IsNullOrEmpty(parentText) ? c.text : parentText + "\n\n" + c.text;
@@ -1078,8 +1418,171 @@ namespace LunaVK.UC
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("BuildFullDetailsText error: " + ex);
+                Debug.WriteLine("BuildFullDetailsText error: " + ex.Message);
                 return string.Empty;
+            }
+        }
+
+        private List<string> GetPreviewUrls()
+        {
+            var list = new List<string>();
+
+            // First from ParsedParent attachments (prefer photo_130, photo_200, photo_604)
+            try
+            {
+                if (this.Notification?.ParsedParent is VKWallPost wp && wp.attachments != null && wp.attachments.Count > 0)
+                {
+                    foreach (var a in wp.attachments)
+                    {
+                        if (a.type == VKAttachmentType.Photo && a.photo != null)
+                        {
+                            if (!string.IsNullOrEmpty(a.photo.photo_130)) list.Add(a.photo.photo_130);
+                            else if (!string.IsNullOrEmpty(a.photo.photo_200)) list.Add(a.photo.photo_200);
+                            else if (!string.IsNullOrEmpty(a.photo.photo_604)) list.Add(a.photo.photo_604);
+                        }
+                        else if (a.type == VKAttachmentType.Video && a.video != null)
+                        {
+                            if (!string.IsNullOrEmpty(a.video.photo_130)) list.Add(a.video.photo_130);
+                        }
+                    }
+                }
+                else if (this.Notification?.ParsedParent is VKPhoto p)
+                {
+                    if (!string.IsNullOrEmpty(p.photo_130)) list.Add(p.photo_130);
+                }
+            }
+            catch { }
+
+            // Next try RawItem
+            try
+            {
+                var raw = this.Notification.RawItem;
+                if (raw != null)
+                {
+                    JToken add = raw.SelectToken("additional_item") ?? raw.SelectToken("additional_items") ?? raw.SelectToken("additional_item.0");
+                    JToken mi = raw.SelectToken("main_item") ?? raw.SelectToken("main_item.0");
+
+                    if (add != null)
+                    {
+                        if (add.Type == JTokenType.Array)
+                        {
+                            foreach (var it in add)
+                            {
+                                var ex = TryExtractImageFromItem(it);
+                                if (!string.IsNullOrEmpty(ex)) list.Add(ex);
+                            }
+                        }
+                        else
+                        {
+                            var ex = TryExtractImageFromItem(add);
+                            if (!string.IsNullOrEmpty(ex)) list.Add(ex);
+                        }
+                    }
+
+                    if (mi != null)
+                    {
+                        var ex = TryExtractImageFromItem(mi);
+                        if (!string.IsNullOrEmpty(ex)) list.Add(ex);
+                    }
+
+                    // also try image_object arrays
+                    var objs = raw.SelectTokens("..image_object");
+                    foreach (var o in objs)
+                    {
+                        if (o != null && o.Type == JTokenType.Array)
+                        {
+                            foreach (var it in o)
+                            {
+                                var ex = TryExtractImageFromItem(it);
+                                if (!string.IsNullOrEmpty(ex)) list.Add(ex);
+                            }
+                        }
+                    }
+                }
+            }
+            catch { }
+
+            // Deduplicate and return up to 4 previews
+            var res = new List<string>();
+            foreach (var s in list)
+            {
+                if (string.IsNullOrEmpty(s)) continue;
+                if (!res.Contains(s)) res.Add(s);
+                if (res.Count >= 4) break;
+            }
+            return res;
+        }
+
+        private void Preview_Tapped(int index)
+        {
+            // Prefer navigating to wall post if we can determine owner/post, otherwise open image url
+            try
+            {
+                var raw = this.Notification?.RawItem;
+                int ownerId = 0; uint postId = 0;
+                string actionUrl = null;
+
+                if (raw != null)
+                {
+                    // try to extract wall-<owner>_<post> from RawItem
+                    var rawStr = raw.ToString();
+                    var m = System.Text.RegularExpressions.Regex.Match(rawStr, @"wall-?(?<owner>-?\d+)_(?<post>\d+)");
+                    if (m.Success)
+                    {
+                        int.TryParse(m.Groups["owner"].Value, out ownerId);
+                        uint.TryParse(m.Groups["post"].Value, out postId);
+                    }
+
+                    // try common action fields as fallback
+                    actionUrl = raw.Value<string>("action_url") ?? raw.Value<string>("additional_action_url");
+                    if (string.IsNullOrEmpty(actionUrl))
+                        actionUrl = raw.SelectToken("additional_item.action.url")?.ToString() ?? raw.SelectToken("main_item.action.url")?.ToString();
+                }
+
+                if (ownerId != 0 && postId != 0)
+                {
+                    try
+                    {
+                        Execute.ExecuteOnUIThread(() => Library.NavigatorImpl.Instance.NavigateToWallPostComments(ownerId, postId, 0, this.Notification.ParsedParent as VKWallPost));
+                        return;
+                    }
+                    catch (Exception navEx)
+                    {
+                        Debug.WriteLine($"Preview_Tapped: NavigateToWallPostComments failed owner={ownerId} post={postId}: {navEx}");
+                        // fallback to opening action url
+                        if (!string.IsNullOrEmpty(actionUrl))
+                        {
+                            try { Execute.ExecuteOnUIThread(() => Library.NavigatorImpl.Instance.NavigateToWebUri(actionUrl)); return; } catch { }
+                        }
+                    }
+                }
+
+                var previews = this.GetPreviewUrls();
+                if (index >= 0 && index < previews.Count)
+                {
+                    var url = previews[index];
+                    if (!string.IsNullOrEmpty(url))
+                    {
+                        if (url.StartsWith("//")) url = "https:" + url;
+                        try
+                        {
+                            Execute.ExecuteOnUIThread(() => Library.NavigatorImpl.Instance.NavigateToWebUri(url));
+                        }
+                        catch (Exception webEx)
+                        {
+                            Debug.WriteLine($"Preview_Tapped: NavigateToWebUri failed for url={url}: {webEx}");
+                            // try actionUrl if available
+                            if (!string.IsNullOrEmpty(actionUrl))
+                            {
+                                try { Execute.ExecuteOnUIThread(() => Library.NavigatorImpl.Instance.NavigateToWebUri(actionUrl)); } catch (Exception ex) { Debug.WriteLine("Preview_Tapped fallback web navigation failed: " + ex); }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Preview_Tapped navigation failed: " + ex);
             }
         }
     }
