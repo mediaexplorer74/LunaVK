@@ -567,7 +567,7 @@ namespace LunaVK.Core.Library
 
             }, (jsonStr) =>
             {
-                try { Debug.WriteLine($"NewsFeedService: raw notifications.get json (truncated 2000) -> {(jsonStr == null ? "" : (jsonStr.Length > 2000 ? jsonStr.Substring(0, 2000) + "..." : jsonStr))}"); } catch { }
+                try { Debug.WriteLine($"NewsFeedService: raw notifications.get json (truncated 20000) -> {(jsonStr == null ? "" : (jsonStr.Length > 20000 ? jsonStr.Substring(0, 20000) + "..." : jsonStr))}"); } catch { }
                 try { Debug.WriteLine($"NewsFeedService: raw notifications.get response length={(jsonStr == null ? 0 : jsonStr.Length)}"); } catch { }
 
                 // inject lightweight raw info for each item: main_item.object_id, main_item.type, additional_item.object_id, additional_item.type, header
@@ -605,7 +605,28 @@ namespace LunaVK.Core.Library
                             try
                             {
                                 var header = it.Value<string>("header");
-                                if (!string.IsNullOrEmpty(header)) info["header"] = header;
+                                if (!string.IsNullOrEmpty(header))
+                                {
+                                    info["header"] = header;
+
+                                    // Try to extract explicit wall link like vk.com/wall-<owner>_<post> from header and inject as main_object_id
+                                    try
+                                    {
+                                        var wallMatch = System.Text.RegularExpressions.Regex.Match(header, @"wall-?(-?\d+)_([0-9]+)");
+                                        if (wallMatch.Success)
+                                        {
+                                            string ownerStr = wallMatch.Groups[1].Value;
+                                            string postStr = wallMatch.Groups[2].Value;
+                                            // if header mentions club, prefer negative owner to indicate group
+                                            string signedOwner = ownerStr;
+                                            if (header.IndexOf("[club", StringComparison.OrdinalIgnoreCase) >= 0 || header.IndexOf("club", StringComparison.OrdinalIgnoreCase) >= 0)
+                                                signedOwner = (ownerStr.StartsWith("-") ? ownerStr : ("-" + ownerStr));
+
+                                            info["main_object_id"] = signedOwner + "_" + postStr;
+                                        }
+                                    }
+                                    catch { }
+                                }
                             }
                             catch { }
 

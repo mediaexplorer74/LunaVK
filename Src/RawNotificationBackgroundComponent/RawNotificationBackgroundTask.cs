@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Threading;
 using Windows.Storage;
+using LunaVK.Core;
 
 namespace RawNotificationBackgroundComponent
 {
@@ -177,10 +178,10 @@ namespace RawNotificationBackgroundComponent
                 XmlElement inputElement = toastXml.CreateElement("input");
                 inputElement.SetAttribute("id", "textBox");
                 inputElement.SetAttribute("type", "text");
-                inputElement.SetAttribute("placeHolderContent", "Написать ответ");
+                inputElement.SetAttribute("placeHolderContent", LocalizedStrings.GetString("PlaceHolder_WriteReply"));
 
                 XmlElement actionElement = toastXml.CreateElement("action");
-                actionElement.SetAttribute("content", "Send");//важно: content
+                actionElement.SetAttribute("content", LocalizedStrings.GetString("Send"));//важно: content
                 actionElement.SetAttribute("arguments", "action=reply&amp;push_id=" + push_id);
                 actionElement.SetAttribute("activationType", "background");
                 actionElement.SetAttribute("hint-inputId", "textBox");
@@ -348,12 +349,12 @@ namespace RawNotificationBackgroundComponent
 
 
                         XmlElement actionAddElement = toastXml.CreateElement("action");
-                        actionAddElement.SetAttribute("content", "Нравится");
+                        actionAddElement.SetAttribute("content", LocalizedStrings.GetString("Like"));
                         actionAddElement.SetAttribute("arguments", "action=like&amp;item=" + toastTag);
                         actionAddElement.SetAttribute("activationType", "background");
 
                         XmlElement actionHideElement = toastXml.CreateElement("action");
-                        actionHideElement.SetAttribute("content", "В избранное");
+                        actionHideElement.SetAttribute("content", LocalizedStrings.GetString("Fave"));
                         actionHideElement.SetAttribute("arguments", "action=fave&amp;item=" + toastTag);
                         actionHideElement.SetAttribute("activationType", "background");
 

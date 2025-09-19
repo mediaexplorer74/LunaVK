@@ -24,7 +24,15 @@
                     <StackPanel Margin="20 0">
                         <TextBlock Margin="0 20 0 0" Text="Приложение" Foreground="{ThemeResource SystemControlHighlightAccentBrush}" FontWeight="Medium" />
 
-                        <ComboBox Header="Lang" x:Uid="Language" Margin="0 16 0 0" ItemsSource="{Binding Languages}" SelectedIndex="{Binding LanguageSettings, Mode=TwoWay}" BorderBrush="{ThemeResource SystemControlHighlightAccentBrush}"/>
+                        <!--<ComboBox Header="Lang" x:Uid="Language" Margin="0 16 0 0" ItemsSource="{Binding Languages}" SelectedIndex="{Binding LanguageSettings, Mode=TwoWay}" BorderBrush="{ThemeResource SystemControlHighlightAccentBrush}"/>-->
+
+                        <ComboBox x:Uid="Language" Margin="0 16 0 0" ItemsSource="{Binding Languages}" SelectedIndex="{Binding LanguageSettings, Mode=TwoWay}" BorderBrush="{ThemeResource SystemControlHighlightAccentBrush}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DisplayName}" Foreground="{ThemeResource TextBrushMediumHigh}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
                         
                         <!--<ComboBox Foreground="{ThemeResource TextBrushMediumHigh}" SelectedIndex="{Binding FriendListOrder, Mode=TwoWay, Converter={StaticResource ThreelenToIntConverter}}"
                                   BorderBrush="{ThemeResource SystemControlHighlightAccentBrush}" Margin="0,16,0,0" Opacity="0.6">

@@ -12,41 +12,9 @@ using Windows.UI.Xaml.Documents;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.ApplicationModel.Email;
+using LunaVK.Core.Framework;
+using System.Diagnostics;
 
-/*
-public static final a a = new a(null);
-private static final Regex b = new Regex("(^|[a-z0-9.\\-]*\\.)(vk|vkontakte)\\.(com|ru|me)");
-private static final Regex c = new Regex("(^|[a-z0-9.\\-]*\\.)m\\.([a-z0-9.\\-]+\\.)?(vk|vkontakte)\\.(com|ru|me)");
-private static final Regex d = new Regex("^vk\\.(cc|link)");
-private static final Regex e = new Regex("/(?:id)([-0-9]+)");
-private static final Regex f = new Regex("/(?:club|event|public)([0-9]+)");
-private static final Regex g = new Regex("/wall(([-0-9]+)_([0-9]+))");
-private static final Regex h = new Regex("/(app[-0-9]+)(?:_([-0-9]+))?");
-private static final Regex i = new Regex("vk.me/(join/)?[A-Za-z0-9._/]+");
-private static final Regex j = new Regex("/moneysend/([A-Za-z0-9._/]+)$");
-private static final Regex k = new Regex("wall(([-0-9]+)_([0-9]+))");
-
-
-static final Pattern a = Pattern.compile("\\[((id|club)[0-9]+)(?::bp[-_0-9]+)?\\|([^\\]]+)\\]");
-static final Pattern b = Pattern.compile("((?:(?:http|https)://)?[a-zA-Zа-яА-Я0-9-]+\\.[a-zA-Zа-яА-Я]{2,4}[a-zA-Z/?\\.=#%&-_]+)");
-static final Pattern c = Pattern.compile("\\[id(\\d+):bp\\-(\\d+)_(\\d+)\\|([^\\]]+)\\]");
-static final Pattern d = Pattern.compile("\\[club(\\d+):bp\\-(\\d+)_(\\d+)\\|([^\\]]+)\\]");
-static final Pattern e = Pattern.compile("\\[id(\\d+)\\|([^\\]]+)\\]");
-static final Pattern f = Pattern.compile("\\[club(\\d+)\\|([^\\]]+)\\]");
-
-
-public static final Pattern a = k.d;
-public static final Pattern b;
-public static final Pattern c = Pattern.compile("\\[((?:event#)[a-z_]+)\\|([^\\]]+)\\]");
-public static final Pattern d = Pattern.compile("\\[((?:id|club)[0-9]+)\\|([^\\]]+)\\]");
-public static final Pattern e = Pattern.compile("'''\\[((?:id|club)[0-9]+)\\|([^\\]]+)\\]'''");
-public static final Pattern f = Pattern.compile("\\[((?:id|club)[0-9]+):bp[0-9_-]+\\|([^\\]]+)\\]");
-public static final Pattern g = Pattern.compile("(#[\\d\\w]{2,})(?:@([-_a-z\\d\\.]{2,}))?", 66);
-public static final Pattern h = Pattern.compile("'''(.*?)'''");
-public static final Pattern i = Pattern.compile("\\[(\\S+?)\\|(.+?)\\]");
-public static final Pattern j = Pattern.compile("'''\\[(\\S+?)\\|(.+?)\\]'''");
-public static final Pattern k = Pattern.compile("\\b(?:([0-5]?\\d):)?([0-5]?\\d):([0-5]?\\d)\\b");
-*/
 namespace LunaVK.Common
 {
     public static class BrowserNavigationService
@@ -65,7 +33,6 @@ namespace LunaVK.Common
         /// также ищем почту, позже её исключим :\
         /// </summary>
         private static Regex _regex_Uri = new Regex(@"(((http|https)://)?[a-zA-Zа-яА-Я0-9@\.-]+\.[a-zA-Zа-яА-Я]{2,4}\b[a-zA-Z/?\.\d\-=#%&_~@]*)", RegexOptions.IgnoreCase);
-        //private static Regex _regex_Uri = new Regex("(?<![A-Za-z\\$0-9А-Яа-яёЁєЄҐґЇїІіЈј\\-_@])(https?:\\/\\/)?((?:[A-Za-z\\$0-9А-Яа-яёЁєЄҐґЇїІіЈј](?:[A-Za-z\\$0-9\\-_А-Яа-яёЁєЄҐґЇїІіЈј]*[A-Za-z\\$0-9А-Яа-яёЁєЄҐґЇїІіЈј])?\\.){1,5}[A-Za-z\\$рфуконлайстбРФУКОНЛАЙСТБ\\-\\d]{2,22}(?::\\d{2,5})?)((?:\\/(?:(?:\\&|\\!|,[_%]|[A-Za-z0-9¨¸À-ÿєЄҐґЇїІіЈј\\-_@#%?+\\/\\$.~=;:]+|\\[[A-Za-z0-9¨¸À-ÿєЄҐґЇїІіЈј\\-_@#%?+\\/\\$.,~=;:]*\\]|\\([A-Za-z0-9¨¸À-ÿєЄҐґЇїІіЈј\\-_@#%?+\\/\\$.,~=;:]*\\))*(?:,[_%]|[A-Za-z0-9¨¸À-ÿєЄҐґЇїІіЈј\\-_@#%?+\\/\\$.~=;:]*[A-Za-z0-9¨¸À-ÿєЄҐґЇїІіЈј_@#%?+\\/\\$~=]|\\[[A-Za-z0-9¨¸À-ÿєЄҐґЇїІіЈј\\-_@#%?+\\/\\$.,~=;:]*\\]|\\([A-Za-z0-9¨¸À-ÿєЄҐґЇїІіЈј\\-_@#%?+\\/\\$.,~=;:]*\\)))?)?)", RegexOptions.IgnoreCase);
         private static Regex _regex_Email = new Regex("(?<![a-zA-Z\\-_\\.0-9^#])([a-zA-Z\\-_\\.0-9]+@[a-zA-Z\\-_0-9]+\\.[a-zA-Z\\-_\\.0-9]+[a-zA-Z\\-_0-9])", RegexOptions.IgnoreCase);
 
         /// <summary>
@@ -76,31 +43,21 @@ namespace LunaVK.Common
         /// <summary>
         /// Выражение для упоминаний вида "[id12345|Имя Фамилия]"
         /// </summary>
-        private static Regex Regex_Mention = new Regex(@"\[(.+?)\|(.+?)\]", RegexOptions.IgnoreCase);// \[(id|club)(\d+)(?:\:([a-z0-9_\-]+))?\|([^\$]+?)\]
+        private static Regex Regex_Mention = new Regex(@"\[(.+?)\|(.+?)\]", RegexOptions.IgnoreCase);
 
         private static Regex _regex_MatchedTag = new Regex(@"(#[\d\w\-]{2,})(@([_a-z\d\.\-]{2,}))?", RegexOptions.IgnoreCase);
         
         private static Regex _regex_Domain = new Regex("((?:[a-z0-9_]*[a-z0-9])?(?:(?:\\.[a-z](?:[a-z0-9_]+[a-z0-9])?)*\\.[a-z][a-z0-9_]{2,40}[a-z0-9])?)", RegexOptions.IgnoreCase);
 
-        //private static Regex _regex_UriVK = new Regex("(?:(?:http|https)://)?(vk|vkontakte).(com|ru|me)[a-zA-Z/?\\.=#%&-_]*", RegexOptions.IgnoreCase);
-
-
         /// <summary>
         /// Возвращает InlineUIContainer с картинкой
         /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
         public static InlineUIContainer GetImage(string name)
         {
-            //Settings.EmojiType   
             Image image1 = new Image() { Height = 20.0, Width = 20.0 };
             image1.Source = new BitmapImage(new Uri(string.Format("ms-appx:///Assets/Emoji/{0:x}.png", name), UriKind.RelativeOrAbsolute));
             image1.Margin = new Thickness(0.0, 0.0, 0.0, -5.0);
-            image1.CacheMode = new BitmapCache();//todo: этого не было, а работает ли оно?
-            //if (name == "00A9" || name == "00AE")
-            //    image1.Margin = new Thickness(0.0, 4.0, -4.0, -9.0);
-            //else
-            //    image1.Margin = new Thickness(0.0, 0.0, 4.0, -5.0);
+            image1.CacheMode = new BitmapCache();
             InlineUIContainer inlineUiContainer = new InlineUIContainer();
             inlineUiContainer.Child = image1;
             return inlineUiContainer;
@@ -215,24 +172,8 @@ namespace LunaVK.Common
         {
             text = text.Replace("\n", " \n ");
 
-            
             text = BrowserNavigationService._regex_Uri.Replace(text, (m =>
             {
-                /*
-                string str1 = m.Groups.Count > 2 ? m.Groups[2].Value : string.Empty;
-                if(m.Groups.Count <= 1 || !m.Groups[1].Value.ToLower().StartsWith("http://") && !m.Groups[1].Value.StartsWith("https://"))
-                    return System.Net.WebUtility.UrlDecode(m.Value);
-                string str2 = m.Groups.Count > 1 ? m.Groups[1].Value : "http://";
-                if (str2 == string.Empty)
-                    str2 = "http://";
-                string str3 = m.Groups.Count > 2 ? m.Groups[2].Value : string.Empty;
-                if (m.Groups.Count > 3)
-                    str3 += m.Groups[3].Value;
-                string str4 = System.Net.WebUtility.UrlDecode(m.Value);
-                if (str4.Length > 38)
-                    str4 = str4.Substring(0, 35) + "...";
-                return string.Format("\a{0}\b{1}\a", (str2 + str3), str4).Replace("#", "\0");
-                */
                 if (m.Value.Contains("@"))//Почта
                     return m.Value;
                 string str4 = m.Value;//Укороченная ссылка
@@ -240,9 +181,7 @@ namespace LunaVK.Common
                     str4 = str4.Substring(0, 35) + "...";
                 return string.Format("\a{0}\b{1}\a", m.Value, str4);
             }));
-            
-            
-            //text = BrowserNavigationService._regex_Uri.Replace(text, "\a$0\b$0\a");
+
             text = BrowserNavigationService._regex_Email.Replace(text, "\amailto:$0\b$0\a");
 
             text = BrowserNavigationService.Regex_DomainMention.Replace(text, "[$2|$4]");
@@ -260,13 +199,11 @@ namespace LunaVK.Common
                 if (value.StartsWith("id") || value.StartsWith("club"))
                     return string.Format("\ahttps://vk.com/{0}\b{1}\a", value, title);
                 return string.Format("\a{0}\b{1}\a", value, title);
-            }) );//"\ahttps://vk.com/$1$2$3\b$4\b\a"
+            }) );
 
-            text = BrowserNavigationService._regex_MatchedTag.Replace(text, "\ahttps://"+ BrowserNavigationService._searchFeedPrefix + "$0\b$0\a");//"$1\ahttps://{0}$3$4\b$3$4\a"
+            text = BrowserNavigationService._regex_MatchedTag.Replace(text, "\ahttps://"+ BrowserNavigationService._searchFeedPrefix + "$0\b$0\a");
 
             text = text.Replace("\n ", "\n").Replace(" \n", "\n").Replace("\0", "#");
-            
-            //var text2 = text.ReplaceByRegex(BrowserNavigationService._regex_Email, "\amailto:$2\b$2\a").ReplaceByRegex(BrowserNavigationService.Regex_DomainMention, "[$2|$4]").ReplaceByRegex(BrowserNavigationService.Regex_Mention, "\ahttps://vk.com/$1$2$3\b$4\b\a").ReplaceByRegex(BrowserNavigationService.Regex_Tag, string.Format("$1\ahttps://{0}$3$4\b$3$4\a", BrowserNavigationService._searchFeedPrefix)).Replace("\n ", "\n").Replace(" \n", "\n").Replace("\0", "#");
             if (text.StartsWith(" "))
                 text = text.Remove(0, 1);
             return Enumerable.ToList<string>(text.Split('\a'));
@@ -283,12 +220,6 @@ namespace LunaVK.Common
             return s;
         }
 
-        /// <summary>
-        /// Добавляем текст, а если надо, то и эмодзи
-        /// </summary>
-        /// <param name="text_block"></param>
-        /// <param name="par"></param>
-        /// <param name="raw_text"></param>
         public static void AddRawText(RichTextBlock text_block, Paragraph par, string raw_text)
         {
             TextElementEnumerator elementEnumerator = StringInfo.GetTextElementEnumerator(raw_text);
@@ -332,9 +263,7 @@ namespace LunaVK.Common
                     }
                     if (flag2)
                         BrowserNavigationService.CheckRelationsSmiles(ref hexString1, ref elementEnumerator, ref textElement1);
-                    //string name;
-                    if(Emoji.Dict.Contains(hexString1))//пробуем найти эмодзи
-                    //if (name != null)
+                    if(Emoji.Dict.Contains(hexString1))
                     {
                         string text = stringBuilder.ToString();
                         stringBuilder = stringBuilder.Clear();
@@ -356,13 +285,6 @@ namespace LunaVK.Common
         private static Run GetRunWithStyle(string text, RichTextBlock richTextBox)
         {
             Run run = new Run();
-            /*
-            FontFamily fontFamily = ((Control)richTextBox).FontFamily;
-            ((TextElement)run).FontFamily = fontFamily;
-            double fontSize = ((Control)richTextBox).FontSize;
-            ((TextElement)run).FontSize = fontSize;
-            Brush foreground = ((Control)richTextBox).Foreground;
-            ((TextElement)run).Foreground = foreground;*/
             run.FontSize = (double)Application.Current.Resources["FontSizeContent"];
             run.Text = text;
             return run;
@@ -371,36 +293,156 @@ namespace LunaVK.Common
         public static Hyperlink GenerateHyperlink(string text, string tag, Action<Hyperlink, string> clickedCallback, Brush foregroundBrush = null)
         {
             Hyperlink h = new Hyperlink();
-            //HyperlinkHelper.SetState(h, hyperlinkState, foregroundBrush);
             Run expr_3D = new Run();
             expr_3D.Text = (text);
             h.Inlines.Add(expr_3D);
-            //
             h.Foreground = new SolidColorBrush((Windows.UI.Color)Application.Current.Resources["PhoneAccentColor"]);
-            //
             h.Click += (s, a)=> { clickedCallback.Invoke(h, tag); };
             return h;
         }
 
         public static async void NavigateOnHyperlink(string navstr)
         {
+            try { Debug.WriteLine($"NavigateOnHyperlink: navstr={navstr}"); } catch { }
             if (string.IsNullOrEmpty(navstr))
                 return;
 
-            if (!navstr.Contains("@") || navstr.Contains("#"))
+            // Email handling
+            if (navstr.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase) || (navstr.Contains("@") && !navstr.Contains("#")))
             {
-                NavigatorImpl.Instance.NavigateToWebUri(navstr);
-            }
-            else
-            {
-                if (navstr.StartsWith("http://") || navstr.StartsWith("mailto:"))
-                    navstr = navstr.Substring(0, 7);
+                try { Debug.WriteLine($"NavigateOnHyperlink: detected email navstr={navstr}"); } catch { }
+                string email = navstr;
+                if (email.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase))
+                    email = email.Substring(7);
 
                 var emailMessage = new EmailMessage();
-                emailMessage.To.Add(new EmailRecipient(navstr));
+                emailMessage.To.Add(new EmailRecipient(email));
                 await EmailManager.ShowComposeNewEmailAsync(emailMessage);
+                return;
             }
-        }
 
+            // Normalize and try to handle vk.com links internally (profiles, groups, wall posts)
+            try
+            {
+                string s = navstr;
+                // normalize escaped slashes and HTML entities to increase chance of finding wall links embedded
+                try { s = s.Replace("\\/", "/").Replace("&amp;", "&").Trim(); } catch { }
+                if (s.StartsWith("vk.com", StringComparison.OrdinalIgnoreCase))
+                    s = "https://" + s;
+
+                // Try to find wall link anywhere in the raw/nav string first (handles escaped/embedded forms)
+                try
+                {
+                    var rawWallMatch = System.Text.RegularExpressions.Regex.Match(s, @"wall-?(?<owner>-?\d+)_(?<post>\d+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    if (!rawWallMatch.Success)
+                        rawWallMatch = System.Text.RegularExpressions.Regex.Match(s, @"wall(?<owner>-?\d+)_(?<post>\d+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+                    if (rawWallMatch.Success)
+                    {
+                        int ownerId = 0; uint postId = 0;
+                        try { ownerId = int.Parse(rawWallMatch.Groups["owner"].Value); } catch { }
+                        try { postId = uint.Parse(rawWallMatch.Groups["post"].Value); } catch { }
+                        if (postId != 0)
+                        {
+                            try { Debug.WriteLine($"NavigateOnHyperlink: wallMatch (raw) owner={ownerId} post={postId}"); } catch { }
+                            Execute.ExecuteOnUIThread(() => NavigatorImpl.Instance.NavigateToWallPostComments(ownerId, postId, 0, null));
+                            return;
+                        }
+                    }
+                }
+                catch { }
+
+                if (Uri.TryCreate(s, UriKind.Absolute, out Uri uri))
+                {
+                    try { Debug.WriteLine($"NavigateOnHyperlink: parsed uri={uri}"); } catch { }
+                    var host = uri.Host ?? string.Empty;
+                    if (host.Contains("vk.com") || host.Contains("vkontakte"))
+                    {
+                        string full = uri.ToString();
+                        try { Debug.WriteLine($"NavigateOnHyperlink: vk host, full={full}"); } catch { }
+                        // Try to find wall link anywhere (again) - on the full string
+                        var wallMatch = System.Text.RegularExpressions.Regex.Match(full, @"wall-?(?<owner>-?\d+)_(?<post>\d+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        if (!wallMatch.Success)
+                            wallMatch = System.Text.RegularExpressions.Regex.Match(full, @"wall(?<owner>-?\d+)_(?<post>\d+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+                        if (wallMatch.Success)
+                        {
+                            int ownerId = 0; uint postId = 0;
+                            try { ownerId = int.Parse(wallMatch.Groups["owner"].Value); } catch { }
+                            try { postId = uint.Parse(wallMatch.Groups["post"].Value); } catch { }
+                            if (postId != 0)
+                            {
+                                try { Debug.WriteLine($"NavigateOnHyperlink: wallMatch owner={ownerId} post={postId}"); } catch { }
+                                Execute.ExecuteOnUIThread(() => NavigatorImpl.Instance.NavigateToWallPostComments(ownerId, postId, 0, null));
+                                return;
+                            }
+                        }
+
+                        // Try profile/group links: /id123 or /club123
+                        var path = uri.AbsolutePath ?? string.Empty; // like /id123 or /club123
+                        // Handle malformed /id-<digits> which sometimes appears instead of /club123
+                        var mIdDash = System.Text.RegularExpressions.Regex.Match(path, @"^/id-(?<gid>\d+)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        if(mIdDash.Success)
+                        {
+                            // Before treating id- as group, ensure there is no wall link elsewhere in original navstr
+                            try { Debug.WriteLine($"NavigateOnHyperlink: detected id- pattern, candidate gid={mIdDash.Groups["gid"].Value}"); } catch { }
+                            // check original raw string s for any wall pattern
+                            var anyWall = System.Text.RegularExpressions.Regex.IsMatch(s, @"wall-?\d+_\d+", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                            if (anyWall)
+                            {
+                                // prefer wall navigation if present anywhere
+                                var wm = System.Text.RegularExpressions.Regex.Match(s, @"wall-?(?<owner>-?\d+)_(?<post>\d+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                                if (!wm.Success)
+                                    wm = System.Text.RegularExpressions.Regex.Match(s, @"wall(?<owner>-?\d+)_(?<post>\d+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                                if (wm.Success)
+                                {
+                                    int ownerId = 0; uint postId = 0;
+                                    try { ownerId = int.Parse(wm.Groups["owner"].Value); } catch { }
+                                    try { postId = uint.Parse(wm.Groups["post"].Value); } catch { }
+                                    if (postId != 0)
+                                    {
+                                        Execute.ExecuteOnUIThread(() => NavigatorImpl.Instance.NavigateToWallPostComments(ownerId, postId, 0, null));
+                                        return;
+                                    }
+                                }
+                            }
+
+                            int gid = 0; if (int.TryParse(mIdDash.Groups["gid"].Value, out gid))
+                            {
+                                Execute.ExecuteOnUIThread(() => NavigatorImpl.Instance.NavigateToProfilePage(-gid));
+                                return;
+                            }
+                        }
+                        var prof = System.Text.RegularExpressions.Regex.Match(path, @"^/(?:id(?<id>\d+)|club(?<gid>\d+))$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        if (prof.Success)
+                        {
+                            if (prof.Groups["id"].Success)
+                            {
+                                int id = 0; if (int.TryParse(prof.Groups["id"].Value, out id))
+                                {
+                                    try { Debug.WriteLine($"NavigateOnHyperlink: profile id={id}"); } catch { }
+                                    Execute.ExecuteOnUIThread(() => NavigatorImpl.Instance.NavigateToProfilePage(id));
+                                    return;
+                                }
+                            }
+                            if (prof.Groups["gid"].Success)
+                            {
+                                int gid = 0; if (int.TryParse(prof.Groups["gid"].Value, out gid))
+                                {
+                                    try { Debug.WriteLine($"NavigateOnHyperlink: group gid={gid}"); } catch { }
+                                    Execute.ExecuteOnUIThread(() => NavigatorImpl.Instance.NavigateToProfilePage(-gid));
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch { }
+
+            // Fallback: open in web view
+            try { Debug.WriteLine($"NavigateOnHyperlink: fallback to webview navstr={navstr}"); } catch { }
+            NavigatorImpl.Instance.NavigateToWebUri(navstr);
+        }
     }
 }

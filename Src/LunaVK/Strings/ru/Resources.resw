@@ -528,6 +528,9 @@
   <data name="Notification_MentionInVideoComment" xml:space="preserve">
     <value>в комментариях к видеозаписи</value>
   </data>
+  <data name="Notification_WallPublish" xml:space="preserve">
+    <value>опубликовал(а) новый пост</value>
+  </data>
   <data name="PullToRefresh.Text" xml:space="preserve">
     <value>Тяните для обновления</value>
   </data>
@@ -2184,6 +2187,9 @@
   <data name="Language.Header" xml:space="preserve">
     <value>Язык</value>
   </data>
+  <data name="Settings_Language_System" xml:space="preserve">
+    <value>Система</value>
+  </data>
   <data name="Settings_Contacts.Text" xml:space="preserve">
     <value>Интеграция с устройством</value>
   </data>
@@ -2383,7 +2389,7 @@
     <value>На стене можно писать только от имени сообщества, комментарии отключены</value>
   </data>
   <data name="GroupType_Private_Description.Text" xml:space="preserve">
-    <value>В группу можно вступить только по邀请ению руководителей</value>
+    <value>В группу можно вступить только по приглашению руководителей</value>
   </data>
   <data name="GroupType_Private.Text" xml:space="preserve">
     <value>Частная</value>
@@ -2648,5 +2654,53 @@
   </data>
   <data name="Description" xml:space="preserve">
     <value>Описание</value>
+  </data>
+  <data name="Notification_StoryPublish" xml:space="preserve">
+    <value>опубликовал(а) историю</value>
+  </data>
+  <data name="Add" xml:space="preserve">
+    <value>Добавить</value>
+  </data>
+  <data name="Hide" xml:space="preserve">
+    <value>Скрыть</value>
+  </data>
+  <data name="Document_Downloaded" xml:space="preserve">
+    <value>Документ загружен</value>
+  </data>
+  <data name="Document_NotDownloaded" xml:space="preserve">
+    <value>Документ не загружен</value>
+  </data>
+  <data name="PlaceHolder_WriteReply" xml:space="preserve">
+    <value>Написать ответ</value>
+  </data>
+  <data name="Send" xml:space="preserve">
+    <value>Отправить</value>
+  </data>
+  <data name="Like" xml:space="preserve">
+    <value>Нравится</value>
+  </data>
+  <data name="Fave" xml:space="preserve">
+    <value>В избранное</value>
+  </data>
+  <data name="RemoveFromFavorites" xml:space="preserve">
+    <value>Убрать из избранного</value>
+  </data>
+  <data name="InProcess" xml:space="preserve">
+    <value>В процессе...</value>
+  </data>
+  <data name="ResultPrefix" xml:space="preserve">
+    <value>Результат: </value>
+  </data>
+  <data name="ChannelOpened" xml:space="preserve">
+    <value>Канал открыт</value>
+  </data>
+  <data name="UpdateDeviceRegistrationFailed" xml:space="preserve">
+    <value>UpdateDeviceRegistration: ошибка</value>
+  </data>
+  <data name="ChannelClosed" xml:space="preserve">
+    <value>Канал закрыт</value>
+  </data>
+  <data name="NotExists" xml:space="preserve">
+    <value>Не существует :(</value>
   </data>
 </root>

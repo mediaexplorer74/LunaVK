@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <!-- Minimal Chinese resource file created automatically -->
+  <data name="Notification_WallPublish" xml:space="preserve"><value>??????</value></data>
+  <data name="Notification_StoryPublish" xml:space="preserve"><value>??????</value></data>
+  <data name="Add" xml:space="preserve"><value>添加</value></data>
+  <data name="Hide" xml:space="preserve"><value>隐藏</value></data>
+  <data name="Document_Downloaded" xml:space="preserve"><value>文档已下载</value></data>
+  <data name="Document_NotDownloaded" xml:space="preserve"><value>文档未下载</value></data>
+  <data name="PlaceHolder_WriteReply" xml:space="preserve"><value>写回复</value></data>
+  <data name="Send" xml:space="preserve"><value>发送</value></data>
+  <data name="Like" xml:space="preserve"><value>喜欢</value></data>
+  <data name="Fave" xml:space="preserve"><value>加入收藏</value></data>
+  <data name="RemoveFromFavorites" xml:space="preserve"><value>从收藏中移除</value></data>
+  <data name="InProcess" xml:space="preserve"><value>处理中...</value></data>
+  <data name="ResultPrefix" xml:space="preserve"><value>结果: </value></data>
+  <data name="ChannelOpened" xml:space="preserve"><value>通道已打开</value></data>
+  <data name="UpdateDeviceRegistrationFailed" xml:space="preserve"><value>更新设备注册失败</value></data>
+  <data name="ChannelClosed" xml:space="preserve"><value>通道已关闭</value></data>
+  <data name="NotExists" xml:space="preserve"><value>不存在 :(</value></data>
+  <data name="Settings_Language_System" xml:space="preserve"><value>系统</value></data>
+</root>

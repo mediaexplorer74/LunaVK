@@ -134,6 +134,7 @@
     <Compile Include="Library\Events\AudioTrackDownloadProgress.cs" />
     <Compile Include="Library\Events\DownloadProgressedEvent.cs" />
     <Compile Include="Library\Events\DownloadSucceededEvent.cs" />
+    <Compile Include="Library\NavigatorImpl.Helpers.cs" />
     <Compile Include="Library\NavigatorImpl.Partial.cs" />
     <Compile Include="Library\PrivacySettingTemplateSelector.cs" />
     <Compile Include="Network\Converters\DownloadStatusToCollapsedConverter.cs" />
@@ -2579,6 +2580,7 @@
     <Compile Include="Framework\CustomFrame.cs" />
     <Compile Include="Framework\DelegateCommand.cs" />
     <PRIResource Include="Strings\en\Resources.resw" />
+    <PRIResource Include="Strings\zh\Resources.resw" />
     <None Include="UC\Controls\ExtendedGridView2\ExtendedGridView.cs" />
     <Compile Include="Framework\DeviceTrigger.cs" />
     <Compile Include="Framework\HideHeaderHelper.cs" />

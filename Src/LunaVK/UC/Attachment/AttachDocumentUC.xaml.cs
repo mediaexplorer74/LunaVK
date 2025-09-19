@@ -298,9 +298,9 @@ namespace LunaVK.UC.Attachment
             string xmlToastTemplate = "<toast launch=\"app-defined-string\">" +
                                      "<visual>" +
                                        "<binding template =\"ToastGeneric\">" +
-                                         (status ? "<text>Скачивание завершено</text>" : "<text>Ошибка скачивания</text>") +
+                                         (status ? "<text>" + LocalizedStrings.GetString("Download_Completed") + "</text>" : "<text>" + LocalizedStrings.GetString("Download_Failed") + "</text>") +
                                          "<text>" +
-                                           (status ? "Документ загружен " : "Документ не загружен ") + fileName +
+                                           (status ? LocalizedStrings.GetString("Document_Downloaded") : LocalizedStrings.GetString("Document_NotDownloaded")) + " " + fileName +
                                          "</text>" +
                                         "</binding>" +
                                      "</visual>" +

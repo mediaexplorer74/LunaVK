@@ -528,6 +528,9 @@
   <data name="Notification_MentionInVideoComment" xml:space="preserve">
     <value>in a video comment</value>
   </data>
+  <data name="Notification_WallPublish" xml:space="preserve">
+    <value>published a new post</value>
+  </data>
   <data name="PullToRefresh.Text" xml:space="preserve">
     <value>Pull to refresh</value>
   </data>
@@ -2187,6 +2190,9 @@
   <data name="Language.Header" xml:space="preserve">
     <value>Language</value>
   </data>
+  <data name="Settings_Language_System" xml:space="preserve">
+    <value>System</value>
+  </data>
   <data name="Settings_Contacts.Text" xml:space="preserve">
     <value>Integrate with device</value>
   </data>
@@ -2651,5 +2657,53 @@
   </data>
   <data name="Description" xml:space="preserve">
     <value>Description</value>
+  </data>
+  <data name="Notification_StoryPublish" xml:space="preserve">
+    <value>published a new story</value>
+  </data>
+  <data name="Add" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="Hide" xml:space="preserve">
+    <value>Hide</value>
+  </data>
+  <data name="Document_Downloaded" xml:space="preserve">
+    <value>Document downloaded</value>
+  </data>
+  <data name="Document_NotDownloaded" xml:space="preserve">
+    <value>Document not downloaded</value>
+  </data>
+  <data name="PlaceHolder_WriteReply" xml:space="preserve">
+    <value>Write a reply</value>
+  </data>
+  <data name="Send" xml:space="preserve">
+    <value>Send</value>
+  </data>
+  <data name="Like" xml:space="preserve">
+    <value>Like</value>
+  </data>
+  <data name="Fave" xml:space="preserve">
+    <value>Add to favorites</value>
+  </data>
+  <data name="RemoveFromFavorites" xml:space="preserve">
+    <value>Remove from favorites</value>
+  </data>
+  <data name="InProcess" xml:space="preserve">
+    <value>In process...</value>
+  </data>
+  <data name="ResultPrefix" xml:space="preserve">
+    <value>Result: </value>
+  </data>
+  <data name="ChannelOpened" xml:space="preserve">
+    <value>Channel opened</value>
+  </data>
+  <data name="UpdateDeviceRegistrationFailed" xml:space="preserve">
+    <value>UpdateDeviceRegistration: failed</value>
+  </data>
+  <data name="ChannelClosed" xml:space="preserve">
+    <value>Channel closed</value>
+  </data>
+  <data name="NotExists" xml:space="preserve">
+    <value>Not exists :(</value>
   </data>
 </root>

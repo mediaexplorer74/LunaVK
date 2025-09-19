@@ -127,7 +127,7 @@ namespace LunaVK.UC
             if (this.VM.can_delete)
             {
                 PopUP2.PopUpItem menuItem2 = new PopUP2.PopUpItem();
-                menuItem2.Text = "Delete";
+                menuItem2.Text = LocalizedStrings.GetString("Delete");
                 menuItem2.Command = new DelegateCommand((args) => { this._deleteMenuItem_Click(); });
                 menuItemList.Items.Add(menuItem2);
             }

@@ -103,7 +103,7 @@ namespace LunaVK.UC
             }
             TextBlock t = new TextBlock();//todo:scrolable textblock for emodgi?
             t.FontSize = (double)Application.Current.Resources["FontSizeContent"]; ;
-            t.Text = content;
+            t.Text = content; // content is dynamic, left as-is
             t.Style = (Style)Application.Current.Resources["TextBlockThemeContent"];
             t.Margin = new Thickness(0, 0, 10, 10);
             t.TextWrapping = TextWrapping.Wrap;

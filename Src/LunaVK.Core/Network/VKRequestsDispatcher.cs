@@ -72,11 +72,19 @@ namespace LunaVK.Core.Network
                         {
                             var list = parameters.Where((param) => param.Key != "access_token" && param.Key != "lang" && param.Key != "v").Select((param) => { return param.Key + ":" + param.Value; }).ToList();
 
+                            // Log to persistent logger
                             Logger.Instance.Error(baseUrl + list.GetCommaSeparated() + Environment.NewLine + jsonResp, response.error);
+
+                            // Also write to debug output for immediate visibility during development
+                            try
+                            {
+                                System.Diagnostics.Debug.WriteLine($"VK API Error: code={response.error.error_code} method={baseUrl} params={list.GetCommaSeparated()} json={jsonResp}");
+                            }
+                            catch { }
                         }
                     }
-                    catch (Exception e)
-                    {
+                     catch (Exception e)
+                     {
                         response = new VKResponse<R>();
                         response.error.error_msg = e.Message;
                         response.error.error_code = VKErrors.DeserializationError;

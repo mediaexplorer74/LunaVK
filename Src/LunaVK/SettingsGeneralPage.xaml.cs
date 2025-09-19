@@ -29,9 +29,25 @@ namespace LunaVK
         {
             this.InitializeComponent();
             base.Title = LocalizedStrings.GetString("SettingsGeneral");
-            base.DataContext = new ViewModels.SettingsViewModel();
+            // Delay creating ViewModel until Loaded to avoid potential exceptions during Measure/Arrange caused by bindings
+            this.Loaded += SettingsGeneralPage_Loaded;
 
+            // keep proxy toggle initial state
             this._switchProxy.IsChecked = Settings.UseProxy;
+        }
+
+        private void SettingsGeneralPage_Loaded(object sender, RoutedEventArgs e)
+        {
+            this.Loaded -= SettingsGeneralPage_Loaded;
+            try
+            {
+                base.DataContext = new ViewModels.SettingsViewModel();
+            }
+            catch (Exception ex)
+            {
+                // Log exception to help diagnose XAML measure/arrange issues
+                try { LunaVK.Core.Utils.Logger.Instance.Error("SettingsGeneralPage_Loaded: " + ex.ToString()); } catch { }
+            }
         }
 
         private ViewModels.SettingsViewModel VM

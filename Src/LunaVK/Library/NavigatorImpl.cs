@@ -26,6 +26,11 @@ namespace LunaVK.Library
     public partial class NavigatorImpl
     {
         private static NavigatorImpl _instance;
+        private bool _isNavigating = false;
+
+        // Store last attempted navigation URI for debugging purposes
+        public string LastAttemptedUri { get; private set; }
+
         public static NavigatorImpl Instance
         {
             get
@@ -51,34 +56,6 @@ namespace LunaVK.Library
                     return;
                 }
             }
-            /*
-            if (e.Parameter == null || CustomFrame.Instance.Content == null || !(CustomFrame.Instance.Content is PageBase))
-                return;
-
-            PagesParams page_param = (CustomFrame.Instance.Content as PageBase).NavigationParameter as PagesParams;//Dictionary<string,int> page_param = (NavigatorImpl.NavigationService.Content as PageBase).NavigationParameter as Dictionary<string,int>;
-            PagesParams nav_param = e.Parameter as PagesParams;//Dictionary<string,int> nav_param = e.Parameter as Dictionary<string,int>;
-
-            if (page_param == null || nav_param == null)
-                return;
-
-            bool equal = false;
-
-            if (nav_param.chat_id > 0)
-            {
-                if (page_param.chat_id == nav_param.chat_id)
-                    equal = true;
-            }
-            else
-            {
-                if (page_param.user_id == nav_param.user_id)
-                    equal = true;
-            }
-
-            if (equal)
-                e.Cancel = true;
-
-            int i = 0;
-            */
         }
 
         public void NavigateToAudio(int ownerId, string ownerName)
@@ -91,17 +68,6 @@ namespace LunaVK.Library
         
         public void NavigateToConversations(uint? groupId = null)
         {
-            /*
-            if (CustomFrame.Instance.Content is DialogsConversationPage2 page)
-            {
-                page.BackAction();
-                CustomFrame.Instance.OpenCloseMenu(false);
-            }
-            else
-            {
-                this.Navigate(typeof(DialogsConversationPage2));
-            }
-            */
             this.NavigateToConversation(0, groupId);
         }
         
@@ -128,24 +94,7 @@ namespace LunaVK.Library
                     QueryString["GroupId"] = (int)groupId.Value;
                 this.Navigate(typeof(DialogsConversationPage2), QueryString);
             }
-            
         }
-        /*
-        public void NavigateToConversation(int peerId, int messageId = 0, bool isContactSellerMode = false)
-        {
-            Dictionary<string, int> QueryString = new Dictionary<string, int>();
-
-            QueryString["PeerId"] = peerId;
-            //QueryString["FromLookup"] =
-            QueryString["MessageId"] = messageId;
-            //QueryString["IsContactProductSellerMode"] =
-
-
-
-
-            this.Navigate(typeof(Pages.DialogsConversationPage2), QueryString);
-        }
-    */
 
         /// <summary>
         /// Навигация в сообщество или пользователя
@@ -163,8 +112,6 @@ namespace LunaVK.Library
         {
             this.Navigate(typeof(NotificationsPage));
         }
-
-        
 
         /// <summary>
         /// 
@@ -293,14 +240,68 @@ namespace LunaVK.Library
 
         private void Navigate(Type navStr, object parameter = null)
         {
-            //NavigationTransitionInfo info = new NavigationTransitionInfo();
+            // Prevent re-entrancy / concurrent navigation
+            if (this._isNavigating)
+                return;
 
-            //Logger.Instance.Info("Navigator.Navigate, navStr={0} [{1}]", navStr.FullName, parameter);
+            Execute.ExecuteOnUIThread(() =>
+            {
+                // quick double-check
+                if (this._isNavigating)
+                    return;
 
-            CustomFrame.Instance.Navigate(navStr, parameter/*,new DrillInNavigationTransitionInfo()*/);//анимация перехода не работает :(
-            
-            CustomFrame.Instance.OpenCloseMenu(false);
+                try
+                {
+                    this._isNavigating = true;
 
+                    var frame = CustomFrame.Instance;
+                    if (frame == null)
+                    {
+                        try { Logger.Instance?.Error("Navigator.Navigate: CustomFrame.Instance is null"); } catch { Debug.WriteLine("Navigator.Navigate: CustomFrame.Instance is null"); }
+                        return;
+                    }
+
+                    // If already on the same page type with no parameter, skip navigation
+                    try
+                    {
+                        if (frame.Content != null && frame.Content.GetType() == navStr && parameter == null)
+                            return;
+                    }
+                    catch { }
+
+                    // Perform navigation
+                    frame.Navigate(navStr, parameter/*,new DrillInNavigationTransitionInfo()*/);
+                    frame.OpenCloseMenu(false);
+                }
+                catch (Exception ex)
+                {
+                    try
+                    {
+                        // Special handling for COMException to capture HRESULT and extra context
+                        var comEx = ex as System.Runtime.InteropServices.COMException;
+                        if (comEx != null)
+                        {
+                            string frameInfo = "";
+                            try { frameInfo = CustomFrame.Instance?.Content?.GetType()?.FullName ?? "<no-frame>"; } catch { frameInfo = "<err-getting-frame>"; }
+                            Logger.Instance?.Error($"Navigator.Navigate COMException HResult=0x{comEx.HResult:X8} Message={comEx.Message} Frame={frameInfo} Stack={comEx.StackTrace} EnvStack={System.Environment.StackTrace}", comEx);
+                            Debug.WriteLine($"Navigator.Navigate COMException HResult=0x{comEx.HResult:X8} Message={comEx.Message}");
+                        }
+                        else
+                        {
+                            Logger.Instance?.Error("Navigator.Navigate failed", ex);
+                        }
+                    }
+                    catch
+                    {
+                        Debug.WriteLine(ex.ToString());
+                    }
+                    // swallow - don't crash UI thread
+                }
+                finally
+                {
+                    this._isNavigating = false;
+                }
+            });
         }
 
         public void ClearBackStack()
@@ -315,17 +316,77 @@ namespace LunaVK.Library
 
         public void NavigateToWallPostComments(int ownerId, uint postId, uint commentId = 0, object postData = null)
         {
-            Dictionary<string, object> QueryString = new Dictionary<string, object>();
-            QueryString.Add("OwnerId", ownerId);
-            QueryString.Add("ItemId", postId);
-            QueryString.Add("CommentId", commentId);
+            try { Debug.WriteLine($"NavigateToWallPostComments: owner={ownerId} post={postId} commentId={commentId}"); } catch { }
 
-            if (postData != null)
-                QueryString.Add("Data", postData);
+            // Try to prefetch post to detect whether owner id sign is correct (user vs group).
+            WallService.Instance.GetWallPostByIdWithComments(ownerId, postId, 0, (int)commentId, true, (result) =>
+            {
+                if (result.error.error_code == VKErrors.None && result.response != null)
+                {
+                    // Success with given ownerId
+                    Execute.ExecuteOnUIThread(() =>
+                    {
+                        Dictionary<string, object> QueryString = new Dictionary<string, object>();
+                        QueryString.Add("OwnerId", ownerId);
+                        QueryString.Add("ItemId", postId);
+                        QueryString.Add("CommentId", commentId);
+                        if (postData != null)
+                            QueryString.Add("Data", postData);
+                        this.Navigate(typeof(CommentsPage), QueryString);
+                    });
+                    return;
+                }
 
-            this.Navigate(typeof(CommentsPage), QueryString);
-            //PostCommentsPage
-        }
+                // If access denied or content unavailable, and ownerId positive, try negated owner (group)
+                if ((result.error.error_code == VKErrors.AccessDenied || result.error.error_code == VKErrors.ContentUnavailable || result.error.error_code == VKErrors.PermissionIsDenied) && ownerId > 0)
+                {
+                    int swapped = -ownerId;
+                    WallService.Instance.GetWallPostByIdWithComments(swapped, postId, 0, (int)commentId, true, (result2) =>
+                    {
+                        if (result2.error.error_code == VKErrors.None && result2.response != null)
+                        {
+                            Execute.ExecuteOnUIThread(() =>
+                            {
+                                Dictionary<string, object> QueryString = new Dictionary<string, object>();
+                                QueryString.Add("OwnerId", swapped);
+                                QueryString.Add("ItemId", postId);
+                                QueryString.Add("CommentId", commentId);
+                                if (postData != null)
+                                    QueryString.Add("Data", postData);
+                                this.Navigate(typeof(CommentsPage), QueryString);
+                            });
+                        }
+                        else
+                        {
+                            // fallback: navigate with original ownerId so page shows error
+                            Execute.ExecuteOnUIThread(() =>
+                            {
+                                Dictionary<string, object> QueryString = new Dictionary<string, object>();
+                                QueryString.Add("OwnerId", ownerId);
+                                QueryString.Add("ItemId", postId);
+                                QueryString.Add("CommentId", commentId);
+                                if (postData != null)
+                                    QueryString.Add("Data", postData);
+                                this.Navigate(typeof(CommentsPage), QueryString);
+                            });
+                        }
+                    });
+                    return;
+                }
+
+                // Other errors - navigate with original ownerId so CommentsPage can handle/display appropriate message
+                Execute.ExecuteOnUIThread(() =>
+                {
+                    Dictionary<string, object> QueryString = new Dictionary<string, object>();
+                    QueryString.Add("OwnerId", ownerId);
+                    QueryString.Add("ItemId", postId);
+                    QueryString.Add("CommentId", commentId);
+                    if (postData != null)
+                        QueryString.Add("Data", postData);
+                    this.Navigate(typeof(CommentsPage), QueryString);
+                });
+            });
+         }
 
         /// <summary>
         /// Добавляем плеер во фрейм
@@ -405,13 +466,12 @@ namespace LunaVK.Library
             if (string.IsNullOrWhiteSpace(uri))
                 return;
 
+            // Save last attempted uri for diagnostics
+            try { this.LastAttemptedUri = uri; } catch { }
+
             if (uri.StartsWith("tel:"))
             {
-                //PhoneCallTask phoneCallTask = new PhoneCallTask();
-                //string str = uri.Substring(4);
-                //phoneCallTask.PhoneNumber = str;
-                //phoneCallTask.Show();
-
+                // phone call
             }
             else if (uri.StartsWith("vk.cc/"))
             {
@@ -430,6 +490,22 @@ namespace LunaVK.Library
             }
             else
             {
+                // If uri refers to a story and is a relative or hostless path, convert to https://vk.com/story... to avoid malformed http://story...
+                bool isSchemeMissing = !uri.StartsWith("http://", StringComparison.CurrentCultureIgnoreCase) && !uri.StartsWith("https://", StringComparison.CurrentCultureIgnoreCase);
+                if (isSchemeMissing)
+                {
+                    string lower = uri.ToLowerInvariant();
+                    if (lower.StartsWith("/story") || lower.StartsWith("story") || lower.Contains("/story/"))
+                    {
+                        // ensure leading slash
+                        string path = uri.StartsWith("/") ? uri : "/" + uri;
+                        uri = "https://vk.com" + path;
+
+                        // update last attempted uri
+                        try { this.LastAttemptedUri = uri; } catch { }
+                    }
+                }
+
                 if (!uri.StartsWith("http://", StringComparison.CurrentCultureIgnoreCase) && !uri.StartsWith("https://", StringComparison.CurrentCultureIgnoreCase))
                     uri = "http://" + uri;
 
@@ -439,16 +515,79 @@ namespace LunaVK.Library
                 if (flag)
                     return;
 
-                Task.Run(async() =>
+                // Normalize URL: unescape JSON slashes and HTML entities, then URL-decode
+                try
                 {
-                    LauncherOptions options = new LauncherOptions();
-                    
-                    if (ApiInformation.IsApiContractPresent("Windows.Foundation.UniversalApiContract", 3))
+                    uri = uri.Replace("\\/", "/").Replace("&amp;", "&").Trim();
+                    try { uri = System.Net.WebUtility.UrlDecode(uri); } catch { }
+                }
+                catch { }
+                
+                // Retry in-app navigation on normalized URI
+                try
+                {
+                    if (!forceWebNavigation)
                     {
-                        options.IgnoreAppUriHandlers = true;
+                        bool handled = this.GetWithinAppNavigationUri(uri);
+                        if (handled)
+                            return;
                     }
-                    
-                    await Launcher.LaunchUriAsync(new Uri(uri), options);
+                }
+                catch (Exception ex)
+                {
+                    try { Logger.Instance?.Error("GetWithinAppNavigationUri failed on normalized uri", ex); } catch { Debug.WriteLine(ex.ToString()); }
+                }
+
+                // Try extract wall-<owner>_<post> and navigate internally if found
+                try
+                {
+                    var m = System.Text.RegularExpressions.Regex.Match(uri, @"wall-?(?<owner>-?\d+)_(?<post>\d+)");
+                    if (m.Success)
+                    {
+                        int ownerId = int.Parse(m.Groups["owner"].Value);
+                        uint postId = uint.Parse(m.Groups["post"].Value);
+                        try
+                        {
+                            this.NavigateToWallPostComments(ownerId, postId);
+                            return;
+                        }
+                        catch (Exception navEx)
+                        {
+                            try { Logger.Instance?.Error("NavigateToWallPostComments failed for extracted wall link", navEx); } catch { Debug.WriteLine(navEx.ToString()); }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    try { Logger.Instance?.Error("Failed to extract wall link from uri", ex); } catch { Debug.WriteLine(ex.ToString()); }
+                }
+                // Fallback: open in external browser on UI thread
+                Execute.ExecuteOnUIThread(async () =>
+                {
+                    try
+                    {
+                        LauncherOptions options = new LauncherOptions();
+                        if (ApiInformation.IsApiContractPresent("Windows.Foundation.UniversalApiContract", 3))
+                            options.IgnoreAppUriHandlers = true;
+
+                        await Launcher.LaunchUriAsync(new Uri(uri), options);
+                    }
+                    catch (System.Runtime.InteropServices.COMException comEx)
+                    {
+                        try { Logger.Instance?.Error($"Launcher.LaunchUriAsync COMException HResult=0x{comEx.HResult:X8} Message={comEx.Message} Uri={uri}", comEx); } catch { Debug.WriteLine(comEx.ToString()); }
+                        try
+                        {
+                            await Launcher.LaunchUriAsync(new Uri(uri));
+                        }
+                        catch (Exception ex2)
+                        {
+                            try { Logger.Instance?.Error("Fallback LaunchUriAsync failed", ex2); } catch { Debug.WriteLine(ex2.ToString()); }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        try { Logger.Instance?.Error("Launcher.LaunchUriAsync failed", ex); } catch { Debug.WriteLine(ex.ToString()); }
+                    }
                 });
             }
         }
@@ -487,47 +626,6 @@ namespace LunaVK.Library
                this.NavigateToProfileAppPage((uint)id, sourceId, app.title, utmParamsStr);
                 
             }
-        }
-
-        public void NavigateToGroupRecommendations(object sender)//(int categoryId, string categoryName)
-        {
-            this.Navigate(typeof(RecommendedGroupsPage));
-        }
-
-        public void NavigateToSuggestedSourcesPage(object sender)
-        {
-            this.Navigate(typeof(SuggestedSourcesPage));
-        }
-
-        public void NavigateToUsersSearch(string query = "")
-        {
-            this.Navigate(typeof(SearchResultsPage), query); //UsersSearchResultsPage
-        }
-
-        public void NavigateToProfileAppPage(uint appId, int ownerId, string appName, string utmParamsStr = "")
-        {
-         //   utmParamsStr = HttpUtility.UrlEncode(utmParamsStr);
-            Dictionary<string, object> QueryString = new Dictionary<string, object>();
-            QueryString.Add("AppId", appId);
-            QueryString.Add("OwnerId", ownerId);
-            QueryString.Add("AppName", appName);
-            if(!string.IsNullOrEmpty(utmParamsStr))
-                QueryString.Add("UtmParams", utmParamsStr);
-            
-            this.Navigate(typeof(ProfileAppPage), QueryString);
-        }
-
-        public void NavigateToAudioPlayer(VKPlaylist playlist = null, int trackNumber = -1)
-        {
-            Dictionary<string, object> QueryString = new Dictionary<string, object>();
-            
-            if(trackNumber!=-1)
-                QueryString.Add("TrackNumber", trackNumber);
-
-            if (playlist != null)
-                QueryString.Add("Playlist", playlist);
-
-            this.Navigate(typeof(AudioPlayer), QueryString);
         }
 
         private bool TryOpenGame(VKGame game)
@@ -657,6 +755,8 @@ namespace LunaVK.Library
             this.Navigate(typeof(NewPostPage), QueryString);
         }
 
+        // Navigation helpers moved to NavigatorImpl.Helpers.cs
+
        /* public void NavigateToGroupRecommendations(object sender)//(int categoryId, string categoryName)
         {
             this.Navigate(typeof(RecommendedGroupsPage));
@@ -708,10 +808,57 @@ namespace LunaVK.Library
         {
             if (!NavigatorImpl.IsVKUri(uri))
                 return false;
+            
+            // Normalize incoming URI: unescape JSON slashes and HTML entities, then URL-decode to increase chance of matching
+            try
+            {
+                uri = uri.Replace("\\/", "/").Replace("&amp;", "&").Trim();
+                try { uri = System.Net.WebUtility.UrlDecode(uri); } catch { }
+            }
+            catch { }
+            
+            // Fix malformed pattern like "/id-12345" which sometimes появляется вместо "/club12345"
+            try { if (uri.Contains("/id-")) uri = uri.Replace("/id-", "/club"); } catch { }
+
             string uri1 = uri;
-            int num = uri1.IndexOf("://");
-            if (num > -1)
-                uri1 = uri1.Remove(0, num + 3);
+
+            // Aggressive early extraction: if URI (or decoded forms) contains a wall link, navigate to it immediately
+            try
+            {
+                var wallMatch = System.Text.RegularExpressions.Regex.Match(uri, @"wall-?(?<owner>-?\d+)_(?<post>\d+)", RegexOptions.IgnoreCase);
+                if (!wallMatch.Success)
+                    wallMatch = System.Text.RegularExpressions.Regex.Match(uri1, @"wall-?(?<owner>-?\d+)_(?<post>\d+)", RegexOptions.IgnoreCase);
+
+                if (wallMatch.Success)
+                {
+                    int parsedOwner = 0;
+                    uint parsedPost = 0;
+                    try
+                    {
+                        parsedOwner = int.Parse(wallMatch.Groups["owner"].Value);
+                        parsedPost = uint.Parse(wallMatch.Groups["post"].Value);
+                    }
+                    catch { }
+
+                    if (parsedPost != 0)
+                    {
+                        try
+                        {
+                            this.NavigateToWallPostComments(parsedOwner, parsedPost);
+                            return true;
+                        }
+                        catch (Exception navEx)
+                        {
+                            try { Logger.Instance?.Error("NavigateToWallPostComments failed for extracted wall link", navEx); } catch { Debug.WriteLine(navEx.ToString()); }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                try { Logger.Instance?.Error("GetWithinAppNavigationUri early wall extraction failed", ex); } catch { Debug.WriteLine(ex.ToString()); }
+            }
+
             int count = uri1.IndexOf("/");
             if (count > -1)
                 uri1 = uri1.Remove(0, count);

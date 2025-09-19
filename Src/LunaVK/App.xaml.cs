@@ -26,6 +26,7 @@ using Windows.Globalization;
 using Windows.Storage;
 using System.Threading.Tasks;
 using Windows.System;
+using System.Linq;
 
 namespace LunaVK
 {
@@ -758,11 +759,78 @@ type=open_url&url=https%3A%2F%2Fvk.com%2Fwall-162756747_50702 // сообщес�
             {
                 Settings.Initialize();
 
-                if(Settings.LanguageSettings!=0)
+                //if(Settings.LanguageSettings!=0)
+                //{
+                //    ApplicationLanguages.PrimaryLanguageOverride = Windows.System.UserProfile.GlobalizationPreferences.Languages[Settings.LanguageSettings-1];
+                //}
+
+                // build same language list as SettingsViewModel.Languages ("" == system)
+                var langsList = new List<string>();
+
+                // "System" option
+                langsList.Add("");
+
+                // Preferred explicit languages: Russian, English, Chinese
+                string[] preferred = new[] { "ru", "en-US", "zh-CN" };
+                var codes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var code in preferred)
                 {
-                    ApplicationLanguages.PrimaryLanguageOverride = Windows.System.UserProfile.GlobalizationPreferences.Languages[Settings.LanguageSettings-1];
+                    try
+                    {
+                        var ci = new System.Globalization.CultureInfo(code);
+                        if (!codes.Contains(ci.Name))
+                        {
+                            langsList.Add(ci.Name);
+                            codes.Add(ci.Name);
+                        }
+                    }
+                    catch { }
                 }
-                
+
+                // Append system-preferred languages (if not already added)
+                try
+                {
+                    foreach (string lang in Windows.System.UserProfile.GlobalizationPreferences.Languages)
+                    {
+                        try
+                        {
+                            var ci = new System.Globalization.CultureInfo(lang);
+                            if (!codes.Contains(ci.Name))
+                            {
+                                langsList.Add(ci.Name);
+                                codes.Add(ci.Name);
+                            }
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
+
+                // Use stored index directly (Settings.LanguageSettings is zero-based index into this same list)
+                int idx = Settings.LanguageSettings;
+                if (langsList != null && idx >= 0 && idx < langsList.Count)
+                {
+                    ApplicationLanguages.PrimaryLanguageOverride = langsList[idx];
+                    LunaVK.Core.Utils.Logger.Instance.Info($"Applied PrimaryLanguageOverride='{langsList[idx]}' from Settings.LanguageSettings={idx}");
+                }
+                else if (langsList != null && langsList.Count > 0)
+                {
+                    // fallback to first available non-empty language from system preferences (skip the "" entry if present)
+                    string fallback = langsList.FirstOrDefault(l => !string.IsNullOrEmpty(l)) ?? "";
+                    ApplicationLanguages.PrimaryLanguageOverride = fallback;
+                    Settings.LanguageSettings = (byte)(string.IsNullOrEmpty(fallback) ? 0 : langsList.IndexOf(fallback));
+                    LunaVK.Core.Utils.Logger.Instance.Info($"Fallback PrimaryLanguageOverride='{fallback}'; Settings.LanguageSettings updated to {Settings.LanguageSettings}");
+                }
+                else
+                {
+                    // no available languages: clear override or use app default
+                    Settings.LanguageSettings = 0;
+                    ApplicationLanguages.PrimaryLanguageOverride = "";
+                    LunaVK.Core.Utils.Logger.Instance.Info("No languages available; using default.");
+                }
+
+
 
                 ThemeManager.ApplyColors();
             }
