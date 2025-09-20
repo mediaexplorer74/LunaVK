@@ -55,7 +55,7 @@ namespace LunaVK.ViewModels
           "icon_278": "https://sun9-32.userapi.com/DqL7ajOebGhkqT2FpKyMrrs0LP1mQqYCRj5UdA/4lfn1wLIJeE.jpg",
           "icon_576": "https://sun9-66.userapi.com/o4CqAVyhuA9z0P0LANFOV_S8HIiYWFuSg5c0Uw/7cKbI_6hGXQ.jpg",
           "icon_75": "https://sun9-52.userapi.com/aDnx4hCo08ieq_D29mvzv5I9VNYhS8M2XbY3Jg/04PFgXb0HlI.jpg",
-          "author_url": "https://vk.com/club22822305",
+          "author_url": "https://vk.ru/club22822305",
           "banner_1120": "https://sun9-22.userapi.com/xVvIsT-d3r8JID7lMKDz_qywQq6lrptuZk5ybA/SfT2GeerT1c.jpg",
           "banner_560": "https://sun9-60.userapi.com/KLRFF0_V-QMPzZf30zsc0X8Biiyyo9fr7vHxWg/1kLqLfrQSCY.jpg",
           "catalog_banner": {
@@ -193,3 +193,4 @@ namespace LunaVK.ViewModels
         #endregion
     }
 }
+

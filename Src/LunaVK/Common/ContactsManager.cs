@@ -1,4 +1,5 @@
 ﻿using LunaVK.Core;
+using Core = LunaVK.Core;
 using LunaVK.Core.DataObjects;
 using LunaVK.Core.Library;
 using LunaVK.Core.Utils;
@@ -17,7 +18,7 @@ using Windows.Foundation;
 using Windows.Storage.Streams;
 using Windows.System.Threading;
 
-namespace LunaVK.Common
+namespace Lunavk.rumon
 {
     public class ContactsManager
     {
@@ -445,7 +446,7 @@ namespace LunaVK.Common
                 contact.LastName = user.last_name;
                 //contact.Id = user.id.ToString();
 
-                if (!string.IsNullOrWhiteSpace(user.photo_max) && !user.photo_max.Contains("vk.com/images/camera"))
+                if (!string.IsNullOrWhiteSpace(user.photo_max) && !user.photo_max.Contains("vk.ru/images/camera"))
                 {
                     var rref = RandomAccessStreamReference.CreateFromUri(new Uri(user.photo_max));
                     contact.SourceDisplayPicture = rref;
@@ -519,7 +520,7 @@ namespace LunaVK.Common
 
                 if (CustomFrame.Instance.IsDevicePhone)
                     prefix += "m.";
-                prefix += "vk.com/";
+                prefix += "vk.ru/";
                 if (string.IsNullOrEmpty(user.domain))
                     prefix += ("id" + user.id);
                 else
@@ -697,3 +698,4 @@ namespace LunaVK.Common
         }
     }
 }
+

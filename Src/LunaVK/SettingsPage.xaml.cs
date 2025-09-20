@@ -10,7 +10,9 @@ using LunaVK.Core.Framework;
 using System.Threading.Tasks;
 using LunaVK.Framework;
 using LunaVK.Pages;
-using LunaVK.Common;
+using Lunavk.rumon;
+using Windows.System;
+using System.Linq;
 
 namespace LunaVK
 {
@@ -33,12 +35,8 @@ namespace LunaVK
             string hexValue = string.Empty;
             int num;
 
-            //for (int i = 0; i < 4; i++)
-            //{
-                num = rdm.Next(0, int.MaxValue);
-                hexValue += num.ToString("X1");
-            //}
-
+            num = rdm.Next(0, int.MaxValue);
+            hexValue += num.ToString("X1");
 
             this._debug.SubTitle = "0x" + hexValue;
         }
@@ -119,3 +117,4 @@ namespace LunaVK
         }
     }
 }
+

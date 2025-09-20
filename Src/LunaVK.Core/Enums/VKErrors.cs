@@ -18,31 +18,31 @@ namespace LunaVK.Core.Enums
 
         /// <summary>
         /// Приложение выключено.
-        /// Необходимо включить приложение в настройках https://vk.com/editapp?id={Ваш API_ID} или использовать тестовый режим (test_mode=1).
+        /// Необходимо включить приложение в настройках https://vk.ru/editapp?id={Ваш API_ID} или использовать тестовый режим (test_mode=1).
         /// </summary>
         ApplicationIsDisabled,
 
         /// <summary>
         /// Передан неизвестный метод.
-        /// Проверьте, правильно ли указано название вызываемого метода: http://vk.com/dev/methods.
+        /// Проверьте, правильно ли указано название вызываемого метода: http://vk.ru/dev/methods.
         /// </summary>
         UnknownMethod,
 
         /// <summary>
         /// Неверная подпись.
-        /// Проверьте правильность формирования подписи запроса: https://vk.com/dev/api_nohttps.
+        /// Проверьте правильность формирования подписи запроса: https://vk.ru/dev/api_nohttps.
         /// </summary>
         IncorrectSignature,
 
         /// <summary>
         /// Авторизация пользователя не удалась.
-        /// Убедитесь, что Вы используете верную схему авторизации. Для работы с методами без префикса secure Вам нужно авторизовать пользователя одним из этих способов: http://vk.com/dev/auth_sites, http://vk.com/dev/auth_mobile.
+        /// Убедитесь, что Вы используете верную схему авторизации. Для работы с методами без префикса secure Вам нужно авторизовать пользователя одним из этих способов: http://vk.ru/dev/auth_sites, http://vk.ru/dev/auth_mobile.
         /// </summary>
         AuthorizationFailed,
 
         /// <summary>
         /// Слишком много запросов в секунду.
-        /// Задайте больший интервал между вызовами или используйте метод execute. Подробнее об ограничениях на частоту вызовов см. на странице http://vk.com/dev/api_requests.
+        /// Задайте больший интервал между вызовами или используйте метод execute. Подробнее об ограничениях на частоту вызовов см. на странице http://vk.ru/dev/api_requests.
         /// </summary>
         TooManyRequests,
 
@@ -72,7 +72,7 @@ namespace LunaVK.Core.Enums
 
         /// <summary>
         /// В тестовом режиме приложение должно быть выключено или пользователь должен быть залогинен. 
-        /// Выключите приложение в настройках https://vk.com/editapp?id={Ваш API_ID}
+        /// Выключите приложение в настройках https://vk.ru/editapp?id={Ваш API_ID}
         /// </summary>
         InTestModeAppShouldBeDisabled,
 
@@ -95,7 +95,7 @@ namespace LunaVK.Core.Enums
 
         /// <summary>
         /// Требуется валидация пользователя.
-        /// Убедитесь, что Вы не используете токен, полученный по схеме http://vk.com/dev/auth_mobile, для вызовов с сервера — это запрещено. Процесс валидации пользователя описан на отдельной странице.
+        /// Убедитесь, что Вы не используете токен, полученный по схеме http://vk.ru/dev/auth_mobile, для вызовов с сервера — это запрещено. Процесс валидации пользователя описан на отдельной странице.
         /// </summary>
         ValidationRequed,
 
@@ -105,7 +105,7 @@ namespace LunaVK.Core.Enums
         ContentUnavailable = 19,
         /// <summary>
         /// Данное действие запрещено для не Standalone приложений.
-        /// Если ошибка возникает несмотря на то, что Ваше приложение имеет тип Standalone, убедитесь, что при авторизации Вы используете redirect_uri=https://oauth.vk.com/blank.html. Подробнее см. http://vk.com/dev/auth_mobile.
+        /// Если ошибка возникает несмотря на то, что Ваше приложение имеет тип Standalone, убедитесь, что при авторизации Вы используете redirect_uri=https://oauth.vk.ru/blank.html. Подробнее см. http://vk.ru/dev/auth_mobile.
         /// </summary>
         PermissionDeniedForNonStandaloneApps = 20,
         /// <summary>
@@ -119,7 +119,7 @@ namespace LunaVK.Core.Enums
 
         /// <summary>
         /// Метод был выключен.
-        /// Все актуальные методы ВК API, которые доступны в настоящий момент, перечислены здесь: http://vk.com/dev/methods.
+        /// Все актуальные методы ВК API, которые доступны в настоящий момент, перечислены здесь: http://vk.ru/dev/methods.
         /// </summary>
         MethodDisabled = 23,
 
@@ -133,7 +133,7 @@ namespace LunaVK.Core.Enums
 
         /// <summary>
         /// Неверный API ID приложения.
-        /// Найдите приложение в списке администрируемых на странице http://vk.com/apps?act=settings и укажите в запросе верный API_ID (идентификатор приложения).
+        /// Найдите приложение в списке администрируемых на странице http://vk.ru/apps?act=settings и укажите в запросе верный API_ID (идентификатор приложения).
         /// </summary>
         InvalidAppAPIID = 101,
         /// <summary>
@@ -251,7 +251,7 @@ namespace LunaVK.Core.Enums
         MaxAlbumsCountOrInvalidFileSize = 302,
         /// <summary>
         /// Действие запрещено. Вы должны включить переводы голосов в настройках приложения. 
-        /// Проверьте настройки приложения: http://vk.com/editapp?id={Ваш API_ID}&section=payments
+        /// Проверьте настройки приложения: http://vk.ru/editapp?id={Ваш API_ID}&section=payments
         /// </summary>
         PermissionToVotesDenied = 500,
 
@@ -324,3 +324,4 @@ namespace LunaVK.Core.Enums
         NeedValidation = 90911,
     }
 }
+

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -36,7 +36,7 @@ namespace LunaVK.UC
         public static readonly DependencyProperty DataProperty = DependencyProperty.Register("Data", typeof(object), typeof(ItemNotificationUC), new PropertyMetadata(default(object), OnDataChanged));
 
         /// <summary>
-        /// Данные
+        /// Р”Р°РЅРЅС‹Рµ
         /// </summary>
         public object Data
         {
@@ -397,7 +397,7 @@ namespace LunaVK.UC
         private bool _isBirthdayDetected = false;
 
         /// <summary>
-        /// Задаём аватарку и запоминаем пользователя
+        /// Р—Р°РґР°С‘Рј Р°РІР°С‚Р°СЂРєСѓ Рё Р·Р°РїРѕРјРёРЅР°РµРј РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
         /// </summary>
         private void GenerateLayout()
         {
@@ -434,7 +434,7 @@ namespace LunaVK.UC
                                 if (!string.IsNullOrEmpty(rawText))
                                 {
                                     var low = rawText.ToLowerInvariant();
-                                    if (low.Contains("birthday") || (low.Contains("день") && low.Contains("рожд")))
+                                    if (low.Contains("birthday") || (low.Contains("РґРµРЅСЊ") && low.Contains("СЂРѕР¶Рґ")))
                                     {
                                         _isBirthdayDetected = true;
                                     }
@@ -557,7 +557,7 @@ namespace LunaVK.UC
                     if (!string.IsNullOrEmpty(header))
                     {
                         var low = header.ToLowerInvariant();
-                        if (low.Contains("birthday") || (low.Contains("день") && low.Contains("рожд")) )
+                        if (low.Contains("birthday") || (low.Contains("РґРµРЅСЊ") && low.Contains("СЂРѕР¶Рґ")) )
                         {
                             _isBirthdayDetected = true;
                         }
@@ -814,12 +814,12 @@ namespace LunaVK.UC
                 }
                 catch { }
 
-                // header like "[club187062591|На максималках] posted '3' new posts"
+                // header like "[club187062591|РќР° РјР°РєСЃРёРјР°Р»РєР°С…] posted '3' new posts"
                 var header = raw.Value<string>("header");
                 if (!string.IsNullOrEmpty(header))
                 {
                     var low = header.ToLowerInvariant();
-                    if (low.Contains("posted") || low.Contains("new post") || low.Contains("new posts") || low.Contains("опубликовал") || low.Contains("опубликовала") || low.Contains("опубликовало") )
+                    if (low.Contains("posted") || low.Contains("new post") || low.Contains("new posts") || low.Contains("РѕРїСѓР±Р»РёРєРѕРІР°Р»") || low.Contains("РѕРїСѓР±Р»РёРєРѕРІР°Р»Р°") || low.Contains("РѕРїСѓР±Р»РёРєРѕРІР°Р»Рѕ") )
                         return true;
                 }
 
@@ -862,7 +862,7 @@ namespace LunaVK.UC
                 if (!string.IsNullOrEmpty(header))
                 {
                     var low = header.ToLowerInvariant();
-                    if (low.Contains("story") && (low.Contains("published") || low.Contains("published a") || low.Contains("published new") || low.Contains("опубликовал") || low.Contains("история") || low.Contains("историю") ))
+                    if (low.Contains("story") && (low.Contains("published") || low.Contains("published a") || low.Contains("published new") || low.Contains("РѕРїСѓР±Р»РёРєРѕРІР°Р»") || low.Contains("РёСЃС‚РѕСЂРёСЏ") || low.Contains("РёСЃС‚РѕСЂРёСЋ") ))
                         return true;
                 }
 
@@ -907,7 +907,7 @@ namespace LunaVK.UC
                 if (!string.IsNullOrEmpty(header))
                 {
                     var low = header.ToLowerInvariant();
-                    if (low.Contains("liked") || low.Contains("like") || low.Contains("оценил") || low.Contains("оценили") || low.Contains("понрав") || low.Contains("лайк"))
+                    if (low.Contains("liked") || low.Contains("like") || low.Contains("РѕС†РµРЅРёР»") || low.Contains("РѕС†РµРЅРёР»Рё") || low.Contains("РїРѕРЅСЂР°РІ") || low.Contains("Р»Р°Р№Рє"))
                         return true;
                 }
 
@@ -923,7 +923,7 @@ namespace LunaVK.UC
                 if (!string.IsNullOrEmpty(rawStr))
                 {
                     var low = rawStr.ToLowerInvariant();
-                    if (low.Contains("\"type\":\"like\"") || low.Contains("\"type\": 'like'") || low.Contains("\"liked\"") || low.Contains("оценил") || low.Contains("понрав"))
+                    if (low.Contains("\"type\":\"like\"") || low.Contains("\"type\": 'like'") || low.Contains("\"liked\"") || low.Contains("РѕС†РµРЅРёР»") || low.Contains("РїРѕРЅСЂР°РІ"))
                         return true;
                 }
             }
@@ -1022,7 +1022,7 @@ namespace LunaVK.UC
                     if (!string.IsNullOrEmpty(act))
                     {
                         var low = act.ToLowerInvariant();
-                        if (low.Contains("/wall") || low.Contains("vk.com/wall") || low.Contains("/wall-"))
+                        if (low.Contains("/wall") || low.Contains("vk.ru/wall") || low.Contains("/wall-"))
                         {
                             return LocalizedStrings.GetString("Notification_WallPublish");
                         }
@@ -1524,3 +1524,4 @@ namespace LunaVK.UC
         }
     }
 }
+

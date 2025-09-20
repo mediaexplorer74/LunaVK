@@ -2448,7 +2448,7 @@ namespace LunaVK.ViewModels
             string link = "url=https://";
             if (CustomFrame.Instance.IsDevicePhone)
                 link += "m.";
-            link += "vk.com/id";
+            link += "vk.ru/id";
             link += this.Id;
 
 
@@ -3052,8 +3052,8 @@ namespace LunaVK.ViewModels
 
         private bool IsValidAvatarUrl(string avatarUrl)
         {
-            if (!string.IsNullOrWhiteSpace(avatarUrl) && !avatarUrl.Contains("vk.com/images/camera") && !avatarUrl.Contains("vk.com/images/deactivated"))
-                return !avatarUrl.Contains("vk.com/images/community");
+            if (!string.IsNullOrWhiteSpace(avatarUrl) && !avatarUrl.Contains("vk.ru/images/camera") && !avatarUrl.Contains("vk.ru/images/deactivated"))
+                return !avatarUrl.Contains("vk.ru/images/community");
             return false;
         }
 
@@ -3105,3 +3105,4 @@ namespace LunaVK.ViewModels
         }
     }
 }
+

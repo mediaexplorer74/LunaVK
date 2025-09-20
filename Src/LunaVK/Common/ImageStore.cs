@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.UI.Xaml.Media.Imaging;
 
-namespace LunaVK.Common
+namespace Lunavk.rumon
 {
     public class ImageStore
     {
@@ -25,3 +25,4 @@ namespace LunaVK.Common
         }
     }
 }
+

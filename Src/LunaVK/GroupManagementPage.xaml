@@ -67,7 +67,7 @@
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Text="vk.com/" VerticalAlignment="Center" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                        <TextBlock Text="vk.ru/" VerticalAlignment="Center" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
                                         <TextBox InputScope="Text" Text="{Binding Domain, Mode=TwoWay, FallbackValue='LunaVK'}" BorderThickness="0" Padding="0"
                                              VerticalAlignment="Center" MinHeight="16" Grid.Column="1" Background="Transparent"/>
                                     </Grid>
@@ -742,3 +742,4 @@
 
     </Grid>
 </local:PageBase>
+

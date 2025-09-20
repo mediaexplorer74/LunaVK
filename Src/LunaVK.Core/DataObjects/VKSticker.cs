@@ -11,7 +11,7 @@ namespace LunaVK.Core.DataObjects
 {
     /// <summary>
     /// Объект, описывающий стикер, содержит следующие поля(с версии 5.74)
-    /// https://vk.com/dev/objects/sticker
+    /// https://vk.ru/dev/objects/sticker
     /// </summary>
     public sealed class VKSticker : IBinarySerializable
     {
@@ -93,3 +93,4 @@ namespace LunaVK.Core.DataObjects
         }
     }
 }
+

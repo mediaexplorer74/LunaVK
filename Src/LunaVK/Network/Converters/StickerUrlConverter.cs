@@ -11,7 +11,7 @@ namespace LunaVK.Network.Converters
         {
             //Windows.UI.Xaml.Media.Imaging.BitmapImage i = new Windows.UI.Xaml.Media.Imaging.BitmapImage()
 
-            return "https://vk.com/images/stickers/"+value+"/128.png";
+            return "https://vk.ru/images/stickers/"+value+"/128.png";
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, string language)
@@ -20,3 +20,4 @@ namespace LunaVK.Network.Converters
         }
     }
 }
+

@@ -129,6 +129,7 @@
     <Compile Include="Common\ParametersRepository.cs" />
     <Compile Include="Common\ThemeManager.cs" />
     <None Include="Framework\DragControlsHelper.cs" />
+    <Compile Include="Controls\MessageBox.cs" />
     <Compile Include="Core\Library\NewsFeedService.cs" />
     <Compile Include="Library\Events\AudioPlayerStateChanged.cs" />
     <Compile Include="Library\Events\AudioTrackDownloadProgress.cs" />
@@ -193,6 +194,9 @@
     </Compile>
     <Compile Include="Pages\ProductPage.xaml.cs">
       <DependentUpon>ProductPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\SettingsPage.xaml.cs">
+      <DependentUpon>SettingsPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Pages\SuggestedSourcesPage.xaml.cs">
       <DependentUpon>SuggestedSourcesPage.xaml</DependentUpon>
@@ -2254,6 +2258,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Pages\SettingsPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Pages\SuggestedSourcesPage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -2579,8 +2587,8 @@
     <None Include="Framework\CornerRadiusSetter.cs" />
     <Compile Include="Framework\CustomFrame.cs" />
     <Compile Include="Framework\DelegateCommand.cs" />
-    <PRIResource Include="Strings\en\Resources.resw" />
-    <PRIResource Include="Strings\zh\Resources.resw" />
+    <PRIResource Include="Strings\en-US\Resources.resw" />
+    <PRIResource Include="Strings\zh-CN\Resources.resw" />
     <None Include="UC\Controls\ExtendedGridView2\ExtendedGridView.cs" />
     <Compile Include="Framework\DeviceTrigger.cs" />
     <Compile Include="Framework\HideHeaderHelper.cs" />
@@ -3426,7 +3434,7 @@
     <Content Include="Assets\Fonts\segmdl2.ttf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <PRIResource Include="Strings\ru\Resources.resw" />
+    <PRIResource Include="Strings\ru-RU\Resources.resw" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Changes.txt" />

@@ -12,7 +12,7 @@ using System.Linq;
 namespace LunaVK.Core.DataObjects
 {
     /// <summary>
-    /// https://vk.com/dev/objects/video
+    /// https://vk.ru/dev/objects/video
     /// </summary>
     public class VKVideoBase : IBinarySerializable
     {
@@ -367,3 +367,4 @@ namespace LunaVK.Core.DataObjects
         }
     }
 }
+

@@ -17,22 +17,20 @@ using LunaVK.Network;
 using LunaVK.Core;
 using Windows.Storage.Pickers;
 using Windows.Storage;
+using Windows.UI.Popups;
+using Windows.Globalization;
+using Windows.UI.Core;
 
 namespace LunaVK
 {
-    /// <summary>
-    /// Пустая страница, которую можно использовать саму по себе или для перехода внутри фрейма.
-    /// </summary>
     public sealed partial class SettingsGeneralPage : PageBase
     {
         public SettingsGeneralPage()
         {
             this.InitializeComponent();
             base.Title = LocalizedStrings.GetString("SettingsGeneral");
-            // Delay creating ViewModel until Loaded to avoid potential exceptions during Measure/Arrange caused by bindings
             this.Loaded += SettingsGeneralPage_Loaded;
 
-            // keep proxy toggle initial state
             this._switchProxy.IsChecked = Settings.UseProxy;
         }
 
@@ -41,11 +39,68 @@ namespace LunaVK
             this.Loaded -= SettingsGeneralPage_Loaded;
             try
             {
-                base.DataContext = new ViewModels.SettingsViewModel();
+                var vm = new ViewModels.SettingsViewModel();
+
+                // Ensure VM languages are initialized before binding to avoid timing issues
+                var dummy = vm.LanguagesFiltered;
+
+                base.DataContext = vm;
+
+                // Fallback: ensure ComboBox has items in case binding didn't update yet
+                try
+                {
+                    var combo = this.FindName("LanguageComboBox") as ComboBox;
+                    if (combo != null)
+                    {
+                        var items = vm.LanguagesFiltered;
+                        if (items != null && items.Count > 0)
+                        {
+                            combo.ItemsSource = items;
+                            combo.SelectedValuePath = "Code";
+
+                            // Safely select item asynchronously on UI dispatcher to avoid runtime crash
+                            try
+                            {
+                                string code = vm.SelectedLanguageCode ?? string.Empty;
+                                int selIdx = -1;
+                                for (int i = 0; i < items.Count; i++)
+                                {
+                                    if (string.Equals(items[i].Code, code, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        selIdx = i;
+                                        break;
+                                    }
+                                }
+
+                                var ignored = combo.Dispatcher.RunAsync(CoreDispatcherPriority.Low, () =>
+                                {
+                                    try
+                                    {
+                                        if (selIdx >= 0 && selIdx < combo.Items.Count)
+                                            combo.SelectedIndex = selIdx;
+                                        else if (combo.Items.Count > 0)
+                                            combo.SelectedIndex = 0;
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        try { LunaVK.Core.Utils.Logger.Instance.Error("Combo selection async failed: " + ex.ToString()); } catch { }
+                                    }
+                                });
+                            }
+                            catch (Exception ex)
+                            {
+                                try { LunaVK.Core.Utils.Logger.Instance.Error("Combo selection setup failed: " + ex.ToString()); } catch { }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    try { LunaVK.Core.Utils.Logger.Instance.Error("SettingsGeneralPage_Loaded fallback: " + ex.ToString()); } catch { }
+                }
             }
             catch (Exception ex)
             {
-                // Log exception to help diagnose XAML measure/arrange issues
                 try { LunaVK.Core.Utils.Logger.Instance.Error("SettingsGeneralPage_Loaded: " + ex.ToString()); } catch { }
             }
         }
@@ -55,51 +110,6 @@ namespace LunaVK
             get { return base.DataContext as ViewModels.SettingsViewModel; }
         }
 
-        //private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
-        //{
-        //    TextBox box = sender as TextBox;
-        //    if (string.IsNullOrEmpty(box.Text))
-        //        error.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-        //    else
-        //    {
-        //        Uri u;
-        //        bool noerror = Uri.TryCreate(box.Text, UriKind.Absolute, out u);
-        //        error.Visibility = noerror ? Visibility.Collapsed : Visibility.Visible;
-        //    }
-
-        //}
-        /*
-        private async void Checked_Changed(object sender, RoutedEventArgs args)
-        {
-            
-    //          public static String getProxyAddr() {
-    //    return PreferenceManager.getDefaultSharedPreferences(KApplication.current).getString("proxy_addr", "proxy.katemobile.ru");
-    //}
-
-    //public static Integer getProxyPort() {
-    //    return Integer.valueOf(Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(KApplication.current).getString("proxy_port", "3752")));
-    //}
-             
-            UC.ToggleSwitch t = sender as UC.ToggleSwitch;
-            if (t.IsChecked)
-            {
-                this._panelStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
-                this._textStatus.Text = "Проверка Proxy-сервера (1)";
-                //bool proxy = await RequestsDispatcher.Ping("userapi.com");
-                //if(proxy)
-                //{
-                //    this._textStatus.Text = "(1) успешно";
-                //    Settings.ProxyAdress = "userapi.com";
-                //    Settings.UseProxy = true;
-                //}
-            }
-            else
-            {
-                this._panelStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-                Settings.UseProxy = false;
-            }
-        }
-*/
         private async void BorderDoc_Tapped(object sender, TappedRoutedEventArgs e)
         {
             var diagFolder = new FolderPicker() { SuggestedStartLocation = PickerLocationId.Downloads };
@@ -123,7 +133,6 @@ namespace LunaVK
                 this.VM.SaveFolderPhoto = outputFolder.Path;
             }
         }
-
 
         private async void BorderVoice_Tapped(object sender, TappedRoutedEventArgs e)
         {

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LunaVK.Common
+namespace Lunavk.rumon
 {
     public static class WallPostVMCacheManager
     {
@@ -59,3 +59,4 @@ namespace LunaVK.Common
         }
     }
 }
+

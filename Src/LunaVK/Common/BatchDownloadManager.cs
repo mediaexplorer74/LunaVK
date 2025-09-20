@@ -18,7 +18,7 @@ using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.UI.Notifications;
 
-namespace LunaVK.Common
+namespace Lunavk.rumon
 {
     public class BatchDownloadManager : GenericCollectionViewModelSql<DownloadOprationItem>
     {
@@ -423,7 +423,7 @@ namespace LunaVK.Common
 
             string fileId = downloader.ResultFile.Name.Substring(1, pos2 - 1);
 
-            EventAggregator1.Instance.PublishEvent(new Library.Events.DownloadProgressedEvent(percent, fileId));
+            EventAggregator1.Instance.PublishEvent(new LunaVK.Library.Events.DownloadProgressedEvent(percent, fileId));
 
             string s_tag = downloader.Guid.ToString();// Unique tag to reference the toast by
             string title = downloader.ResultFile.Name;
@@ -552,3 +552,4 @@ namespace LunaVK.Common
         }
     }
 }
+

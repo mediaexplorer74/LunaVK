@@ -24,7 +24,7 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
-        <Image Height="64" Width="64" Source="{Binding Photo, FallbackValue=https://vk.com/images/community_100.png}"
+        <Image Height="64" Width="64" Source="{Binding Photo, FallbackValue=https://vk.ru/images/community_100.png}"
                Grid.RowSpan="2" HorizontalAlignment="Left" Margin="15"/>
 
         <Grid Grid.Column="1" VerticalAlignment="Bottom">
@@ -46,3 +46,4 @@
             VerticalAlignment="Top" Foreground="{StaticResource TextBrushMedium}"/>
     </Grid>
 </UserControl>
+

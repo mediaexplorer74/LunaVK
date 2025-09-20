@@ -11,13 +11,14 @@ using System.Threading.Tasks;
 using Windows.UI.Popups;
 using Windows.UI.Xaml.Controls;
 using VkLib.Error; // Added for VkLib exceptions
+using Windows.Storage;
 
 namespace LunaVK.Core.Network
 {
     public static class VKRequestsDispatcher
     {
         /// <summary>
-        /// https://api.vk.com/method/
+        /// https://api.vk.ru/method/
         /// </summary>
         public static string RequestUriFrm
         {
@@ -56,7 +57,7 @@ namespace LunaVK.Core.Network
                 parameters["access_token"] = Settings.AccessToken;
             parameters["lang"] = VKRequestsDispatcher.GetLang;
 
-            //baseUrl = https://api.vk.com/method/[METHOD]
+            //baseUrl = https://api.vk.ru/method/[METHOD]
             JsonWebRequest.SendHTTPRequestAsync(baseUrl, parameters, ((jsonResp, IsSucceeded) =>
             {
                 VKResponse<R> response = null;
@@ -181,17 +182,44 @@ namespace LunaVK.Core.Network
             return GetArrayCountAndRemoveExt(jsonStr, arrayName, 0, out resultCount, out foundInd);
         }
 
+        private static string GetShortLangTag(string fullTag)
+        {
+            if (string.IsNullOrEmpty(fullTag))
+                return "en";
+            int dash = fullTag.IndexOf('-');
+            if (dash == -1)
+                return fullTag.ToLowerInvariant();
+            return fullTag.Substring(0, dash).ToLowerInvariant();
+        }
+
         private static string GetLang
         {
             get
             {
-                int index = Settings.LanguageSettings == 0 ? 0 : Settings.LanguageSettings - 1;
-                string str = Windows.Globalization.ApplicationLanguages.Languages[index];
-                //en-US
-                int subs = str.IndexOf('-');
-                if (subs == -1)
-                    return str;
-                return str.Substring(0, subs);
+                try
+                {
+                    // 1) Prefer explicit selection from app Settings (SelectedLanguageCode)
+                    var saved = Settings.SelectedLanguageCode;
+                    if (!string.IsNullOrEmpty(saved))
+                        return GetShortLangTag(saved);
+
+                    // 2) Fallback to ApplicationLanguages.PrimaryLanguageOverride
+                    var primary = Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride;
+                    if (!string.IsNullOrEmpty(primary))
+                        return GetShortLangTag(primary);
+
+                    // 3) Use the first available runtime language
+                    var langs = Windows.Globalization.ApplicationLanguages.Languages;
+                    if (langs != null && langs.Count > 0)
+                        return GetShortLangTag(langs[0]);
+
+                    // fallback
+                    return "en";
+                }
+                catch
+                {
+                    return "en";
+                }
             }
         }
 
@@ -251,8 +279,8 @@ namespace LunaVK.Core.Network
         private static void ProcessInputPage(string text, string login, string password, Action<VKErrors, string> callback)
         {
             /*
-            <form method="post" action="https://login.vk.com/?act=login&soft=1&utf8=1">
-                  <input type="hidden" name="_origin" value="https://oauth.vk.com">
+            <form method="post" action="https://login.vk.ru/?act=login&soft=1&utf8=1">
+                  <input type="hidden" name="_origin" value="https://oauth.vk.ru">
                   <input type="hidden" name="ip_h" value="315d1c2d69a7223bb1" />
                   <input type="hidden" name="lg_h" value="ace7dd23d8f90d93c0" />
                   <input type="hidden" name="to" value="aHR0cHM6Ly9vYXV0aC52ay5jb20vYXV0aG9yaXplP2NsaWVudF9pZD02MjQ0ODU0JnJlZGlyZWN0X3VyaT1odHRwcyUzQSUyRiUyRm9hdXRoLnZrLmNvbSUyRmJsYW5rLmh0bWwmcmVzcG9uc2VfdHlwZT10b2tlbiZzY29wZT0xMzYyNjQ5Mjcmdj01LjkyJnN0YXRlPSZkaXNwbGF5PW1vYmlsZQ--">
@@ -271,14 +299,14 @@ namespace LunaVK.Core.Network
       
                   <div class="fi_row">
                     <div class="fi_subrow">
-                      <input class="button" type="submit" value="Войти" /><div class="near_btn"><a href="//oauth.vk.com/blank.html#error=access_denied&error_reason=user_denied&error_description=User denied your request">Отмена</a></div>
+                      <input class="button" type="submit" value="Войти" /><div class="near_btn"><a href="//oauth.vk.ru/blank.html#error=access_denied&error_reason=user_denied&error_description=User denied your request">Отмена</a></div>
                     </div>
                   </div>
                   <div class="fi_row_new">
               <div class="fi_header fi_header_light">Ещё не зарегистрированы?</div>
             </div>
             <div class="fi_row">
-              <a class="button wide_button gray_button" href="https://m.vk.com/join?api_hash=770128f2ab85662d0d" rel="noopener">Зарегистрироваться</a>
+              <a class="button wide_button gray_button" href="https://m.vk.ru/join?api_hash=770128f2ab85662d0d" rel="noopener">Зарегистрироваться</a>
             </div>
             </form>
             */
@@ -293,11 +321,11 @@ namespace LunaVK.Core.Network
             parameters.Add("pass", password);
             // Отправляем наш логин и пароль
 
-            JsonWebRequest.SendHTTPRequestAsync("https://login.vk.com/?act=login&soft=1&utf8=1", (html, result) =>
+            JsonWebRequest.SendHTTPRequestAsync("https://login.vk.ru/?act=login&soft=1&utf8=1", (html, result) =>
             {
                 if (result)
                 {
-                    //<img id="captcha" alt="" src="https://m.vk.com/captcha.php?sid=300813742407&dif=1" class="captcha_img" />
+                    //<img id="captcha" alt="" src="https://m.vk.ru/captcha.php?sid=300813742407&dif=1" class="captcha_img" />
                     //<div class="service_msg service_msg_warning">Указан неверный логин или пароль.</div>
                     Regex regService = new Regex("service_msg_warning.+?>(.+?)<", RegexOptions.Singleline);
                     Match matchResults = regService.Match(html);
@@ -312,7 +340,7 @@ namespace LunaVK.Core.Network
                 }
                 else
                 {
-                    callback(VKErrors.NoNetwork, "Не удалось загрузить страницу oauth.vk.com");
+                    callback(VKErrors.NoNetwork, "Не удалось загрузить страницу oauth.vk.ru");
                 }
             }, parameters);
         }
@@ -323,7 +351,7 @@ namespace LunaVK.Core.Network
             /*
             <div class="PageBlock">
               <div class="owner_panel oauth_mobile_header">
-                <img src="https://vk.com/images/dquestion_d.png" class="op_fimg" />
+                <img src="https://vk.ru/images/dquestion_d.png" class="op_fimg" />
                 <div class="op_fcont">
                   <div class="op_owner">LunaVK</div>
                   <div class="op_info">запрашивает доступ к Вашему аккаунту</div>
@@ -338,10 +366,10 @@ namespace LunaVK.Core.Network
                     <span class="oauth_access_item">сообщения</span>, <span class="oauth_access_item">информация страницы</span>, <span class="oauth_access_item">обновление статуса</span>, <span class="oauth_access_item">список друзей</span>, <span class="oauth_access_item">фотографии</span>, <span class="oauth_access_item">товары</span>, <span class="oauth_access_item">истории</span>, <span class="oauth_access_item">публикация записей</span>, <span class="oauth_access_item">аудиозаписи</span>, <span class="oauth_access_item">видео</span>, <span class="oauth_access_item">доступ в любое время</span>, <span class="oauth_access_item">заметки</span>, <span class="oauth_access_item">вики-страницы</span>, <span class="oauth_access_item">документы</span>, <span class="oauth_access_item">группы</span>, <span class="oauth_access_item">уведомления об ответах</span>, <span class="oauth_access_item">статистика</span>
                   </div>
                 </div>
-                <form method="post" action="https://login.vk.com/?act=grant_access&client_id=6244854&settings=136264927&response_type=token&group_ids=&token_type=0&v=5.92&display=mobile&ip_h=315d1c2d69a7223bb1&hash=1588688729_946ca8ebe67420ea82&https=1&state=&redirect_uri=https%3A%2F%2Foauth.vk.com%2Fblank.html">
+                <form method="post" action="https://login.vk.ru/?act=grant_access&client_id=6244854&settings=136264927&response_type=token&group_ids=&token_type=0&v=5.92&display=mobile&ip_h=315d1c2d69a7223bb1&hash=1588688729_946ca8ebe67420ea82&https=1&state=&redirect_uri=https%3A%2F%2Foauth.vk.ru%2Fblank.html">
       
                   <div class="fi_row">
-                    <input class="button" type="submit" value="Разрешить" /><div class="near_btn"><a href="//oauth.vk.com/blank.html#error=access_denied&error_reason=user_denied&error_description=User denied your request">Отмена</a></div>
+                    <input class="button" type="submit" value="Разрешить" /><div class="near_btn"><a href="//oauth.vk.ru/blank.html#error=access_denied&error_reason=user_denied&error_description=User denied your request">Отмена</a></div>
                   </div>
                 </form>
               </div>
@@ -353,7 +381,7 @@ namespace LunaVK.Core.Network
             {
                 string action = matchResults.Groups[1].Value;
                 // Действие: разрешить приложению
-                //<form method="post" action="https://login.vk.com/?act=grant_access
+                //<form method="post" action="https://login.vk.ru/?act=grant_access
 
                 //ИЛИ <form method="post" action="/login?act=authcheck_code
                 Dictionary<string, string> parameters = new Dictionary<string, string>();
@@ -405,7 +433,7 @@ namespace LunaVK.Core.Network
                     Dictionary<string, string> parameters = new Dictionary<string, string>();
                     parameters.Add("code", code);
 
-                    JsonWebRequest.SendHTTPRequestAsync("https://m.vk.com" + action, (html, result) =>
+                    JsonWebRequest.SendHTTPRequestAsync("https://m.vk.ru" + action, (html, result) =>
                     {
                         if (result)
                         {
@@ -423,3 +451,4 @@ namespace LunaVK.Core.Network
         }
     }
 }
+

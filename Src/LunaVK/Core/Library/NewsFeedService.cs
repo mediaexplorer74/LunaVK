@@ -1,4 +1,4 @@
-using LunaVK.Core.DataObjects;
+п»їusing LunaVK.Core.DataObjects;
 using LunaVK.Core.Network;
 using LunaVK.Core.Utils;
 using System;
@@ -23,7 +23,7 @@ namespace LunaVK.Core.Library
         }
 
         /// <summary>
-        /// Позволяет скрыть объект из ленты новостей. 
+        /// РџРѕР·РІРѕР»СЏРµС‚ СЃРєСЂС‹С‚СЊ РѕР±СЉРµРєС‚ РёР· Р»РµРЅС‚С‹ РЅРѕРІРѕСЃС‚РµР№. 
         /// </summary>
         /// <param name="ignore"></param>
         /// <param name="type"></param>
@@ -46,7 +46,7 @@ namespace LunaVK.Core.Library
         }
 
         /// <summary>
-        /// Запрещает/разрешает показывать новости от заданных пользователей и групп в ленте новостей текущего пользователя.
+        /// Р—Р°РїСЂРµС‰Р°РµС‚/СЂР°Р·СЂРµС€Р°РµС‚ РїРѕРєР°Р·С‹РІР°С‚СЊ РЅРѕРІРѕСЃС‚Рё РѕС‚ Р·Р°РґР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ Рё РіСЂСѓРїРї РІ Р»РµРЅС‚Рµ РЅРѕРІРѕСЃС‚РµР№ С‚РµРєСѓС‰РµРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ.
         /// </summary>
         /// <param name="addBan"></param>
         /// <param name="uids"></param>
@@ -609,7 +609,7 @@ namespace LunaVK.Core.Library
                                 {
                                     info["header"] = header;
 
-                                    // Try to extract explicit wall link like vk.com/wall-<owner>_<post> from header and inject as main_object_id
+                                    // Try to extract explicit wall link like vk.ru/wall-<owner>_<post> from header and inject as main_object_id
                                     try
                                     {
                                         var wallMatch = System.Text.RegularExpressions.Regex.Match(header, @"wall-?(-?\d+)_([0-9]+)");
@@ -693,3 +693,4 @@ namespace LunaVK.Core.Library
         }
     }
 }
+

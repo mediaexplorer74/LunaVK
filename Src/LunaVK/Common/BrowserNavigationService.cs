@@ -15,14 +15,14 @@ using Windows.ApplicationModel.Email;
 using LunaVK.Core.Framework;
 using System.Diagnostics;
 
-namespace LunaVK.Common
+namespace Lunavk.rumon
 {
     public static class BrowserNavigationService
     {
         /// <summary>
-        /// vk.com/feed?section=search&q=
+        /// vk.ru/feed?section=search&q=
         /// </summary>
-        public static string _searchFeedPrefix = "vk.com/feed?section=search&q=";
+        public static string _searchFeedPrefix = "vk.ru/feed?section=search&q=";
 
         public static readonly List<string> _flagsPrefixes = new List<string>() { "D83CDDE6", "D83CDDE7", "D83CDDE8", "D83CDDE9", "D83CDDEA", "D83CDDEB", "D83CDDEC", "D83CDDED", "D83CDDEE", "D83CDDEF", "D83CDDF0", "D83CDDF1", "D83CDDF2", "D83CDDF3", "D83CDDF4", "D83CDDF5", "D83CDDF6", "D83CDDF7", "D83CDDF8", "D83CDDF9", "D83CDDFA", "D83CDDFB", "D83CDDFC", "D83CDDFD", "D83CDDFE", "D83CDDFF" };
         public static readonly List<string> _modificatableSmiles = new List<string>() { "261D", "270A", "270B", "270C", "270D", "D83CDF85", "D83CDFC3", "D83CDFC4", "D83CDFC7", "D83CDFCA", "D83DDC4A", "D83DDC4B", "D83DDC4C", "D83DDC4D", "D83DDC4E", "D83DDC4F", "D83DDC6E", "D83DDC7C", "D83DDC42", "D83DDC43", "D83DDC46", "D83DDC47", "D83DDC48", "D83DDC49", "D83DDC50", "D83DDC66", "D83DDC67", "D83DDC68", "D83DDC69", "D83DDC70", "D83DDC71", "D83DDC72", "D83DDC73", "D83DDC74", "D83DDC75", "D83DDC76", "D83DDC77", "D83DDC78", "D83DDC81", "D83DDC82", "D83DDC83", "D83DDC85", "D83DDC86", "D83DDC87", "D83DDCAA", "D83DDD90", "D83DDD95", "D83DDD96", "D83DDE4B", "D83DDE4C", "D83DDE4D", "D83DDE4E", "D83DDE4F", "D83DDE45", "D83DDE46", "D83DDE47", "D83DDEA3", "D83DDEB4", "D83DDEB5", "D83DDEB6", "D83DDEC0", "D83EDD18" };
@@ -197,7 +197,7 @@ namespace LunaVK.Common
                 }
 
                 if (value.StartsWith("id") || value.StartsWith("club"))
-                    return string.Format("\ahttps://vk.com/{0}\b{1}\a", value, title);
+                    return string.Format("\ahttps://vk.ru/{0}\b{1}\a", value, title);
                 return string.Format("\a{0}\b{1}\a", value, title);
             }) );
 
@@ -321,13 +321,13 @@ namespace LunaVK.Common
                 return;
             }
 
-            // Normalize and try to handle vk.com links internally (profiles, groups, wall posts)
+            // Normalize and try to handle vk.ru links internally (profiles, groups, wall posts)
             try
             {
                 string s = navstr;
                 // normalize escaped slashes and HTML entities to increase chance of finding wall links embedded
                 try { s = s.Replace("\\/", "/").Replace("&amp;", "&").Trim(); } catch { }
-                if (s.StartsWith("vk.com", StringComparison.OrdinalIgnoreCase))
+                if (s.StartsWith("vk.ru", StringComparison.OrdinalIgnoreCase))
                     s = "https://" + s;
 
                 // Try to find wall link anywhere in the raw/nav string first (handles escaped/embedded forms)
@@ -356,7 +356,7 @@ namespace LunaVK.Common
                 {
                     try { Debug.WriteLine($"NavigateOnHyperlink: parsed uri={uri}"); } catch { }
                     var host = uri.Host ?? string.Empty;
-                    if (host.Contains("vk.com") || host.Contains("vkontakte"))
+                    if (host.Contains("vk.ru") || host.Contains("vkontakte"))
                     {
                         string full = uri.ToString();
                         try { Debug.WriteLine($"NavigateOnHyperlink: vk host, full={full}"); } catch { }
@@ -446,3 +446,4 @@ namespace LunaVK.Common
         }
     }
 }
+

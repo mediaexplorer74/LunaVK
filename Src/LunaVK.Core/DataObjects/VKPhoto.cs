@@ -11,8 +11,8 @@ namespace LunaVK.Core.DataObjects
 {
     /// <summary>
     /// Объект photo, описывающий фотографию
-    /// https://vk.com/dev/photo
-    /// https://vk.com/dev/objects/photo
+    /// https://vk.ru/dev/photo
+    /// https://vk.ru/dev/objects/photo
     /// </summary>
     public class VKPhoto : ThumbnailsLayoutHelper.IThumbnailSupport, IBinarySerializable
     {
@@ -285,3 +285,4 @@ namespace LunaVK.Core.DataObjects
         }
     }
 }
+

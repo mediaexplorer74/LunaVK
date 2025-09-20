@@ -9,22 +9,22 @@
 
         public static readonly string ApplicationID = "2274003";//"6244854";
         public static readonly string Scope = "audio,friends,docs,groups,messages,notes,notifications,notify,offline,pages,photos,stats,status,video,wall,stories,market";
-        public static readonly string Redirect = "https://oauth.vk.com/blank.html";
+        public static readonly string Redirect = "https://oauth.vk.ru/blank.html";
 
         /// <summary>
-        /// https://api.vk.com
+        /// https://api.vk.ru
         /// </summary>
-        public static readonly string HostURL = "https://api.vk.com";
+        public static readonly string HostURL = "https://api.vk.ru";
 
-        public static readonly string AVATAR_CAMERA = "https://vk.com/images/camera";
-        public static readonly string AVATAR_DEACTIVATED = "https://vk.com/images/deactivated";
+        public static readonly string AVATAR_CAMERA = "https://vk.ru/images/camera";
+        public static readonly string AVATAR_DEACTIVATED = "https://vk.ru/images/deactivated";
 
         /// <summary>
-        /// https://vk.com/images/community
+        /// https://vk.ru/images/community
         /// </summary>
-        public static readonly string AVATAR_COMMUNITY = "https://vk.com/images/community";
+        public static readonly string AVATAR_COMMUNITY = "https://vk.ru/images/community";
 
-        public static readonly string AVATR_MULTICHAT = "https://vk.com/images/icons/im_multichat";
+        public static readonly string AVATR_MULTICHAT = "https://vk.ru/images/icons/im_multichat";
                         
         /// <summary>
         /// 935.0

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Windows.Networking.BackgroundTransfer;
 using Windows.Storage;
 
-namespace LunaVK.Common
+namespace Lunavk.rumon
 {
     public class MediaDownloadManager
     {
@@ -63,3 +63,4 @@ namespace LunaVK.Common
         }
     }
 }
+

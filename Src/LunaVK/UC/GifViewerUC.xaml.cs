@@ -151,7 +151,7 @@ namespace LunaVK.UC
 
             string uri = this._doc.preview.video == null ? this._doc.url : this._doc.preview.video.src;
 
-            //https://vk.com/doc306689421_437338190?hash=7f527b270cbcdf60da&dl=GM3TKOJYHAZTCMQ:1524836049:418ade0494a114bac5&api=1&mp4=1
+            //https://vk.ru/doc306689421_437338190?hash=7f527b270cbcdf60da&dl=GM3TKOJYHAZTCMQ:1524836049:418ade0494a114bac5&api=1&mp4=1
             var f = await CacheManager.GetStorageFileInCurrentUserCacheFolder(this._localFile);
             
             if (this.fileCreated)
@@ -425,3 +425,4 @@ namespace LunaVK.UC
         }
     }
 }
+

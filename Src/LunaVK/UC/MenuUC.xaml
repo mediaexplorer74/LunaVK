@@ -119,7 +119,7 @@
 
                     <Ellipse Width="25" Height="25">
                         <Ellipse.Fill>
-                            <ImageBrush ImageSource="{Binding UserPhoto, FallbackValue='http://vk.com/images/camera_50.png'}" />
+                            <ImageBrush ImageSource="{Binding UserPhoto, FallbackValue='http://vk.ru/images/camera_50.png'}" />
                         </Ellipse.Fill>
                     </Ellipse>
 
@@ -166,3 +166,4 @@
 
     </Grid>
 </UserControl>
+

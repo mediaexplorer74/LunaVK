@@ -14,7 +14,7 @@ namespace LunaVK.Framework
 {
     public class ImageCache// : IBinarySerializable
     {
-        public static string COMMUNITY_IMAGE = "https://vk.com/images/community";
+        public static string COMMUNITY_IMAGE = "https://vk.ru/images/community";
         private Dictionary<string, string> _uriToLocalPathDict = new Dictionary<string, string>();
         private object _lockObj = new object();
 //        private readonly SHA1 _hasher = (SHA1)new SHA1Managed();
@@ -41,7 +41,7 @@ namespace LunaVK.Framework
                 return null;
             string empty = string.Empty;
 //            if (uriString.EndsWith("gif"))
-//                return (!uriString.StartsWith(ImageCache.COMMUNITY_IMAGE) ? (!uriString.StartsWith("https://vk.com/images/deactivated") ? (!uriString.StartsWith("https://vk.com/images/contact") ? (!uriString.Contains("_null") ? Application.GetResourceStream(new Uri("/VKClient.Common;component/Resources/Photo_Placeholder.png", UriKind.RelativeOrAbsolute)) : Application.GetResourceStream(new Uri("/VKClient.Common;component/Resources/Empty1x1.png", UriKind.RelativeOrAbsolute))) : Application.GetResourceStream(new Uri("/VKClient.Common;component/Resources/EmailUser.png", UriKind.RelativeOrAbsolute))) : Application.GetResourceStream(new Uri("/VKClient.Common;component/Resources/deactivatedUser.png", UriKind.RelativeOrAbsolute))) : Application.GetResourceStream(new Uri("/VKClient.Common;component/Resources/community_100.png", UriKind.RelativeOrAbsolute))).Stream;
+//                return (!uriString.StartsWith(ImageCache.COMMUNITY_IMAGE) ? (!uriString.StartsWith("https://vk.ru/images/deactivated") ? (!uriString.StartsWith("https://vk.ru/images/contact") ? (!uriString.Contains("_null") ? Application.GetResourceStream(new Uri("/VKClient.Common;component/Resources/Photo_Placeholder.png", UriKind.RelativeOrAbsolute)) : Application.GetResourceStream(new Uri("/VKClient.Common;component/Resources/Empty1x1.png", UriKind.RelativeOrAbsolute))) : Application.GetResourceStream(new Uri("/VKClient.Common;component/Resources/EmailUser.png", UriKind.RelativeOrAbsolute))) : Application.GetResourceStream(new Uri("/VKClient.Common;component/Resources/deactivatedUser.png", UriKind.RelativeOrAbsolute))) : Application.GetResourceStream(new Uri("/VKClient.Common;component/Resources/community_100.png", UriKind.RelativeOrAbsolute))).Stream;
             lock (this._lockObj)
             {
                 if (this._uriToLocalPathDict.ContainsKey(uriString))
@@ -132,3 +132,4 @@ namespace LunaVK.Framework
         }
     }
 }
+

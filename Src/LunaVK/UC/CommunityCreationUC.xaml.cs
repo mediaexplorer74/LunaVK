@@ -21,7 +21,7 @@ namespace LunaVK.UC
 
         private void TermsLink_OnClicked(Windows.UI.Xaml.Documents.Hyperlink sender, Windows.UI.Xaml.Documents.HyperlinkClickEventArgs args)
         {
-            NavigatorImpl.Instance.NavigateToWebUri("https://m.vk.com/terms", true);
+            NavigatorImpl.Instance.NavigateToWebUri("https://m.vk.ru/terms", true);
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -30,3 +30,4 @@ namespace LunaVK.UC
         }
     }
 }
+

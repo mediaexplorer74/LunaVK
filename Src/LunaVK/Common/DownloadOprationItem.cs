@@ -12,7 +12,7 @@ using LunaVK.Core.ViewModels;
 using LunaVK.Core.Framework;
 using LunaVK.Core;
 
-namespace LunaVK.Common
+namespace Lunavk.rumon
 {
     public class DownloadOprationItem : ViewModelBase, ISupportGroup
     {
@@ -299,3 +299,4 @@ namespace LunaVK.Common
         }
     }
 }
+

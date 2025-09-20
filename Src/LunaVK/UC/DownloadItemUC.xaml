@@ -377,7 +377,7 @@
                     <TextBlock Grid.Row="0" Text="{Binding ResultFileName, FallbackValue='File'}"
                                    Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}">
                     </TextBlock>
-                    <TextBlock Grid.Row="1" Style="{StaticResource DownloadItemCaptionTextBlockStyle}" Text="{Binding RequestUri, FallbackValue='vk.com'}"/>
+                    <TextBlock Grid.Row="1" Style="{StaticResource DownloadItemCaptionTextBlockStyle}" Text="{Binding RequestUri, FallbackValue='vk.ru'}"/>
 
                     <ProgressBar 
                                 HorizontalContentAlignment="Stretch"

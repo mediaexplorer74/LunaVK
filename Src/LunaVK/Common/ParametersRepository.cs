@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace LunaVK.Common
+namespace Lunavk.rumon
 {
     public class ParametersRepository
     {
@@ -31,3 +31,4 @@ namespace LunaVK.Common
         }
     }
 }
+

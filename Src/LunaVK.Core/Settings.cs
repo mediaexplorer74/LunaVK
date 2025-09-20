@@ -421,9 +421,17 @@ namespace LunaVK.Core
             set { SettingsHelper.Set(value); }
         }
 
+        // Backward-compatible index stored previously (kept for migration/compat)
         public static byte LanguageSettings
         {
             get { return SettingsHelper.Get<byte>(); }
+            set { SettingsHelper.Set(value); }
+        }
+
+        // New preferred: store string language code. "" = system, e.g. "ru", "en-US", "zh-CN".
+        public static string SelectedLanguageCode
+        {
+            get { return SettingsHelper.Get<string>(); }
             set { SettingsHelper.Set(value); }
         }
         

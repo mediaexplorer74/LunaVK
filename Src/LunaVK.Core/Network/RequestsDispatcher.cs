@@ -165,18 +165,18 @@ namespace LunaVK.Core.Network
             Windows.Web.Http.Filters.HttpBaseProtocolFilter myFilter = new Windows.Web.Http.Filters.HttpBaseProtocolFilter();
             var cookieManager = myFilter.CookieManager;
 
-            Windows.Web.Http.HttpCookieCollection myCookieJar = cookieManager.GetCookies(new Uri("https://www.vk.com/"));
+            Windows.Web.Http.HttpCookieCollection myCookieJar = cookieManager.GetCookies(new Uri("https://www.vk.ru/"));
             foreach (Windows.Web.Http.HttpCookie cookie in myCookieJar)
                 cookieManager.DeleteCookie(cookie);
 #endregion
 
 
 
-            //GET https://oauth.vk.com/authorize?client_id=5674548&scope=audio,friends,docs,groups,messages,notes,notifications,notify,offline,pages,photos,stats,status,video,wall&redirect_uri=https://oauth.vk.com/blank.html&display=mobile&v=5.54&response_type=token
+            //GET https://oauth.vk.ru/authorize?client_id=5674548&scope=audio,friends,docs,groups,messages,notes,notifications,notify,offline,pages,photos,stats,status,video,wall&redirect_uri=https://oauth.vk.ru/blank.html&display=mobile&v=5.54&response_type=token
 
             /*
             // Шаг 1: получаем страницу входа (на ней важны скрытые поля у кнопки входа)
-            string requestUriString = string.Format("https://oauth.vk.com/authorize?client_id={0}&scope={1}&redirect_uri={2}&display=mobile&v={3}&response_type=token", Constants.ApplicationID, Constants.Scope, Constants.Redirect, Constants.API_VERSION);
+            string requestUriString = string.Format("https://oauth.vk.ru/authorize?client_id={0}&scope={1}&redirect_uri={2}&display=mobile&v={3}&response_type=token", Constants.ApplicationID, Constants.Scope, Constants.Redirect, Constants.API_VERSION);
             string html = await RequestsDispatcher.DoWebRequestString(requestUriString);
             
                 if(string.IsNullOrEmpty(html))
@@ -198,7 +198,7 @@ namespace LunaVK.Core.Network
 
                 // Шаг 2: парсим скрытые поля
 
-                //<input type="hidden" name="_origin" value="https://oauth.vk.com">
+                //<input type="hidden" name="_origin" value="https://oauth.vk.ru">
                 var hidden_items = bodyNode.Where((d) =>
                 {
                     if (d.Attributes.Contains("type") && d.Name == "input")
@@ -237,8 +237,8 @@ namespace LunaVK.Core.Network
                 }
 
                 // Отправляем наш логин и пароль
-                html = await RequestsDispatcher.PostAsync("https://login.vk.com/?act=login&soft=1&utf8=1", parameters);
-                //JsonWebRequest.SendHTTPRequestAsync("https://login.vk.com/?act=login&soft=1&utf8=1", (html2, result2) =>
+                html = await RequestsDispatcher.PostAsync("https://login.vk.ru/?act=login&soft=1&utf8=1", parameters);
+                //JsonWebRequest.SendHTTPRequestAsync("https://login.vk.ru/?act=login&soft=1&utf8=1", (html2, result2) =>
                 //{
                     //Возможны варианты: пользователь ввёл данные неверно
                     //Приложению будут доступны:
@@ -277,7 +277,7 @@ namespace LunaVK.Core.Network
                     }
 
                     // Действие: разрешить приложению
-                    //<form method="post" action="https://login.vk.com/?act=grant_access
+                    //<form method="post" action="https://login.vk.ru/?act=grant_access
                     var action_items = bodyNode.Where((d) =>
                     {
                         if (d.Attributes.Contains("action") && d.Name == "form")
@@ -317,7 +317,7 @@ namespace LunaVK.Core.Network
                         parameters = new Dictionary<string, string>();
                         //parameters.Add("_ajax","1");
                         parameters.Add("code", text);
-                        html = await RequestsDispatcher.PostAsync("https://m.vk.com" + action, parameters);
+                        html = await RequestsDispatcher.PostAsync("https://m.vk.ru" + action, parameters);
 
                         doc = new HtmlDocument();
                         doc.LoadHtml(html);
@@ -336,7 +336,7 @@ namespace LunaVK.Core.Network
 
 
                         // Действие: разрешить приложению
-                        //<form method="post" action="https://login.vk.com/?act=grant_access
+                        //<form method="post" action="https://login.vk.ru/?act=grant_access
                         action_items = bodyNode.Where((d) =>
                         {
                             if (d.Attributes.Contains("action") && d.Name == "form")
@@ -391,3 +391,4 @@ namespace LunaVK.Core.Network
         }
     }
 }
+

@@ -394,7 +394,7 @@ namespace LunaVK.ViewModels
 
 
                 //
-                if (url.Contains("vk.com/video_hls.php") || url.Contains("video.m3u8"))//HTTP Live Streaming (HLS-VOD) - есть варианты качества
+                if (url.Contains("vk.ru/video_hls.php") || url.Contains("video.m3u8"))//HTTP Live Streaming (HLS-VOD) - есть варианты качества
                 {
                     // TODO
                     //this.ProcessHLS(url);
@@ -527,7 +527,7 @@ namespace LunaVK.ViewModels
 
         public string VideoUri
         {//todo:access token need?
-            get { return string.Format("https://vk.com/video{0}_{1}", this.OwnerId, this.VideoId); }
+            get { return string.Format("https://vk.ru/video{0}_{1}", this.OwnerId, this.VideoId); }
         }
 
         public bool IsLiked
@@ -686,3 +686,4 @@ namespace LunaVK.ViewModels
         }
     }
 }
+

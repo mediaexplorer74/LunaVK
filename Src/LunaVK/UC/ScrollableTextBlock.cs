@@ -4,7 +4,7 @@ using Windows.UI.Xaml.Documents;
 using Windows.UI.Xaml.Media;
 using LunaVK.Core.Utils;
 using LunaVK.Core;
-using LunaVK.Common;
+using Lunavk.rumon;
 using System.Net;
 using System.Diagnostics;
 using Newtonsoft.Json.Linq;
@@ -190,7 +190,7 @@ namespace LunaVK.UC
                             try
                             {
                                 string t = navTag.Replace("\\/", "/").Replace("&amp;", "&").Trim();
-                                if (t.StartsWith("vk.com", System.StringComparison.OrdinalIgnoreCase))
+                                if (t.StartsWith("vk.ru", System.StringComparison.OrdinalIgnoreCase))
                                     t = "https://" + t;
                                 tipContent = t;
                             }
@@ -328,7 +328,7 @@ private void ParseText(string value, bool show_full)
            Hyperlink hp = new Hyperlink();
            hp.Click += (sender, arg) =>
            {
-               Library.NavigatorImpl.Instance.NavigateToWebUri("vk.com/feed?section=search&q=" + block);
+               Library.NavigatorImpl.Instance.NavigateToWebUri("vk.ru/feed?section=search&q=" + block);
            };
 
            hp.Foreground = new SolidColorBrush((Windows.UI.Color)Application.Current.Resources["PhoneAccentColor"]);
@@ -393,3 +393,4 @@ private void ParseText(string value, bool show_full)
         }
     }
 }
+

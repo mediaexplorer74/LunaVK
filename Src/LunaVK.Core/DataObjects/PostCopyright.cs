@@ -12,7 +12,7 @@ namespace LunaVK.Core.DataObjects
         public int id { get; set; }
 
         /// <summary>
-        /// https://vk.com/wall-163547593_654
+        /// https://vk.ru/wall-163547593_654
         /// </summary>
         public string link { get; set; }
 
@@ -45,3 +45,4 @@ namespace LunaVK.Core.DataObjects
         }
     }
 }
+

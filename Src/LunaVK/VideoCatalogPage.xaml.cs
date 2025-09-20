@@ -335,7 +335,7 @@ namespace LunaVK
                 item3.Command = new DelegateCommand((args) => {
                     //mItemCopyLink_Click
                     var dataPackage = new DataPackage();
-                    dataPackage.SetText(string.Format("https://{0}vk.com/video{1}_{2}", CustomFrame.Instance.IsDevicePhone ? "m." : "", video.owner_id, video.id));
+                    dataPackage.SetText(string.Format("https://{0}vk.ru/video{1}_{2}", CustomFrame.Instance.IsDevicePhone ? "m." : "", video.owner_id, video.id));
                     Clipboard.SetContent(dataPackage);
                 });
                 menu.Items.Add(item3);

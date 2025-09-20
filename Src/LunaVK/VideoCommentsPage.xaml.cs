@@ -218,7 +218,7 @@ namespace LunaVK
                     this.ContentGrid.Children.Add(this.web);
 
 
-//                    if(this.VM.Video.player.Contains("vk.com/video_ext.php"))
+//                    if(this.VM.Video.player.Contains("vk.ru/video_ext.php"))
 //                    {
 //                        this.web.NavigateToString("<html><body><iframe src=\"" + this.VM.Video.player + "\" width=\"607\" height=\"360\" frameborder=\"0\"></iframe></body></html>");
 //                    }
@@ -256,3 +256,4 @@ namespace LunaVK
         }
     }
 }
+

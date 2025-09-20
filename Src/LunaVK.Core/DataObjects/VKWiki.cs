@@ -8,7 +8,7 @@ using System.Text;
 namespace LunaVK.Core.DataObjects
 {
     /// <summary>
-    /// https://vk.com/dev/_objects_page
+    /// https://vk.ru/dev/_objects_page
     /// </summary>
     public class VKWiki : IBinarySerializable
     {
@@ -93,3 +93,4 @@ namespace LunaVK.Core.DataObjects
         }
     }
 }
+

@@ -37,7 +37,7 @@ namespace LunaVK.UC.Attachment
             if (this.VM == null)
                 return;//todo: ARTICLE!
 
-            this.VM.button.action.url = this.VM.button.action.url.Replace("m.vk.com/", "vk.com/");
+            this.VM.button.action.url = this.VM.button.action.url.Replace("m.vk.ru/", "vk.ru/");
 
 
             this._flyout = new PopUpService();
@@ -59,7 +59,7 @@ namespace LunaVK.UC.Attachment
 
         private void w_NavigationStarting(WebView sender, WebViewNavigationStartingEventArgs args)
         {
-            if(!args.Uri.AbsoluteUri.StartsWith("https://m.vk.com/@") && !args.Uri.AbsoluteUri.StartsWith("https://vk.com/@"))
+            if(!args.Uri.AbsoluteUri.StartsWith("https://m.vk.ru/@") && !args.Uri.AbsoluteUri.StartsWith("https://vk.ru/@"))
             {
                 args.Cancel = true;
                 this._flyout.Hide();
@@ -77,3 +77,4 @@ namespace LunaVK.UC.Attachment
         }
     }
 }
+

@@ -501,7 +501,7 @@ namespace LunaVK.Pages
                 string temp = "https://";
                 if (CustomFrame.Instance.IsDevicePhone)
                     temp += "m.";
-                temp += "vk.com/club";
+                temp += "vk.ru/club";
                 temp += Math.Abs(this.VM._gid);
                 dataPackage.SetText(temp);
                 Clipboard.SetContent(dataPackage);
@@ -518,7 +518,7 @@ namespace LunaVK.Pages
                 string temp = "https://";
                 if (CustomFrame.Instance.IsDevicePhone)
                     temp += "m.";
-                temp += "vk.com/club";
+                temp += "vk.ru/club";
                 temp += Math.Abs(this.VM._gid);
                 NavigatorImpl.Instance.NavigateToWebUri(temp, true);
             });
@@ -731,7 +731,7 @@ namespace LunaVK.Pages
                 string temp = "https://";
                 if (CustomFrame.Instance.IsDevicePhone)
                     temp += "m.";
-                temp += "vk.com/club";
+                temp += "vk.ru/club";
                 temp += Math.Abs(this.VM._gid);
                 dataPackage.SetText(temp);
                 Clipboard.SetContent(dataPackage);
@@ -744,7 +744,7 @@ namespace LunaVK.Pages
                 string temp = "https://";
                 if (CustomFrame.Instance.IsDevicePhone)
                     temp += "m.";
-                temp += "vk.com/club";
+                temp += "vk.ru/club";
                 temp += Math.Abs(this.VM._gid);
                 NavigatorImpl.Instance.NavigateToWebUri(temp, true);
             }));
@@ -788,3 +788,4 @@ namespace LunaVK.Pages
         }
     }
 }
+

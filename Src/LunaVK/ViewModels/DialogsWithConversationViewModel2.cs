@@ -651,8 +651,8 @@ namespace LunaVK.ViewModels
                 //    return "CommonResources.MoneyTransfer";
                 if (firstAttachment.type == VKAttachmentType.Link)
                 {
-                    //https://m.vk.com/settings?act=transfers
-                    return LocalizedStrings.GetString(firstAttachment.link.url.Contains("vk.com/story") ? "Story" : "Link");
+                    //https://m.vk.ru/settings?act=transfers
+                    return LocalizedStrings.GetString(firstAttachment.link.url.Contains("vk.ru/story") ? "Story" : "Link");
                 }
                 else if (firstAttachment.type == VKAttachmentType.Wall)
                     return LocalizedStrings.GetString("WallPost");
@@ -1199,3 +1199,4 @@ namespace LunaVK.ViewModels
         public int unread_count { get; set; }
     }
 }
+

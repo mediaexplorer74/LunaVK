@@ -6,8 +6,9 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Media;
 using Windows.UI;
 using System.Globalization;
+using LunaVK;
 
-namespace LunaVK.Common
+namespace Lunavk.rumon
 {
     public class ThemeManager
     {

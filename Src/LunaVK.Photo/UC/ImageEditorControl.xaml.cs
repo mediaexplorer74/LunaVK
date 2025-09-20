@@ -1463,18 +1463,18 @@ namespace LunaVK.Photo.UC
                 return;
 
             var vkPack = new StickerPack();
-            vkPack.preview = "https://vk.com/sticker/1-3200-64-9";
+            vkPack.preview = "https://vk.ru/sticker/1-3200-64-9";
             List<VKSticker> vkStickers = new List<VKSticker>();
-            //<img src="https://vk.com/sticker/1-3230-128-9">
+            //<img src="https://vk.ru/sticker/1-3230-128-9">
             foreach (int id in ids)
             {
                 var s = new VKSticker();
                 s.images_with_background = new List<VKImageWithSize>();
-                s.images_with_background.Add(new VKImageWithSize() { url = "https://vk.com/sticker/1-" + id + "-64-9" });
-                s.images_with_background.Add(new VKImageWithSize() { url = "https://vk.com/sticker/1-" + id + "-128-9" });
-                s.images_with_background.Add(new VKImageWithSize() { url = "https://vk.com/sticker/1-" + id + "-256-9" });
-                s.images_with_background.Add(new VKImageWithSize() { url = "https://vk.com/sticker/1-" + id + "-352-9" });
-                s.images_with_background.Add(new VKImageWithSize() { url = "https://vk.com/sticker/1-" + id + "-512-9" });
+                s.images_with_background.Add(new VKImageWithSize() { url = "https://vk.ru/sticker/1-" + id + "-64-9" });
+                s.images_with_background.Add(new VKImageWithSize() { url = "https://vk.ru/sticker/1-" + id + "-128-9" });
+                s.images_with_background.Add(new VKImageWithSize() { url = "https://vk.ru/sticker/1-" + id + "-256-9" });
+                s.images_with_background.Add(new VKImageWithSize() { url = "https://vk.ru/sticker/1-" + id + "-352-9" });
+                s.images_with_background.Add(new VKImageWithSize() { url = "https://vk.ru/sticker/1-" + id + "-512-9" });
                 vkStickers.Add(s);
             }
 
@@ -2031,3 +2031,4 @@ namespace LunaVK.Photo.UC
 
 
 }
+

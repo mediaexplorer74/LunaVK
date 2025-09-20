@@ -1,4 +1,4 @@
-﻿using LunaVK.Common;
+﻿using Lunavk.rumon;
 using LunaVK.Core;
 using LunaVK.Core.DataObjects;
 using LunaVK.Core.Framework;
@@ -224,7 +224,7 @@ namespace LunaVK.Pages
                                 VKAlbumPhoto a = result.response;
                                 a.sizes = new List<DocPreviewPhotoSize>();
                                 
-                                a.sizes.Add(new DocPreviewPhotoSize() { height = 97, width = 130, type="m", src= "https://vk.com/images/m_noalbum.png" });
+                                a.sizes.Add(new DocPreviewPhotoSize() { height = 97, width = 130, type="m", src= "https://vk.ru/images/m_noalbum.png" });
                                 this.VM.AlbumsVM.Items.Insert(0, result.response);
                                 this.VM.AlbumsCount++;
                                 dc.Hide();
@@ -336,3 +336,4 @@ namespace LunaVK.Pages
         }
     }
 }
+

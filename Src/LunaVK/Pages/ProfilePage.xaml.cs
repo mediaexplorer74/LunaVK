@@ -19,7 +19,7 @@ using LunaVK.UC;
 using LunaVK.Core.Library;
 using LunaVK.UC.PopUp;
 using Windows.UI.Xaml.Media;
-using LunaVK.Common;
+using Lunavk.rumon;
 using Windows.UI.Xaml.Controls.Primitives;
 
 namespace LunaVK.Pages
@@ -282,7 +282,7 @@ namespace LunaVK.Pages
                 string temp = "https://";
                 if (CustomFrame.Instance.IsDevicePhone)
                     temp += "m.";
-                temp += "vk.com/id";
+                temp += "vk.ru/id";
                 temp += this.VM.Id;
                 dataPackage.SetText(temp);
                 Clipboard.SetContent(dataPackage);
@@ -299,7 +299,7 @@ namespace LunaVK.Pages
                 string temp = "https://";
                 if (CustomFrame.Instance.IsDevicePhone)
                     temp += "m.";
-                temp += "vk.com/id";
+                temp += "vk.ru/id";
                 temp += this.VM.Id;
                 NavigatorImpl.Instance.NavigateToWebUri(temp, true);
             });
@@ -444,7 +444,7 @@ namespace LunaVK.Pages
                 string temp = "https://";
                 if (CustomFrame.Instance.IsDevicePhone)
                     temp += "m.";
-                temp += "vk.com/id";
+                temp += "vk.ru/id";
                 temp += this.VM.Id;
                 dataPackage.SetText(temp);
                 Clipboard.SetContent(dataPackage);
@@ -457,7 +457,7 @@ namespace LunaVK.Pages
                 string temp = "https://";
                 if (CustomFrame.Instance.IsDevicePhone)
                     temp += "m.";
-                temp += "vk.com/id";
+                temp += "vk.ru/id";
                 temp += this.VM.Id;
                 dataPackage.SetText(temp);
                 Clipboard.SetContent(dataPackage);
@@ -472,7 +472,7 @@ namespace LunaVK.Pages
                 string temp = "https://";
                 if (CustomFrame.Instance.IsDevicePhone)
                     temp += "m.";
-                temp += "vk.com/id";
+                temp += "vk.ru/id";
                 temp += this.VM.Id;
                 NavigatorImpl.Instance.NavigateToWebUri(temp, true);
             });
@@ -483,7 +483,7 @@ namespace LunaVK.Pages
                 string temp = "https://";
                 if (CustomFrame.Instance.IsDevicePhone)
                     temp += "m.";
-                temp += "vk.com/id";
+                temp += "vk.ru/id";
                 temp += this.VM.Id;
                 NavigatorImpl.Instance.NavigateToWebUri(temp, true);
             }));
@@ -999,3 +999,4 @@ namespace LunaVK.Pages
         }
     }
 }
+

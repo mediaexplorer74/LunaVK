@@ -17,7 +17,7 @@ using Windows.UI.Xaml.Navigation;
 
 using LunaVK.Core.Utils;
 using Windows.UI.Xaml.Media.Animation;
-using LunaVK.Common;
+using Lunavk.rumon;
 
 namespace LunaVK.UC
 {
@@ -119,3 +119,4 @@ namespace LunaVK.UC
         //StickersAutoSuggestUC
     }
 }
+

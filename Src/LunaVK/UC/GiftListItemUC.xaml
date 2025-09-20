@@ -70,7 +70,7 @@
         </Grid>
 
 
-        <Image Source="{Binding thumb_256, FallbackValue='https://vk.com/images/gift/953/256.jpg'}" MaxWidth="256" MaxHeight="256"
+        <Image Source="{Binding thumb_256, FallbackValue='https://vk.ru/images/gift/953/256.jpg'}" MaxWidth="256" MaxHeight="256"
                Stretch="Fill" Margin="0 10"/>
 
         <StackPanel Margin="16 0 16 12"

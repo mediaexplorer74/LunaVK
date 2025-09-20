@@ -8,7 +8,7 @@ using LunaVK.Core.Network;
 namespace LunaVK.Core.DataObjects
 {
     /// <summary>
-    /// https://vk.com/dev/notifications.get
+    /// https://vk.ru/dev/notifications.get
     /// </summary>
     public class VKNotification
     {
@@ -281,3 +281,4 @@ namespace LunaVK.Core.DataObjects
         #endregion
     }
 }
+

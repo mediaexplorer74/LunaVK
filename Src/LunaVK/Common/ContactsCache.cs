@@ -3,7 +3,7 @@ using LunaVK.Core.Utils;
 using System.Collections.Generic;
 using System.IO;
 
-namespace LunaVK.Common
+namespace Lunavk.rumon
 {
     public class ContactsCache : IBinarySerializable
     {
@@ -27,3 +27,4 @@ namespace LunaVK.Common
         }
     }
 }
+

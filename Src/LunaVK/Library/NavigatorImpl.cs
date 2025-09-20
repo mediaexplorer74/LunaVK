@@ -490,7 +490,7 @@ namespace LunaVK.Library
             }
             else
             {
-                // If uri refers to a story and is a relative or hostless path, convert to https://vk.com/story... to avoid malformed http://story...
+                // If uri refers to a story and is a relative or hostless path, convert to https://vk.ru/story... to avoid malformed http://story...
                 bool isSchemeMissing = !uri.StartsWith("http://", StringComparison.CurrentCultureIgnoreCase) && !uri.StartsWith("https://", StringComparison.CurrentCultureIgnoreCase);
                 if (isSchemeMissing)
                 {
@@ -499,7 +499,7 @@ namespace LunaVK.Library
                     {
                         // ensure leading slash
                         string path = uri.StartsWith("/") ? uri : "/" + uri;
-                        uri = "https://vk.com" + path;
+                        uri = "https://vk.ru" + path;
 
                         // update last attempted uri
                         try { this.LastAttemptedUri = uri; } catch { }
@@ -1040,7 +1040,7 @@ namespace LunaVK.Library
                 uri = uri.Remove(0, 2);
             if (uri.StartsWith("www.") || uri.StartsWith("new."))
                 uri = uri.Remove(0, 4);
-            if (!uri.StartsWith("vk.com/") && !uri.StartsWith("vkontakte.ru/"))
+            if (!uri.StartsWith("vk.ru/") && !uri.StartsWith("vkontakte.ru/"))
                 return uri.StartsWith("vk.me/");
             return true;
         }
@@ -1445,3 +1445,4 @@ namespace LunaVK.Library
         }
     }
 }
+

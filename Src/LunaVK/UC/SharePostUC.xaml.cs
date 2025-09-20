@@ -157,7 +157,7 @@ namespace LunaVK.UC
                 string temp = "https://";
                 if (CustomFrame.Instance.IsDevicePhone)
                     temp += "m.";
-                temp += "vk.com/";
+                temp += "vk.ru/";
                 if (string.IsNullOrEmpty(this._link))
                     temp += this.MediaId;
                 else
@@ -310,3 +310,4 @@ namespace LunaVK.UC
         }
     }
 }
+

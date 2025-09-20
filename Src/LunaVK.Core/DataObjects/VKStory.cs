@@ -11,7 +11,7 @@ namespace LunaVK.Core.DataObjects
 {
     /// <summary>
     /// Объект, описывающий историю
-    /// https://vk.com/dev/objects/story
+    /// https://vk.ru/dev/objects/story
     /// </summary>
     public class VKStory : IBinarySerializable
     {
@@ -159,9 +159,9 @@ namespace LunaVK.Core.DataObjects
 "y": 1507
 }],
 "link_object": {
-"url": "https://vk.com/memories",
-"title": "https://vk.com/memories",
-"caption": "vk.com",
+"url": "https://vk.ru/memories",
+"title": "https://vk.ru/memories",
+"caption": "vk.ru",
 "description": ""
 },
 "tooltip_text": "Перейти"
@@ -236,3 +236,4 @@ namespace LunaVK.Core.DataObjects
 #endregion
     }
 }
+

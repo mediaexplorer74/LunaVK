@@ -26,7 +26,13 @@
 
                         <!--<ComboBox Header="Lang" x:Uid="Language" Margin="0 16 0 0" ItemsSource="{Binding Languages}" SelectedIndex="{Binding LanguageSettings, Mode=TwoWay}" BorderBrush="{ThemeResource SystemControlHighlightAccentBrush}"/>-->
 
-                        <ComboBox x:Uid="Language" Margin="0 16 0 0" ItemsSource="{Binding Languages}" SelectedIndex="{Binding LanguageSettings, Mode=TwoWay}" BorderBrush="{ThemeResource SystemControlHighlightAccentBrush}">
+                        <ComboBox x:Uid="Language" x:Name="LanguageComboBox" Margin="0 16 0 0"
+                                  ItemsSource="{Binding LanguagesFiltered}"
+                                  SelectedValue="{Binding SelectedLanguageCode, Mode=TwoWay}"
+                                  SelectedValuePath="Code"
+                                  DisplayMemberPath="DisplayName"
+                                  Foreground="{ThemeResource TextBrushMediumHigh}"
+                                  BorderBrush="{ThemeResource SystemControlHighlightAccentBrush}">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding DisplayName}" Foreground="{ThemeResource TextBrushMediumHigh}"/>
