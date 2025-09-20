@@ -40,11 +40,23 @@ namespace LunaVK.UC.Attachment
 
         public static readonly DependencyProperty IsCompactProperty = DependencyProperty.Register("IsCompact", typeof(bool), typeof(AttachDocumentUC), new PropertyMetadata(false));
 
+        // Allow XAML Tapped handlers and code-behind subscriptions
         public event TappedEventHandler OnTap;
 
-        private void Root_Tapped(object sender, TappedRoutedEventArgs e)
+        private void Main_Tapped(object sender, TappedRoutedEventArgs e)
         {
+            // First raise the explicit OnTap event
             this.OnTap?.Invoke(this, e);
+
+            // Then call protected base method to raise standard Tapped event for external handlers
+            try
+            {
+                base.OnTapped(e);
+            }
+            catch
+            {
+                // On some SDKs OnTapped may not be accessible; ignore if not available
+            }
         }
 
         // IThumbnailSupport implementation

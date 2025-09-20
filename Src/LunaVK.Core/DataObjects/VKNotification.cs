@@ -48,6 +48,72 @@ namespace LunaVK.Core.DataObjects
         [JsonProperty("_raw_item")]
         public JObject RawItem { get; set; }
 
+        /// <summary>
+        /// Навигационный URL, извлечённый из action/header (если есть)
+        /// </summary>
+        public string TargetUrl { get; set; }
+
+        /// <summary>
+        /// Preview image URL extracted asynchronously for like_photo notifications
+        /// </summary>
+        public string PreviewImageUrl { get; set; }
+
+        // Try to extract an explicit action URL from raw injected data
+        public string ActionUrl
+        {
+            get
+            {
+                try
+                {
+                    if (this.RawItem != null)
+                    {
+                        var v = this.RawItem.Value<string>("action_url");
+                        if (!string.IsNullOrEmpty(v))
+                            return v;
+                        v = this.RawItem.Value<string>("additional_action_url");
+                        if (!string.IsNullOrEmpty(v))
+                            return v;
+                        var header = this.RawItem.Value<string>("header");
+                        if (!string.IsNullOrEmpty(header))
+                        {
+                            var m = System.Text.RegularExpressions.Regex.Match(header, "\\[https?://[^\\|\\]]+");
+                            if (m.Success)
+                            {
+                                var s = m.Value.TrimStart('[');
+                                return s;
+                            }
+                            // fallback: try to find /wall-... pattern in header and build mobile url
+                            var wallMatch = System.Text.RegularExpressions.Regex.Match(header, @"wall-?(-?\d+)_([0-9]+)");
+                            if (wallMatch.Success)
+                            {
+                                string owner = wallMatch.Groups[1].Value;
+                                string post = wallMatch.Groups[2].Value;
+                                return $"https://m.vk.ru/wall{owner}_{post}";
+                            }
+                        }
+                    }
+                }
+                catch { }
+                return null;
+            }
+        }
+
+        // Heuristic: determine if this notification actually points to a reply (comment) by inspecting action URL/header
+        public bool IsReplyByActionOrHeader()
+        {
+            try
+            {
+                var url = this.ActionUrl;
+                if (!string.IsNullOrEmpty(url) && url.IndexOf("reply=", StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
+                var h = this.RawItem?.Value<string>("header");
+                if (!string.IsNullOrEmpty(h) && h.IndexOf("to your comment", StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
+            }
+            catch { }
+            return false;
+        }
+
         public object ParsedParent
         {
             get
@@ -91,7 +157,7 @@ namespace LunaVK.Core.DataObjects
                         this._parsedParent = JsonConvert.DeserializeObject<VKTopic>(str);
                         break;
 
-                    
+
                 }
                 return this._parsedParent;
             }
@@ -103,7 +169,7 @@ namespace LunaVK.Core.DataObjects
             {
                 if (this._parsedFeedback != null)
                     return this._parsedFeedback;
-                
+
                 string str = "";
                 if (this.feedback == null)
                     return "";
@@ -268,8 +334,6 @@ namespace LunaVK.Core.DataObjects
             mention_comment_photo,
             mention_comment_video,
 
-            
-            
             //money_transfer_received,
             //money_transfer_accepted,
             //money_transfer_declined,

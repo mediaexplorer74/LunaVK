@@ -170,8 +170,8 @@ namespace LunaVK
             Logger.Instance.Info("<---------------------------- Launched =========================>");
 
             //TEMP
-            UsersService.Instance.ClearCachedUsers();
-            GroupsService.Instance.ClearCachedGroups();
+            //UsersService.Instance.ClearCachedUsers();
+            //GroupsService.Instance.ClearCachedGroups();
 
             this.InitFrame();
 

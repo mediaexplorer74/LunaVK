@@ -9,7 +9,6 @@
     xmlns:uc="using:LunaVK.UC"
     xmlns:framework="using:LunaVK.Framework"
     FontSize="{StaticResource FontSizeContent}"
-    
     d:DesignHeight="1000">
 
     <local:PageBase.Resources>
@@ -25,22 +24,8 @@
             <RowDefinition/>
         </Grid.RowDefinitions>
 
-        <VisualStateManager.VisualStateGroups>
-            <VisualStateGroup x:Name="MenuState">
-                <VisualState x:Name="Medium">
-                    <VisualState.StateTriggers>
-                        <AdaptiveTrigger MinWindowWidth="{StaticResource WideMinWindowWidth}" />
-                    </VisualState.StateTriggers>
-                    <VisualState.Setters>
-                        <Setter Target="SecondContent.(Grid.Column)" Value="1" />
-                        <Setter Target="SecondContent.(Grid.Row)" Value="0" />
-                        <Setter Target="MainContent.(Grid.ColumnSpan)" Value="1" />
-                    </VisualState.Setters>
-                </VisualState>
-            </VisualStateGroup>
-        </VisualStateManager.VisualStateGroups>
-
-        <uc:HeaderOffsetUC/>
+        <!-- Replaced custom HeaderOffsetUC with placeholder spacing for compatibility -->
+        <Grid Height="0" />
 
         <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
                       VerticalScrollBarVisibility="Hidden">
@@ -54,14 +39,13 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-
-
                 <StackPanel Grid.ColumnSpan="2" x:Name="MainContent">
-                    <uc:CustomIconUC Glyph="&#xEDB1;" FontSize="80" Margin="0 20" DoubleTapped="CustomIconUC_DoubleTapped" x:Name="logoIcon"
-                                     />
-                    <TextBlock FontSize="26" FontWeight="Light" Margin="20 30 0 0" Text="LunaVK"/>
+                    <!-- Replaced CustomIconUC with simple TextBlock for MVP -->
+                    <TextBlock Text="L" FontSize="80" Margin="0,20,0,0" x:Name="logoIcon" />
+                    <TextBlock FontSize="26" Margin="20 30 0 0" Text="LunaVK"/>
                     <!--<TextBlock Text="это альтернативный клиент ВКонтакте для устройств семейства Windows 10" TextWrapping="Wrap"/>-->
-                    <uc:ScrollableTextBlock x:Name="description" Text="данный альтернативный клиент ВКонтакте для устройств семейства Windows 10 является плодом больной фантазии [id460389|Максима Гутикова] и сделано с ♥ " Margin="20 10"/>
+                    <!-- Replaced ScrollableTextBlock with simple TextBlock for compatibility -->
+                    <TextBlock x:Name="description" Text="Альтернативный клиент ВКонтакте" TextWrapping="Wrap" />
                     <TextBlock Text="Version" Name="ver"/>
                     <TextBlock Text="Api" Name="api"/>
                     <TextBlock Text="Users count" Name="users" Visibility="Collapsed"/>
@@ -74,32 +58,20 @@
                         <TextBlock Text="Win10m" Name="family"/>
                         <TextBlock Text="Win10m" Name="apicontract"/>
                     </StackPanel>
-
-                    
                 </StackPanel>
 
-                <StackPanel Grid.Row="1" Grid.ColumnSpan="2" x:Name="SecondContent">
+                <StackPanel Grid.Row="1" Grid.ColumnSpan="2" x:Name="SecondContent"> 
 
-                    <TextBlock Text="Обратная связь" FontSize="26" FontWeight="Light" Margin="20 30 0 0"/>
-                    <TextBlock Text="Группа ВК" Foreground="{ThemeResource SystemControlHighlightAccentBrush}" Tapped="Border_Tapped" framework:MouseOver.Cursor="Hand"/>
+                    <TextBlock Text="Обратная связь" FontSize="26" Margin="20 30 0 0"/>
+                    <TextBlock Text="Группа ВК"/>
 
+                    <TextBlock Text="Оценить приложение" Tapped="TextBlock_Tapped" />
 
-                    <TextBlock Text="Оценить приложение" Tapped="TextBlock_Tapped" Foreground="{ThemeResource SystemControlHighlightAccentBrush}"
-                           framework:MouseOver.Cursor="Hand"/>
+                    <TextBlock Text="Политика конфиденциальности" />
 
-                    <TextBlock Text="Политика конфиденциальности" Foreground="{ThemeResource SystemControlHighlightAccentBrush}" Tapped="Border_Tapped_1" framework:MouseOver.Cursor="Hand"/>
+                    <TextBlock Text="Правила пользования" />
 
-
-                    <TextBlock Text="Правила пользования" Foreground="{ThemeResource SystemControlHighlightAccentBrush}" Tapped="Border_Tapped_2" framework:MouseOver.Cursor="Hand"/>
-
-
-
-
-
-
-
-
-                    <TextBlock Text="Стороннее ПО" FontSize="26" FontWeight="Light" Margin="20 30 0 0"/>
+                    <TextBlock Text="Стороннее ПО" FontSize="26" Margin="20 30 0 0"/>
 
                     <!--<TextBlock Text="FFmpeg codec v3.4 - декодирование видео"/>-->
 

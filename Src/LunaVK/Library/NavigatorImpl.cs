@@ -1313,6 +1313,50 @@ namespace LunaVK.Library
             if (notification == null)
                 return;
 
+            // First: try to navigate using explicit TargetUrl / ActionUrl if present.
+            try
+            {
+                string target = notification.TargetUrl ?? notification.ActionUrl;
+                if (!string.IsNullOrWhiteSpace(target))
+                {
+                    try
+                    {
+                        // Normalize and decode
+                        string uri = target.Replace("\\/", "/").Replace("&amp;", "&").Trim();
+                        try { uri = System.Net.WebUtility.UrlDecode(uri); } catch { }
+
+                        // Try in-app navigation first (best effort)
+                        bool handled = false;
+                        try
+                        {
+                            handled = this.GetWithinAppNavigationUri(uri);
+                        }
+                        catch { handled = false; }
+
+                        if (handled)
+                            return;
+
+                        // Sometimes URIs lack scheme or are hostless; try adding https:// if it helps
+                        try
+                        {
+                            if (!uri.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && !uri.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                            {
+                                string withScheme = "https://" + uri.TrimStart('/');
+                                if (this.GetWithinAppNavigationUri(withScheme))
+                                    return;
+                            }
+                        }
+                        catch { }
+
+                        // Final fallback: open as web uri (this will again attempt in-app handling inside NavigateToWebUri)
+                        this.NavigateToWebUri(uri);
+                        return;
+                    }
+                    catch { /* swallow and continue to parsed-parent flow */ }
+                }
+            }
+            catch { /* ignore target-url pre-check failures and continue */ }
+
             try
             {
                 var parsedParent = notification.ParsedParent;

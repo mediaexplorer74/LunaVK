@@ -10,7 +10,7 @@
     d:DesignWidth="400"
     MaxHeight="400">
     
-    <Grid Name="Main">
+    <Grid Name="Main" Background="Transparent" Tapped="Main_Tapped">
 
     </Grid>
 </UserControl>
