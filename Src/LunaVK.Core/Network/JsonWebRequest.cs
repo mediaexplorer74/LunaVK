@@ -170,7 +170,7 @@ namespace LunaVK.Core.Network
                     using (var protocolFilter = new Windows.Web.Http.Filters.HttpBaseProtocolFilter())
                     {
                         var cookieManager = protocolFilter.CookieManager;
-                        var cookies = cookieManager.GetCookies(new Uri("https://vk.com"));
+                        var cookies = cookieManager.GetCookies(new Uri("https://vk.ru"));
                         foreach (HttpCookie cookie in cookies)
                         {
                             string ccc = cookie.ToString();
@@ -180,7 +180,7 @@ namespace LunaVK.Core.Network
                                 Debug.WriteLine(ccc);
                             }
 #endif
-                            myHttpWebRequest.CookieContainer.SetCookies(new Uri("https://vk.com/"), ccc);//Работает, но куки сбиваются :(
+                            myHttpWebRequest.CookieContainer.SetCookies(new Uri("https://vk.ru/"), ccc);//Работает, но куки сбиваются :(
                         }
                         
                     }
@@ -230,7 +230,7 @@ namespace LunaVK.Core.Network
                         var protocolFilter = new Windows.Web.Http.Filters.HttpBaseProtocolFilter();
                         
                         var cookieManager = protocolFilter.CookieManager;
-                        var cookies = cookieManager.GetCookies(new Uri("https://vk.com"));
+                        var cookies = cookieManager.GetCookies(new Uri("https://vk.ru"));
                         foreach (HttpCookie cookie in cookies)
                         {
                             string ccc = cookie.ToString();
@@ -242,7 +242,7 @@ namespace LunaVK.Core.Network
                             }
 #endif
                             */
-                            //myHttpWebRequest.CookieContainer.SetCookies(new Uri("https://vk.com/"), ccc);//Работает, но куки сбиваются :(
+                            //myHttpWebRequest.CookieContainer.SetCookies(new Uri("https://vk.ru/"), ccc);//Работает, но куки сбиваются :(
                         }
 
                         client = new HttpClient(protocolFilter);
@@ -736,3 +736,4 @@ namespace LunaVK.Core.Network
         }
     }
 }
+

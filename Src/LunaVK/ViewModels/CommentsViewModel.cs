@@ -430,7 +430,7 @@ namespace LunaVK.ViewModels
                 if (sticker_id != 0)
                 {
                     VKSticker sticker = new VKSticker() { sticker_id = sticker_id };
-                    sticker.SetImage("https://vk.com/images/stickers/" + sticker_id + "/256b.png");
+                    sticker.SetImage("https://vk.ru/images/stickers/" + sticker_id + "/256b.png");
 
                     VKAttachment at = new VKAttachment() { sticker = sticker, type = VKAttachmentType.Sticker };
 
@@ -824,3 +824,4 @@ namespace LunaVK.ViewModels
         public Action CanPublish;
     }
 }
+

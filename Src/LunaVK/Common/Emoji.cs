@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace LunaVK.Common
+namespace Lunavk.rumon
 {
     public static class Emoji
     {
@@ -1921,3 +1921,4 @@ namespace LunaVK.Common
         }
     }
 }
+

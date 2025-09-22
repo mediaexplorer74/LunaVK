@@ -1271,7 +1271,7 @@ namespace LunaVK.ViewModels
                             emailMessage.To.Add(new Windows.ApplicationModel.Email.EmailRecipient(contact.email));
                             await Windows.ApplicationModel.Email.EmailManager.ShowComposeNewEmailAsync(emailMessage);
                         });
-                        viewModel.InfoSections.Add(new LinkItem(string.IsNullOrEmpty( contact.desc) ? contact.phone : contact.desc, contact.email, "https://vk.com/images/contact.png") { NavigationAction = NavigationAction });
+                        viewModel.InfoSections.Add(new LinkItem(string.IsNullOrEmpty( contact.desc) ? contact.phone : contact.desc, contact.email, "https://vk.ru/images/contact.png") { NavigationAction = NavigationAction });
                     }
                     else if (!string.IsNullOrEmpty(contact.phone))
                     {
@@ -1279,7 +1279,7 @@ namespace LunaVK.ViewModels
                             PhoneCallManager.ShowPhoneCallUI(contact.phone, this.Title);
                             
                         });
-                        viewModel.InfoSections.Add(new LinkItem(contact.desc, contact.phone, "https://vk.com/images/contact.png") { NavigationAction = call });
+                        viewModel.InfoSections.Add(new LinkItem(contact.desc, contact.phone, "https://vk.ru/images/contact.png") { NavigationAction = call });
                     }
                     else
                     {
@@ -1313,7 +1313,7 @@ namespace LunaVK.ViewModels
             string link = "url=https://";
             if (CustomFrame.Instance.IsDevicePhone)
                 link += "m.";
-            link += "vk.com/club";
+            link += "vk.ru/club";
             link += this.Id;
 
 
@@ -1415,3 +1415,4 @@ namespace LunaVK.ViewModels
     }
     }
 }
+

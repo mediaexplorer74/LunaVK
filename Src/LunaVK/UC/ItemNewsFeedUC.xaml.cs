@@ -89,12 +89,12 @@ namespace LunaVK.UC
 
         private void CopyLinkMI_OnClick(object args)
         {
-            //Clipboard.SetText(string.Format("https://vk.com/wall{0}_{1}", this.WallPost.to_id, this.WallPost.id));
+            //Clipboard.SetText(string.Format("https://vk.ru/wall{0}_{1}", this.WallPost.to_id, this.WallPost.id));
             var dataPackage = new DataPackage();
             string temp = "https://";
             if (CustomFrame.Instance.IsDevicePhone)
                 temp += "m.";
-            temp += "vk.com/wall";
+            temp += "vk.ru/wall";
             temp += this.VM.OwnerId;
             temp += "_";
             temp += this.VM.PostId;
@@ -127,7 +127,7 @@ namespace LunaVK.UC
             if (this.VM.can_delete)
             {
                 PopUP2.PopUpItem menuItem2 = new PopUP2.PopUpItem();
-                menuItem2.Text = "Delete";
+                menuItem2.Text = LocalizedStrings.GetString("Delete");
                 menuItem2.Command = new DelegateCommand((args) => { this._deleteMenuItem_Click(); });
                 menuItemList.Items.Add(menuItem2);
             }
@@ -197,12 +197,12 @@ namespace LunaVK.UC
 
         private void CopyLinkMI_OnClick(object sender, RoutedEventArgs e)
         {
-            //           Clipboard.SetText(string.Format("https://vk.com/wall{0}_{1}", this.WallPost.to_id, this.WallPost.id));
+            //           Clipboard.SetText(string.Format("https://vk.ru/wall{0}_{1}", this.WallPost.to_id, this.WallPost.id));
             var dataPackage = new DataPackage();
             string temp = "https://";
             //if (CustomFrame.Instance.IsDevicePhone)
             //    temp += "m.";
-            temp += "vk.com/wall";
+            temp += "vk.ru/wall";
             temp += this.VM.OwnerId;
             temp += "_";
             temp += this.VM.PostId;
@@ -414,3 +414,4 @@ namespace LunaVK.UC
         }
     }
 }
+

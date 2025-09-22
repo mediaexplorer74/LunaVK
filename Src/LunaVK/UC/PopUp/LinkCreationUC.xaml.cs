@@ -62,7 +62,7 @@ namespace LunaVK.UC.PopUp
             {
                 string url = this._adress.Text;
                 if (!url.Contains("://"))
-                    url = (url.Contains("vk.com") || url.Contains("vkontakte.ru") || url.Contains("vk.cc") ? "https://" : "http://") + url;
+                    url = (url.Contains("vk.ru") || url.Contains("vkontakte.ru") || url.Contains("vk.cc") ? "https://" : "http://") + url;
 
                 GroupsService.Instance.AddLink(this._communityId, url, this._description.Text, (result) =>
                 {
@@ -101,3 +101,4 @@ namespace LunaVK.UC.PopUp
         }
     }
 }
+

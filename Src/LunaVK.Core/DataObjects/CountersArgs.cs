@@ -5,7 +5,7 @@ using System.IO;
 namespace LunaVK.Core.DataObjects
 {
     //OwnCounters
-    //https://vk.com/dev/account.getCounters
+    //https://vk.ru/dev/account.getCounters
     public class CountersArgs : IBinarySerializable
     {
         /// <summary>
@@ -117,3 +117,4 @@ namespace LunaVK.Core.DataObjects
         }
     }
 }
+

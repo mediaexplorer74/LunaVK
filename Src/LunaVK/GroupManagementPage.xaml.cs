@@ -15,7 +15,7 @@ using LunaVK.Core;
 using LunaVK.ViewModels;
 using LunaVK.Library;
 using LunaVK.Core.DataObjects;
-using LunaVK.Common;
+using Lunavk.rumon;
 
 namespace LunaVK
 {
@@ -289,7 +289,7 @@ namespace LunaVK
 
         private void MoreInformation_OnClicked(object sender, TappedRoutedEventArgs e)
         {
-            string uri = "https://"+ (CustomFrame.Instance.IsDevicePhone ? "m." : "") +"vk.com/agelimits?api_view=1";
+            string uri = "https://"+ (CustomFrame.Instance.IsDevicePhone ? "m." : "") +"vk.ru/agelimits?api_view=1";
             //string lang = LangHelper.GetLang();
             //if (!string.IsNullOrEmpty(lang))
             //    uri += string.Format("&lang={0}", lang);
@@ -499,3 +499,4 @@ namespace LunaVK
         }
     }
 }
+

@@ -256,7 +256,7 @@ namespace LunaVK
         {
             MenuFlyout menu = new MenuFlyout();
 
-            MenuFlyoutItem item = new MenuFlyoutItem() { Text = "Убрать из избранного" };
+            MenuFlyoutItem item = new MenuFlyoutItem() { Text = LocalizedStrings.GetString("RemoveFromFavorites") };
             item.Command = new DelegateCommand((arg) =>
             {
                 var vm = element.DataContext as VKBaseDataForGroupOrUser;

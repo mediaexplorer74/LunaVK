@@ -17,7 +17,7 @@ using System.Linq;
 namespace LunaVK.Core.DataObjects
 {
     /// <summary>
-    /// https://vk.com/dev/newsfeed.get
+    /// https://vk.ru/dev/newsfeed.get
     /// NewsItem
     /// </summary>
     public class VKNewsfeedPost : INotifyPropertyChanged, IBinarySerializable
@@ -208,7 +208,7 @@ namespace LunaVK.Core.DataObjects
         public bool is_favorite { get; set; }
 
         #region ADs
-        //https://vk.com/dev/feed_ads
+        //https://vk.ru/dev/feed_ads
 
         /// <summary>
         /// заголовок рекламного блока. 
@@ -546,3 +546,4 @@ namespace LunaVK.Core.DataObjects
 #endregion
     }
 }
+

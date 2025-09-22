@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>LunaVK</RootNamespace>
     <AssemblyName>LunaVK</AssemblyName>
-    <DefaultLanguage>ru</DefaultLanguage>
+    <DefaultLanguage>ru-RU</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
     <TargetPlatformVersion Condition=" '$(TargetPlatformVersion)' == '' ">10.0.19041.0</TargetPlatformVersion>
     <TargetPlatformMinVersion>10.0.10240.0</TargetPlatformMinVersion>
@@ -22,7 +22,7 @@
     <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
     <AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
     <AppxBundle>Always</AppxBundle>
-    <AppxBundlePlatforms>arm|x86|x64</AppxBundlePlatforms>
+    <AppxBundlePlatforms>arm</AppxBundlePlatforms>
     <AppInstallerUpdateFrequency>0</AppInstallerUpdateFrequency>
     <AppInstallerCheckForUpdateFrequency>OnApplicationRun</AppInstallerCheckForUpdateFrequency>
     <PackageCertificateThumbprint>
@@ -129,10 +129,14 @@
     <Compile Include="Common\ParametersRepository.cs" />
     <Compile Include="Common\ThemeManager.cs" />
     <None Include="Framework\DragControlsHelper.cs" />
+    <Compile Include="Controls\MessageBox.cs" />
+    <Compile Include="Core\Library\NewsFeedService.cs" />
     <Compile Include="Library\Events\AudioPlayerStateChanged.cs" />
     <Compile Include="Library\Events\AudioTrackDownloadProgress.cs" />
     <Compile Include="Library\Events\DownloadProgressedEvent.cs" />
     <Compile Include="Library\Events\DownloadSucceededEvent.cs" />
+    <Compile Include="Library\NavigatorImpl.Helpers.cs" />
+    <Compile Include="Library\NavigatorImpl.Partial.cs" />
     <Compile Include="Library\PrivacySettingTemplateSelector.cs" />
     <Compile Include="Network\Converters\DownloadStatusToCollapsedConverter.cs" />
     <Compile Include="Network\Converters\DownloadStatusToStringConverter.cs" />
@@ -184,11 +188,15 @@
     <Compile Include="Pages\MyLikesPage.xaml.cs">
       <DependentUpon>MyLikesPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Pages\NotificationsDetailPage.xaml.cs" />
     <Compile Include="Pages\PhotoPickerPhotos.xaml.cs">
       <DependentUpon>PhotoPickerPhotos.xaml</DependentUpon>
     </Compile>
     <Compile Include="Pages\ProductPage.xaml.cs">
       <DependentUpon>ProductPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\SettingsPage.xaml.cs">
+      <DependentUpon>SettingsPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Pages\SuggestedSourcesPage.xaml.cs">
       <DependentUpon>SuggestedSourcesPage.xaml</DependentUpon>
@@ -2242,9 +2250,17 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Pages\NotificationsDetailPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Pages\PhotoPickerPhotos.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Pages\SettingsPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Pages\SuggestedSourcesPage.xaml">
       <SubType>Designer</SubType>
@@ -2571,7 +2587,8 @@
     <None Include="Framework\CornerRadiusSetter.cs" />
     <Compile Include="Framework\CustomFrame.cs" />
     <Compile Include="Framework\DelegateCommand.cs" />
-    <PRIResource Include="Strings\en\Resources.resw" />
+    <PRIResource Include="Strings\en-US\Resources.resw" />
+    <PRIResource Include="Strings\zh-CN\Resources.resw" />
     <None Include="UC\Controls\ExtendedGridView2\ExtendedGridView.cs" />
     <Compile Include="Framework\DeviceTrigger.cs" />
     <Compile Include="Framework\HideHeaderHelper.cs" />
@@ -3417,7 +3434,7 @@
     <Content Include="Assets\Fonts\segmdl2.ttf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <PRIResource Include="Strings\ru\Resources.resw" />
+    <PRIResource Include="Strings\ru-RU\Resources.resw" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Changes.txt" />
@@ -4163,7 +4180,7 @@
       <Name>XamlAnimatedGif</Name>
     </ProjectReference>
     <ProjectReference Include="..\YoutubeExtractor\YoutubeExtractor.csproj">
-      <Project>{be76dc22-feaf-4ac0-816f-28a646ca83b0}</Project>
+      <Project>{2ed009b9-ca0b-4a94-a44a-fa2abfb316cc}</Project>
       <Name>YoutubeExtractor</Name>
     </ProjectReference>
   </ItemGroup>

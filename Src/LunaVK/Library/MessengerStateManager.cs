@@ -34,6 +34,7 @@ namespace LunaVK.Library
         public void Initialize()
         {
             LongPollServerService.Instance.ReceivedUpdates += Instance_ReceivedUpdates;
+            Debug.WriteLine("MessengerStateManager initialized and subscribed to ReceivedUpdates");
         }
 
         void Instance_ReceivedUpdates(List<UpdatesResponse.LongPollServerUpdateData> updates)
@@ -49,6 +50,7 @@ namespace LunaVK.Library
             {
                 foreach (var update in updates)
                 {
+                    Debug.WriteLine($"Instance_ReceivedUpdates: update type={update.UpdateType} user_id={update.user_id} peer_id={update.peer_id} message_id={update.message_id}");
                     switch (update.UpdateType)
                     {
                         case LongPollServerUpdateType.MessageAdd:
@@ -72,6 +74,7 @@ namespace LunaVK.Library
                 //todo: GetUsers больше не должно использоваться
                 UsersService.Instance.GetUsers(userIds, (result) =>
                 {
+                    Debug.WriteLine($"HandleInAppNotification: GetUsers callback result null? {result==null} count={(result!=null?result.Count:0)} for user_id={update.user_id}");
                     
                     if (result != null )
                     {
@@ -97,6 +100,7 @@ namespace LunaVK.Library
                         
                         Execute.ExecuteOnUIThread(() =>
                         {
+                            Debug.WriteLine($"HandleInAppNotification: ready to show in-app notification for user.Id={user.Id} MinPhoto='{user.MinPhoto}'");
                             this.HandleInAppNotification(user.Title, temp, update.peer_id, user.MinPhoto);
                         });
 
@@ -112,6 +116,8 @@ namespace LunaVK.Library
         //паблик для теста
         public void HandleInAppNotification(string title, string message, int peer_id, string imageSrc)
         {
+            Debug.WriteLine($"HandleInAppNotification called: title='{title}' peer_id={peer_id} imageSrc='{imageSrc}'");
+
             if (Settings.PushNotificationsBlockedUntil >= DateTime.UtcNow)
                 return;
 
@@ -134,6 +140,7 @@ namespace LunaVK.Library
 
             if (Settings.NotificationsEnabled)
             {
+                Debug.WriteLine("HandleInAppNotification: adding to CustomFrame.Instance.NotificationsPanel");
                 CustomFrame.Instance.NotificationsPanel.AddAndShowNotification(imageSrc, title, message, () =>
                 {
                     if (peer_id < 2000000000)

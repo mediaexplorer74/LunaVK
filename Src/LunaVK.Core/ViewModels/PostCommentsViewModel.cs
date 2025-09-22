@@ -204,7 +204,7 @@ namespace LunaVK.Core.ViewModels
 
                 if(owner == null)
                 {
-                    owner = new VKUser() { photo_50 = "https://vk.com/images/wall/deleted_avatar_50.png", first_name = "Комментарий удалён пользователем или руководителем страницы" };
+                    owner = new VKUser() { photo_50 = "https://vk.ru/images/wall/deleted_avatar_50.png", first_name = "Комментарий удалён пользователем или руководителем страницы" };
                 }
 
                 c.User = owner;
@@ -373,7 +373,7 @@ namespace LunaVK.Core.ViewModels
             if (sticker_id != 0)
             {
                 VKSticker sticker = new VKSticker() { sticker_id = sticker_id };
-                sticker.SetImage("https://vk.com/images/stickers/" + sticker_id + "/256b.png");
+                sticker.SetImage("https://vk.ru/images/stickers/" + sticker_id + "/256b.png");
 
                 VKAttachment at = new VKAttachment() { sticker = sticker, type = VKAttachmentType.Sticker };
 
@@ -748,3 +748,4 @@ namespace LunaVK.Core.ViewModels
     market_comment,
   }
  * */
+

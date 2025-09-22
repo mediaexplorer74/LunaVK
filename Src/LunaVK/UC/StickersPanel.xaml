@@ -8,7 +8,7 @@
     mc:Ignorable="d"
     d:DesignHeight="260"
     d:DesignWidth="400"
-    xmlns:common="using:LunaVK.Common">
+    xmlns:common="using:Lunavk.rumon">
 
     <UserControl.Resources>
         <Style x:Key="PivotBottomHeaderStyle" TargetType="Pivot">
@@ -390,3 +390,4 @@
         <ProgressBar Margin="30 0" IsIndeterminate="True" Name="progBar" Background="Transparent" MaxWidth="500"/>
     </Grid>
 </UserControl>
+

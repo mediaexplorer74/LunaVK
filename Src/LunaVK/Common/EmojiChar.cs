@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.UI.Xaml.Media.Imaging;
 
-namespace LunaVK.Common
+namespace Lunavk.rumon
 {
     public sealed class Emoji
     {
@@ -74,3 +74,4 @@ namespace LunaVK.Common
         }
     }
 }
+

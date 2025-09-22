@@ -508,7 +508,7 @@ namespace LunaVK.Pages.Group
                 string temp = "https://";
                 if (CustomFrame.Instance.IsDevicePhone)
                     temp += "m.";
-                temp += "vk.com/club";
+                temp += "vk.ru/club";
                 temp += Math.Abs(this.VM.Id);
                 dataPackage.SetText(temp);
                 Clipboard.SetContent(dataPackage);
@@ -525,7 +525,7 @@ namespace LunaVK.Pages.Group
                 string temp = "https://";
                 if (CustomFrame.Instance.IsDevicePhone)
                     temp += "m.";
-                temp += "vk.com/club";
+                temp += "vk.ru/club";
                 temp += Math.Abs(this.VM.Id);
                 NavigatorImpl.Instance.NavigateToWebUri(temp, true);
             });
@@ -604,3 +604,4 @@ namespace LunaVK.Pages.Group
         }
     }
 }
+

@@ -140,7 +140,7 @@ namespace LunaVK.Core.DataObjects
             }
         }
         */
-        // date -- https://vk.com/dev/post_source
+        // date -- https://vk.ru/dev/post_source
 
         /// <summary>
         /// Ссылка на ресурс, с которого была опубликована запись.
@@ -162,3 +162,4 @@ namespace LunaVK.Core.DataObjects
         }
     }
 }
+

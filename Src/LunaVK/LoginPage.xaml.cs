@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
@@ -23,7 +23,7 @@ using Windows.Networking.PushNotifications;
 using Windows.Storage;
 using Windows.ApplicationModel.Background;
 using Windows.Foundation.Metadata;
-using LunaVK.Common;
+using Lunavk.rumon;
 using VkLib.Error; // Added for VkLib exceptions
 
 namespace LunaVK
@@ -31,7 +31,7 @@ namespace LunaVK
     public sealed partial class LoginPage : Page
     {
         /// <summary>
-        /// Если есть континум анимация
+        /// Р•СЃР»Рё РµСЃС‚СЊ РєРѕРЅС‚РёРЅСѓРј Р°РЅРёРјР°С†РёСЏ
         /// </summary>
         bool needAnimation;
         //private bool Accessed;
@@ -137,24 +137,24 @@ namespace LunaVK
                 }
                 else
                 {
-                    this.Callback(VKErrors.AccessDenied, "Не удалось получить токен доступа");
+                    this.Callback(VKErrors.AccessDenied, "РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ С‚РѕРєРµРЅ РґРѕСЃС‚СѓРїР°");
                 }
             }
             catch (VkCaptchaNeededException ex)
             {
-                this.Callback(VKErrors.CaptchaNeeded, $"Требуется капча: {ex.CaptchaImg}");
+                this.Callback(VKErrors.CaptchaNeeded, $"РўСЂРµР±СѓРµС‚СЃСЏ РєР°РїС‡Р°: {ex.CaptchaImg}");
             }
             catch (VkInvalidClientException ex)
             {
-                this.Callback(VKErrors.AccessDenied, "Неверный логин или пароль");
+                this.Callback(VKErrors.AccessDenied, "РќРµРІРµСЂРЅС‹Р№ Р»РѕРіРёРЅ РёР»Рё РїР°СЂРѕР»СЊ");
             }
             catch (VkNeedValidationException ex)
             {
-                this.Callback(VKErrors.NeedValidation, "Требуется подтверждение безопасности");
+                this.Callback(VKErrors.NeedValidation, "РўСЂРµР±СѓРµС‚СЃСЏ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ Р±РµР·РѕРїР°СЃРЅРѕСЃС‚Рё");
             }
             catch (Exception ex)
             {
-                this.Callback(VKErrors.UnknownError, $"Ошибка авторизации: {ex.Message}");
+                this.Callback(VKErrors.UnknownError, $"РћС€РёР±РєР° Р°РІС‚РѕСЂРёР·Р°С†РёРё: {ex.Message}");
             }
         }
 
@@ -176,7 +176,7 @@ namespace LunaVK
                             NavigatorImpl.Instance.NavigateToNewsFeed();
                         else
                         {
-                            this._error.Text = "Авторизация выполнена, но не удалось получить данные пользователя.";
+                            this._error.Text = "РђРІС‚РѕСЂРёР·Р°С†РёСЏ РІС‹РїРѕР»РЅРµРЅР°, РЅРѕ РЅРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ РґР°РЅРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ.";
                             this._error.Opacity = 1;
                             this._progressRing.IsActive = false;
                             this.passwordBox.IsEnabled = this.textBoxUsername.IsEnabled = this.LoginBtn.IsEnabled = true;
@@ -218,7 +218,7 @@ namespace LunaVK
 
         private void TextBlock_Tapped(object sender, TappedRoutedEventArgs e)
         {
-            NavigatorImpl.Instance.NavigateToWebUri("https://m.vk.com/terms", true);
+            NavigatorImpl.Instance.NavigateToWebUri("https://m.vk.ru/terms", true);
         }
         
         private void Settings_Tapped(object sender, TappedRoutedEventArgs e)

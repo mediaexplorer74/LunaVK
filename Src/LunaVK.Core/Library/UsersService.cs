@@ -355,16 +355,13 @@ namespace LunaVK.Core.Library
             VKRequestsDispatcher.DispatchRequestToVK<VKProfilePhoto>("photos.saveOwnerPhoto", parameters, callback);
         }
 
-
-
-
-
-
-
-
-
-
-
+        public void ClearCachedUsers()
+        {
+            lock (this._lockObj)
+            {
+                this._usersCache.Clear();
+            }
+        }
 
 
 

@@ -27,7 +27,7 @@ namespace LunaVK.Network
 
         public event LongPollServerService.UpdatesReceivedEventHandler ReceivedUpdates;
 
-        //https://api.vk.com:443/newuim375988312? act=a_check key=963a2ddd43caf36a83f474714cde441f482d6021 ts=1785042013 wait=25 mode=362 version=5 
+        //https://api.vk.ru:443/newuim375988312? act=a_check key=963a2ddd43caf36a83f474714cde441f482d6021 ts=1785042013 wait=25 mode=362 version=5 
         //private readonly string _getUpdatesURIFrm = "https://{0}?act=a_check&key={1}&ts={2}&wait=25&mode=66&version=3";
         private readonly string _getUpdatesURIFrm = "https://{0}?act=a_check&key={1}&ts={2}&wait=25&mode=330&version=5";//362
 
@@ -742,8 +742,8 @@ namespace LunaVK.Network
   "first_name": "Тест",
   "last_name": "Тестович",
   "sex": 2,
-  "photo_max": "https://vk.com/images/camera_200.png?ava=1",
-  "photo_max_orig": "https://vk.com/images/camera_200.png?ava=1",
+  "photo_max": "https://vk.ru/images/camera_200.png?ava=1",
+  "photo_max_orig": "https://vk.ru/images/camera_200.png?ava=1",
   "crop_rect": false,
   "verified": false
 }}
@@ -1145,3 +1145,4 @@ case 2:
     public static final int ONLINE_TYPE_WINDOWS8 = 6;
     public static final int ONLINE_TYPE_WINPHONE = 5;
  * */
+

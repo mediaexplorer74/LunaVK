@@ -16,7 +16,7 @@ namespace LunaVK.Core.DataObjects
 {
     /// <summary>
     /// Запись на стене
-    /// https://vk.com/dev/objects/post
+    /// https://vk.ru/dev/objects/post
     /// Topic
     /// </summary>
     public class VKWallPost : INotifyPropertyChanged, IBinarySerializable
@@ -445,3 +445,4 @@ namespace LunaVK.Core.DataObjects
 #endregion
     }
 }
+

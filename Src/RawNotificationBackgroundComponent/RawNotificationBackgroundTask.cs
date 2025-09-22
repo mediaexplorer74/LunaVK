@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Threading;
 using Windows.Storage;
+using LunaVK.Core;
 
 namespace RawNotificationBackgroundComponent
 {
@@ -105,7 +106,7 @@ namespace RawNotificationBackgroundComponent
             else if (paramDict.ContainsKey("type"))
             {
                 toastXmlString += "</binding></visual>";
-                //sound=default&amp;_genSrv=807117&amp;type=open_url&amp;try_internal=1&amp;url=https%3A%2F%2Fvk.com%2Fwall-155775051_162&amp;sandbox=0&amp;log_date=1585657792
+                //sound=default&amp;_genSrv=807117&amp;type=open_url&amp;try_internal=1&amp;url=https%3A%2F%2Fvk.ru%2Fwall-155775051_162&amp;sandbox=0&amp;log_date=1585657792
                 string type = paramDict["type"];
                 if (type == "friend")
                 {
@@ -177,10 +178,10 @@ namespace RawNotificationBackgroundComponent
                 XmlElement inputElement = toastXml.CreateElement("input");
                 inputElement.SetAttribute("id", "textBox");
                 inputElement.SetAttribute("type", "text");
-                inputElement.SetAttribute("placeHolderContent", "Написать ответ");
+                inputElement.SetAttribute("placeHolderContent", LocalizedStrings.GetString("PlaceHolder_WriteReply"));
 
                 XmlElement actionElement = toastXml.CreateElement("action");
-                actionElement.SetAttribute("content", "Send");//важно: content
+                actionElement.SetAttribute("content", LocalizedStrings.GetString("Send"));//важно: content
                 actionElement.SetAttribute("arguments", "action=reply&amp;push_id=" + push_id);
                 actionElement.SetAttribute("activationType", "background");
                 actionElement.SetAttribute("hint-inputId", "textBox");
@@ -274,9 +275,9 @@ namespace RawNotificationBackgroundComponent
                 }
                 else if (type == "open_url" && paramDict.ContainsKey("url"))
                 {
-                    //sound=default&amp;_genSrv=807117&amp;type=open_url&amp;try_internal=1&amp;url=https%3A%2F%2Fvk.com%2Fwall-155775051_162&amp;sandbox=0&amp;log_date=1585657792
-                    string url0 = paramDict["url"];//https%3A%2F%2Fvk.com%2Fwall-155775051_162
-                    string url = System.Net.WebUtility.UrlDecode(url0);//https://vk.com/wall-155775051_162
+                    //sound=default&amp;_genSrv=807117&amp;type=open_url&amp;try_internal=1&amp;url=https%3A%2F%2Fvk.ru%2Fwall-155775051_162&amp;sandbox=0&amp;log_date=1585657792
+                    string url0 = paramDict["url"];//https%3A%2F%2Fvk.ru%2Fwall-155775051_162
+                    string url = System.Net.WebUtility.UrlDecode(url0);//https://vk.ru/wall-155775051_162
                     Match m = _wallReplyReg.Match(url);
                     if (m.Success && m.Groups.Count > 1)
                     {
@@ -348,12 +349,12 @@ namespace RawNotificationBackgroundComponent
 
 
                         XmlElement actionAddElement = toastXml.CreateElement("action");
-                        actionAddElement.SetAttribute("content", "Нравится");
+                        actionAddElement.SetAttribute("content", LocalizedStrings.GetString("Like"));
                         actionAddElement.SetAttribute("arguments", "action=like&amp;item=" + toastTag);
                         actionAddElement.SetAttribute("activationType", "background");
 
                         XmlElement actionHideElement = toastXml.CreateElement("action");
-                        actionHideElement.SetAttribute("content", "В избранное");
+                        actionHideElement.SetAttribute("content", LocalizedStrings.GetString("Fave"));
                         actionHideElement.SetAttribute("arguments", "action=fave&amp;item=" + toastTag);
                         actionHideElement.SetAttribute("activationType", "background");
 
@@ -439,3 +440,4 @@ namespace RawNotificationBackgroundComponent
         }
     }
 }
+

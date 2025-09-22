@@ -128,12 +128,12 @@ namespace LunaVK.UC
 
         private void CopyLinkMI_OnClick(object args)
         {
-            //Clipboard.SetText(string.Format("https://vk.com/wall{0}_{1}", this.WallPost.to_id, this.WallPost.id));
+            //Clipboard.SetText(string.Format("https://vk.ru/wall{0}_{1}", this.WallPost.to_id, this.WallPost.id));
             var dataPackage = new DataPackage();
             string temp = "https://";
             if (CustomFrame.Instance.IsDevicePhone)
                 temp += "m.";
-            temp += "vk.com/wall";
+            temp += "vk.ru/wall";
             temp += this.VM.OwnerId;
             temp += "_";
             temp += this.VM.PostId;
@@ -356,12 +356,12 @@ namespace LunaVK.UC
 
         private void CopyLinkMI_OnClick(object sender, RoutedEventArgs e)
         {
-            //           Clipboard.SetText(string.Format("https://vk.com/wall{0}_{1}", this.WallPost.to_id, this.WallPost.id));
+            //           Clipboard.SetText(string.Format("https://vk.ru/wall{0}_{1}", this.WallPost.to_id, this.WallPost.id));
             var dataPackage = new DataPackage();
             string temp = "https://";
             //if (CustomFrame.Instance.IsDevicePhone)
             //    temp += "m.";
-            temp += "vk.com/wall";
+            temp += "vk.ru/wall";
             temp += this.VM.OwnerId;
             temp += "_";
             temp += this.VM.PostId;
@@ -563,3 +563,4 @@ namespace LunaVK.UC
         }
     }
 }
+

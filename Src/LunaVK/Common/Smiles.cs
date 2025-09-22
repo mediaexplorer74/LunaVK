@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace LunaVK.Common
+namespace Lunavk.rumon
 {
     public static class Smiles
     {
@@ -1192,3 +1192,4 @@ namespace LunaVK.Common
         */
     }
 }
+

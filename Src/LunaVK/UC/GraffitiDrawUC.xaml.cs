@@ -707,3 +707,16 @@ namespace App1uwp.UC
        
     }
 }
+
+namespace LunaVK.UC
+{
+    public sealed partial class GraffitiDrawUC : UserControl
+    {
+        public Action<RenderTargetBitmap, string> SendAction;
+
+        public GraffitiDrawUC()
+        {
+            this.InitializeComponent();
+        }
+    }
+}

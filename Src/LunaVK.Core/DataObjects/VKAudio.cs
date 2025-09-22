@@ -15,7 +15,7 @@ namespace LunaVK.Core.DataObjects
 {
     /// <summary>
     /// Объект audio, описывающий аудиозапись
-    /// https://vk.com/dev/_objects_audio
+    /// https://vk.ru/dev/_objects_audio
     /// </summary>
     public class VKAudio : ViewModelBase, IBinarySerializable
     {
@@ -47,7 +47,7 @@ namespace LunaVK.Core.DataObjects
 
         /// <summary>
         /// Ссылка на MP3-файл
-        /// https://vk.com/mp3/audio_api_unavailable.mp3
+        /// https://vk.ru/mp3/audio_api_unavailable.mp3
         /// </summary>
         public string url { get; set; }
 
@@ -157,7 +157,7 @@ namespace LunaVK.Core.DataObjects
         {
             get
             {
-                return this.url == "https://vk.com/mp3/audio_api_unavailable.mp3";
+                return this.url == "https://vk.ru/mp3/audio_api_unavailable.mp3";
             }
         }
 
@@ -190,3 +190,4 @@ namespace LunaVK.Core.DataObjects
 #endregion
     }
 }
+

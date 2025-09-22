@@ -190,7 +190,7 @@ namespace LunaVK.Core.ViewModels
         }*/
         #endregion
 
-        //https://vk.com/dev/feed_ads
+        //https://vk.ru/dev/feed_ads
         public override void GetData(int offset, int count, Action<VKErrors, IReadOnlyList<VKBaseDataForPostOrNews>> callback)
         {
             string code = "var stories;";
@@ -638,3 +638,4 @@ count указывает, какое максимальное число нов�
 положительное число 
 
 */
+

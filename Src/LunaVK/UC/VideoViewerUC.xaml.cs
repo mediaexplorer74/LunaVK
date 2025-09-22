@@ -20,7 +20,7 @@ using LunaVK.Core.Enums;
 using LunaVK.Core.Framework;
 using Windows.UI.Xaml.Media.Animation;
 using System;
-using LunaVK.Common;
+using Lunavk.rumon;
 using Windows.Foundation;
 using Windows.UI.ViewManagement;
 
@@ -441,7 +441,7 @@ namespace LunaVK.UC
 
             if (sender != null)
             {
-                Common.ImageAnimator imageAnimator = new Common.ImageAnimator(200, null);
+                /*Common.*/ImageAnimator imageAnimator = new /*Common.*/ ImageAnimator(200, null);
                 imageAnimator.AnimateIn(sender as FrameworkElement, CustomFrame.Instance.VideoViewerElement);
             }
         }
@@ -500,3 +500,4 @@ namespace LunaVK.UC
         }
     }
 }
+

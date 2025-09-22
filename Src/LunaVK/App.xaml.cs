@@ -14,7 +14,7 @@ using LunaVK.Pages;
 using LunaVK.Core.Library;
 using LunaVK.Core.Utils;
 using LunaVK.ViewModels;
-using LunaVK.Common;
+using Lunavk.rumon;
 using Windows.ApplicationModel.DataTransfer.ShareTarget;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.UI.Notifications;
@@ -26,6 +26,7 @@ using Windows.Globalization;
 using Windows.Storage;
 using System.Threading.Tasks;
 using Windows.System;
+using System.Linq;
 
 namespace LunaVK
 {
@@ -40,6 +41,14 @@ namespace LunaVK
         /// </summary>
         public App()
         {
+            // Ensure settings and language are applied before XAML is initialized
+            try
+            {
+                Settings.Initialize();
+                ApplyStoredLanguage();
+            }
+            catch { }
+
             this.InitializeComponent();
 
             base.Suspending += this.OnSuspending;
@@ -48,6 +57,105 @@ namespace LunaVK
 #if WINDOWS_UWP
             this.RequestedTheme = ApplicationTheme.Dark; // BugFix - Чтобы темы менялись на лету
 #endif
+        }
+
+        // Helper: normalize language codes to be compatible with resource qualifiers
+        private static string NormalizeLanguageCode(string code)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+                return code ?? "";
+
+            // Remove common script subtags that may not match resource folder names (e.g. zh-Hans-CN -> zh-CN)
+            // Handle patterns like zh-Hans-CN, zh-Hant-TW, etc.
+            try
+            {
+                // simple replace of -Hans- and -Hant- segments
+                if (code.IndexOf("-Hans-", StringComparison.OrdinalIgnoreCase) >= 0)
+                    return code.Replace("-Hans-", "-").Replace("-hans-", "-");
+                if (code.EndsWith("-Hans", StringComparison.OrdinalIgnoreCase))
+                    return code.Substring(0, code.Length - 5);
+                if (code.IndexOf("-Hant-", StringComparison.OrdinalIgnoreCase) >= 0)
+                    return code.Replace("-Hant-", "-").Replace("-hant-", "-");
+                if (code.EndsWith("-Hant", StringComparison.OrdinalIgnoreCase))
+                    return code.Substring(0, code.Length - 5);
+
+                // fallback: return as-is
+                return code;
+            }
+            catch
+            {
+                return code;
+            }
+        }
+
+        // Apply stored language settings as early as possible
+        private void ApplyStoredLanguage()
+        {
+            try
+            {
+                // prefer explicit stored language code
+                string code = Settings.SelectedLanguageCode;
+
+                if (!string.IsNullOrEmpty(code))
+                {
+                    string norm = NormalizeLanguageCode(code);
+                    ApplicationLanguages.PrimaryLanguageOverride = norm;
+                    LunaVK.Core.Utils.Logger.Instance.Info($"Applied PrimaryLanguageOverride from SelectedLanguageCode='{code}' (normalized='{norm}')");
+                    return;
+                }
+
+                // fallback to old index-based LanguageSettings
+                var langsList = new List<string> { "" };
+                string[] preferred = new[] { "ru", "en-US", "zh-CN" };
+                var codes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var c in preferred)
+                {
+                    try
+                    {
+                        var ci = new System.Globalization.CultureInfo(c);
+                        if (!codes.Contains(ci.Name))
+                        {
+                            langsList.Add(ci.Name);
+                            codes.Add(ci.Name);
+                        }
+                    }
+                    catch { }
+                }
+
+                try
+                {
+                    foreach (string lang in Windows.System.UserProfile.GlobalizationPreferences.Languages)
+                    {
+                        try
+                        {
+                            var ci = new System.Globalization.CultureInfo(lang);
+                            if (!codes.Contains(ci.Name))
+                            {
+                                langsList.Add(ci.Name);
+                                codes.Add(ci.Name);
+                            }
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
+
+                int idx = Settings.LanguageSettings;
+                if (idx >= 0 && idx < langsList.Count)
+                {
+                    string applied = langsList[idx];
+                    string norm = NormalizeLanguageCode(applied);
+                    ApplicationLanguages.PrimaryLanguageOverride = norm;
+                    Settings.SelectedLanguageCode = norm; // migrate
+                    LunaVK.Core.Utils.Logger.Instance.Info($"Applied PrimaryLanguageOverride='{applied}' (normalized='{norm}') from legacy LanguageSettings index={idx}");
+                    LunaVK.Core.Utils.Logger.Instance.Info($"Migrated LanguageSettings index={idx} -> SelectedLanguageCode='{norm}'");
+                }
+            }
+            catch (Exception ex)
+            {
+                LunaVK.Core.Utils.Logger.Instance.Error("ApplyStoredLanguage failed", ex);
+            }
         }
 
         /// <summary>
@@ -60,6 +168,10 @@ namespace LunaVK
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
             Logger.Instance.Info("<---------------------------- Launched =========================>");
+
+            //TEMP
+            //UsersService.Instance.ClearCachedUsers();
+            //GroupsService.Instance.ClearCachedGroups();
 
             this.InitFrame();
 
@@ -165,7 +277,7 @@ namespace LunaVK
                         SplashPage extendedSplash = new SplashPage(e.SplashScreen);
                         rootFrame.Content = extendedSplash;
                     }
-                    
+
                     /*
                     if(ApiInformation.IsApiContractPresent("Windows.Foundation.UniversalApiContract", 3) && ApiInformation.IsTypePresent("Windows.UI.Xaml.Media.Animation.ConnectedAnimationService"))
                     {
@@ -200,9 +312,9 @@ namespace LunaVK
 
 
 
-                //args = "badge=3&sound=default&try_internal=1&url=https%3A%2F%2Fvk.com%2Fwall-55527953_32032&_genSrv=807116&type=open_url&sandbox=0&log_date=1565445117";
-                //args = "url=https://vk.com/loftproektetagi";
-                //args = "type=open_url&url=https://vk.com/wall-26493942_3869175";
+                //args = "badge=3&sound=default&try_internal=1&url=https%3A%2F%2Fvk.ru%2Fwall-55527953_32032&_genSrv=807116&type=open_url&sandbox=0&log_date=1565445117";
+                //args = "url=https://vk.ru/loftproektetagi";
+                //args = "type=open_url&url=https://vk.ru/wall-26493942_3869175";
             }
 #endif
             if (string.IsNullOrEmpty(args))
@@ -239,7 +351,7 @@ type=mention&place=topic-155775051_38965377&uid=375988312 // упоминани�
 
 type=friend_found&uid=527914199 // друг зарегестрировался в ВК
 
-type=open_url&url=https%3A%2F%2Fvk.com%2Fwall-162756747_50702 // сообщество опубликовало запись
+type=open_url&url=https%3A%2F%2Fvk.ru%2Fwall-162756747_50702 // сообщество опубликовало запись
 
             launch="badge=22&amp;log_date=1589216664&amp;_genSrv=626730&amp;msg_id=615102&amp;sound=default&amp;sandbox=0&amp;uid=2000000091&amp;push_id=chat_2000000091_615102"
             */
@@ -304,7 +416,7 @@ type=open_url&url=https%3A%2F%2Fvk.com%2Fwall-162756747_50702 // сообщес�
                     //return new Uri(NavigatorImpl.GetNavigateToPostCommentsNavStr(long.Parse(text2.Remove(0, text2.IndexOf('_') + 1)), ownerId, false, 0, 0, "") + "&ClearBackStack=true", UriKind.Relative);
             }
 
-            //url=https%3A%2F%2Fvk.com%2Fwall-55527953_32032&type=open_url&sandbox=0&log_date=1565445117
+            //url=https%3A%2F%2Fvk.ru%2Fwall-55527953_32032&type=open_url&sandbox=0&log_date=1565445117
             if (paramDict.ContainsKey("url"))
             {
                 string url0 = paramDict["url"];
@@ -651,6 +763,7 @@ type=open_url&url=https%3A%2F%2Fvk.com%2Fwall-162756747_50702 // сообщес�
         */
         
 
+
         /// <summary>
         /// Вызывается при приостановке выполнения приложения.  Состояние приложения сохраняется
         /// без учета информации о том, будет ли оно завершено или возобновлено с неизменным
@@ -682,7 +795,7 @@ type=open_url&url=https%3A%2F%2Fvk.com%2Fwall-162756747_50702 // сообщес�
             // Code to handle activation goes here.
 
             this.InitFrame();
-            
+
             
             if (shareOperation != null)
             {
@@ -752,13 +865,7 @@ type=open_url&url=https%3A%2F%2Fvk.com%2Fwall-162756747_50702 // сообщес�
 
             if (rootFrame == null)
             {
-                Settings.Initialize();
-
-                if(Settings.LanguageSettings!=0)
-                {
-                    ApplicationLanguages.PrimaryLanguageOverride = Windows.System.UserProfile.GlobalizationPreferences.Languages[Settings.LanguageSettings-1];
-                }
-                
+                // Settings initialized in constructor
 
                 ThemeManager.ApplyColors();
             }
@@ -862,4 +969,3 @@ type=open_url&url=https%3A%2F%2Fvk.com%2Fwall-162756747_50702 // сообщес�
         */
     }
 }
- 

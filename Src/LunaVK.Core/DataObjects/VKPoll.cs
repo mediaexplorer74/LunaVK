@@ -66,7 +66,7 @@ namespace LunaVK.Core.DataObjects
         /// <summary>
         /// идентификаторы вариантов ответа, выбранных текущим пользователем. 
         /// </summary>
-        public List<int> answer_ids { get; set; }
+        public List<uint> answer_ids { get; set; }
 
         /// <summary>
         /// дата завершения опроса в Unixtime. 0, если опрос бессрочный. 
@@ -353,7 +353,7 @@ namespace LunaVK.Core.DataObjects
             this.closed = reader.ReadBoolean();
             this.question = reader.ReadString();
             this.votes = reader.ReadInt32();
-            this.answer_ids = reader.ReadListInt();
+            this.answer_ids = reader.ReadListUInt();
             this.answers = reader.ReadList<VKPollAnswers>();
             this.anonymous = reader.ReadBoolean();
         }

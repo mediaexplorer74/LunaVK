@@ -20,7 +20,7 @@
         </Grid.ColumnDefinitions>
 
         <Image Height="64" Width="64" Grid.RowSpan="2"
-               Source="{Binding photo_100, FallbackValue=https://vk.com/images/community_100.png}"
+               Source="{Binding photo_100, FallbackValue=https://vk.ru/images/community_100.png}"
                HorizontalAlignment="Left" Margin="15"
                VerticalAlignment="Top"/>
         
@@ -47,3 +47,4 @@
         </StackPanel>
     </Grid>
 </UserControl>
+

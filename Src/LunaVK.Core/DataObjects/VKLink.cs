@@ -14,7 +14,7 @@ namespace LunaVK.Core.DataObjects
 {
     /// <summary>
     /// Ссылка (type = link)
-    /// https://vk.com/dev/attachments_w
+    /// https://vk.ru/dev/attachments_w
     /// </summary>
     public class VKLink : IBinarySerializable
     {
@@ -211,8 +211,8 @@ namespace LunaVK.Core.DataObjects
         {
             get
             {
-                //https://vk.com/@-76477496-prometheus-posts
-                return this.button != null && this.button.action.url.Contains("vk.com/@");
+                //https://vk.ru/@-76477496-prometheus-posts
+                return this.button != null && this.button.action.url.Contains("vk.ru/@");
             }
         }
 
@@ -369,3 +369,4 @@ namespace LunaVK.Core.DataObjects
         }
     }
 }
+

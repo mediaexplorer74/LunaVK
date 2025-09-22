@@ -6,7 +6,7 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Animation;
 
-namespace LunaVK.Common
+namespace Lunavk.rumon
 {
     public class ImageAnimator
     {
@@ -154,3 +154,4 @@ namespace LunaVK.Common
         }
     }
 }
+

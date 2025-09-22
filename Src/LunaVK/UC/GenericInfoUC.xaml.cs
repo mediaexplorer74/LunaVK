@@ -10,6 +10,7 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
+using System.Diagnostics;
 
 namespace LunaVK.UC
 {
@@ -53,58 +54,21 @@ namespace LunaVK.UC
                 else
                 {
                     int delayToHide = 3000;
-                    //string text = "Error";
-                    /*
-                    switch (error.error_code)
-                    {
-                        case ResultCode.Processing:
-                            text = "Registration_TryAgainLater";
-                            break;
-                        case ResultCode.ProductNotFound:
-                            text = "CannotLoadProduct";
-                            delayToHide = 2000;
-                            break;
-                        case ResultCode.VideoNotFound:
-                            text = "CannotLoadVideo";
-                            delayToHide = 2000;
-                            break;
-                        case ResultCode.WrongPhoneNumberFormat:
-                            text = "Registration_InvalidPhoneNumber";
-                            break;
-                        case ResultCode.PhoneAlreadyRegistered:
-                            text = "Registration_PhoneNumberIsBusy";
-                            break;
-                        case ResultCode.InvalidCode:
-                            text = "Registration_WrongCode;
-                            break;
-                        case ResultCode.InvalidAudioFormat:
-                            text = "InvalidAudioFormatError";
-                            delayToHide = 3000;
-                            break;
-                        case ResultCode.AudioIsExcludedByRightholder:
-                            text = "AudioIsExcludedByRightholderError";
-                            delayToHide = 3000;
-                            break;
-                        case ResultCode.MaximumLimitReached:
-                            text = "AudioFileSizeLimitReachedError";
-                            delayToHide = 3000;
-                            break;
-                        case ResultCode.UploadingFailed:
-                            text = "FailedToConnectError";
-                            delayToHide = 3000;
-                            break;
-                        case ResultCode.CommunicationFailed:
-                            text = "Error_Connection";
-                            delayToHide = 3000;
-                            break;
-                    }
-                    */
 
-                    //string str = error1 != null ? error1.error_text : null;
-                    //if (!string.IsNullOrWhiteSpace(str))
-                    //    text = str;
                     if (error.error_code == Core.Enums.VKErrors.NoNetwork)
                         error.error_msg = LocalizedStrings.GetString("FailedToConnectError").Replace("\\r\\n", Environment.NewLine);
+
+                    // If access denied, write last attempted URI to debug for diagnostics
+                    try
+                    {
+                        if (error.error_code == Core.Enums.VKErrors.AccessDenied)
+                        {
+                            string lastUri = "<unknown>";
+                            try { lastUri = LunaVK.Library.NavigatorImpl.Instance.LastAttemptedUri ?? "<null>"; } catch { }
+                            Debug.WriteLine($"Access Denied while navigating. LastAttemptedUri={lastUri} ErrorMessage={error.error_msg}");
+                        }
+                    }
+                    catch { }
 
                     new GenericInfoUC(delayToHide).ShowAndHideLater(error.error_msg, null);
                 }

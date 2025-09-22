@@ -15,6 +15,7 @@ using Windows.UI.Xaml.Navigation;
 
 using LunaVK.Framework;
 using Windows.UI.Xaml.Media.Imaging;
+using System.Diagnostics;
 
 namespace LunaVK.UC
 {
@@ -35,6 +36,7 @@ namespace LunaVK.UC
             this.InitializeComponent();
             //this._brd.LetsRound();
             //this.Loaded += AppNotification2_Loaded;
+            Debug.WriteLine("AppNotification2 ctor: default");
         }
         /*
         void AppNotification2_Loaded(object sender, RoutedEventArgs e)
@@ -57,6 +59,8 @@ namespace LunaVK.UC
             : this()
         {
             this._tapCallback = tapCallback;
+
+            Debug.WriteLine($"AppNotification2 ctor: image_src='{image_src}' title='{title}' content='{content}'");
 
             Uri uri = new Uri(image_src, UriKind.RelativeOrAbsolute);
             BitmapImage bitmapImage = new BitmapImage() { UriSource = uri };
@@ -91,13 +95,15 @@ namespace LunaVK.UC
         /// <param name="content"></param>
         public void AddContent(string content)
         {
+            Debug.WriteLine($"AppNotification2.AddContent: content='{content}'");
+
             if(this.content.Children.Count>=3)
             {
                 this.content.Children.RemoveAt(0);
             }
             TextBlock t = new TextBlock();//todo:scrolable textblock for emodgi?
             t.FontSize = (double)Application.Current.Resources["FontSizeContent"]; ;
-            t.Text = content;
+            t.Text = content; // content is dynamic, left as-is
             t.Style = (Style)Application.Current.Resources["TextBlockThemeContent"];
             t.Margin = new Thickness(0, 0, 10, 10);
             t.TextWrapping = TextWrapping.Wrap;

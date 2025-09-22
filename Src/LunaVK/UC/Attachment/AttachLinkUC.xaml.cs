@@ -68,7 +68,7 @@ namespace LunaVK.UC.Attachment
             {
                 if(this.VM.IsAMP)
                 {
-                    this.VM.button.action.url = this.VM.button.action.url.Replace("m.vk.com/", "vk.com/");
+                    this.VM.button.action.url = this.VM.button.action.url.Replace("m.vk.ru/", "vk.ru/");
 
                     this._flyout = new PopUpService();
                     this._flyout.AnimationTypeChild = PopUpService.AnimationTypes.Swivel;

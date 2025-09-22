@@ -10,7 +10,7 @@ namespace LunaVK.Core.DataObjects
     /// <summary>
     /// Представляет собой вложение в запись.
     /// Объект содержимого зависит от типа вложения.
-    /// https://vk.com/dev/attachments_w
+    /// https://vk.ru/dev/attachments_w
     /// </summary>
     public sealed class VKAttachment : IBinarySerializable
     {
@@ -264,3 +264,4 @@ namespace LunaVK.Core.DataObjects
         }
     }
 }
+

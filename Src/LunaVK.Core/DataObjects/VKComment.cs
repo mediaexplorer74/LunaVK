@@ -11,7 +11,7 @@ namespace LunaVK.Core.DataObjects
 {
     /// <summary>
     /// Комментарий к записи на стене
-    /// https://vk.com/dev/attachments_m
+    /// https://vk.ru/dev/attachments_m
     /// </summary>
     public class VKComment : ViewModels.ViewModelBase, IBinarySerializable
     {
@@ -257,3 +257,4 @@ namespace LunaVK.Core.DataObjects
 #endregion
     }
 }
+

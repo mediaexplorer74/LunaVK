@@ -11,7 +11,7 @@ namespace LunaVK.Core.DataObjects
 "read_comments": 0,
 "date": 1513962420,
 "title": "РЕКЛАМА НА КАНАЛЕ Nyamik / Нямик :3",
-"view_url": "https://m.vk.com/...d5f3d0910e3aa50c642"
+"view_url": "https://m.vk.ru/...d5f3d0910e3aa50c642"
      * */
     public class VKNote : IBinarySerializable
     {
@@ -42,3 +42,4 @@ namespace LunaVK.Core.DataObjects
         }
     }
 }
+

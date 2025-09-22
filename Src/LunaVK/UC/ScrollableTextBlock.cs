@@ -4,8 +4,12 @@ using Windows.UI.Xaml.Documents;
 using Windows.UI.Xaml.Media;
 using LunaVK.Core.Utils;
 using LunaVK.Core;
-using LunaVK.Common;
+using Lunavk.rumon;
 using System.Net;
+using System.Diagnostics;
+using Newtonsoft.Json.Linq;
+using System.Text;
+using System;
 
 namespace LunaVK.UC
 {
@@ -24,7 +28,6 @@ namespace LunaVK.UC
 
         private static void OnTextPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            //((ScrollableTextBlock)d).ParseText((string)e.NewValue, false);
             ((ScrollableTextBlock)d).OnTextChanged((string)e.NewValue, false);
         }
 #endregion
@@ -55,7 +58,7 @@ namespace LunaVK.UC
         }
 
         public static readonly DependencyProperty FullProperty = DependencyProperty.Register("FullOnly", typeof(bool), typeof(ScrollableTextBlock), new PropertyMetadata(null));
-#endregion
+        #endregion
 
 #region DisableHyperlinks
         public bool DisableHyperlinks
@@ -83,30 +86,33 @@ namespace LunaVK.UC
         /// </summary>
         public double FontSize = (double)Application.Current.Resources["FontSizeContent"];
 
+        #region OverrideNavigationTarget
+        public string OverrideNavigationTarget
+        {
+            get { return (string)GetValue(OverrideNavigationTargetProperty); }
+            set { SetValue(OverrideNavigationTargetProperty, value); }
+        }
 
+        public static readonly DependencyProperty OverrideNavigationTargetProperty = DependencyProperty.Register("OverrideNavigationTarget", typeof(string), typeof(ScrollableTextBlock), new PropertyMetadata(null));
+        #endregion
 
+        #region RawJson
+        public string RawJson
+        {
+            get { return (string)GetValue(RawJsonProperty); }
+            set { SetValue(RawJsonProperty, value); }
+        }
 
-
-
-
-
-
-        //public ScrollableTextBlock()
-        //{
-        //}
-
-        //private static ushort FontWeight = (ushort)Settings.UI_FontWeight;
-
-
+        public static readonly DependencyProperty RawJsonProperty = DependencyProperty.Register("RawJson", typeof(string), typeof(ScrollableTextBlock), new PropertyMetadata(null));
+        #endregion
 
         private void OnTextChanged(string value, bool show_full)
         {
-            base.Children.Clear();//((PresentationFrameworkCollection<Block>)text_block.Blocks).Clear();
-            
+            base.Children.Clear();
+
             if (string.IsNullOrEmpty(value))
                 return;
 
-            //
             if (this.FullOnly)
                 show_full = true;
 
@@ -120,24 +126,17 @@ namespace LunaVK.UC
                 value += "...";
                 _showReadFull = true;
             }
-            //Medium 500
-            //Normal 400
-            //Light 300
-            
-            RichTextBlock text_block = new RichTextBlock() { IsTextSelectionEnabled = this.SelectionEnabled, FontSize = this.FontSize/*, FontWeight = new Windows.UI.Text.FontWeight(){ Weight = ScrollableTextBlock.FontWeight }*/ };
+
+            RichTextBlock text_block = new RichTextBlock() { IsTextSelectionEnabled = this.SelectionEnabled, FontSize = this.FontSize };
             if (this.Foreground != null)
                 text_block.Foreground = this.Foreground;
             else
             {
                 text_block.Style = (Style)Application.Current.Resources["RichTextBlockTheme"];
                 text_block.ContextMenuOpening += Text_block_ContextMenuOpening;
-            }//RichTextBox text_block = d as RichTextBox;
+            }
 
-            //if (text_block == null)
-            //    return;
-            bool disableHyperlinks = this.DisableHyperlinks;//BrowserNavigationService.GetDisableHyperlinks((DependencyObject)text_block);
-                                           //string textId = BrowserNavigationService.GetTextId((DependencyObject)text_block);
-                                           //bool hyperlinksForeground = BrowserNavigationService.GetHideHyperlinksForeground((DependencyObject)text_block);
+            bool disableHyperlinks = this.DisableHyperlinks;
 
             Paragraph par = new Paragraph();
 
@@ -158,41 +157,55 @@ namespace LunaVK.UC
                         {
                             int num = innerSplit[0].IndexOf(BrowserNavigationService._searchFeedPrefix) + BrowserNavigationService._searchFeedPrefix.Length;
                             string str2 = innerSplit[0].Substring(num);
-                            //innerSplit[0] = innerSplit[0].Substring(0, num) + WebUtility.UrlEncode(str2);
                             innerSplit[0] = innerSplit[0].Substring(0, num) + str2;
                         }
-                        
-                        Hyperlink hyperlink = BrowserNavigationService.GenerateHyperlink(innerSplit[1], innerSplit[0], ((h, navstr) =>
+
+                        string overrideTarget = this.OverrideNavigationTarget;
+                        try { Debug.WriteLine($"ScrollableTextBlock: OverrideNavigationTarget='{overrideTarget}' tag='{innerSplit[0]}' text='{innerSplit[1]}'"); } catch { }
+
+                        string navTag = !string.IsNullOrEmpty(overrideTarget) ? overrideTarget : innerSplit[0];
+
+                        // If RawJson available, encode it into the nav tag so NavigateOnHyperlink can inspect it
+                        string tagForNavigation = navTag;
+                        try
                         {
-                            /*
-                            EventAggregator.Current.Publish(new HyperlinkClickedEvent() { HyperlinkOwnerId = textId });
-                            
-                            if (!string.IsNullOrEmpty(textId))
+                            if (!string.IsNullOrEmpty(this.RawJson))
                             {
-                                string str = navstr;
-                                if (innerSplit.Length > 2)
-                                    str = str.Replace("https://", "vkontakte://");
-                                
-                                EventAggregator.Current.Publish(new PostInteractionEvent() { PostId = textId, Action = PostInteractionAction.link_click, Link = str });
-                                
+                                var rawBytes = Encoding.UTF8.GetBytes(this.RawJson);
+                                string rawB64 = Convert.ToBase64String(rawBytes);
+                                tagForNavigation = "<<NAV>>" + navTag + "<<RAW>>" + rawB64;
                             }
-                            */
+                        }
+                        catch { }
+
+                        Hyperlink hyperlink = BrowserNavigationService.GenerateHyperlink(innerSplit[1], tagForNavigation, ((h, navstr) =>
+                        {
                             BrowserNavigationService.NavigateOnHyperlink(navstr);
-                        }), text_block.Foreground/*, hyperlinksForeground ? HyperlinkState.MatchForeground : HyperlinkState.Normal*/);
+                        }), text_block.Foreground);
 
                         ToolTip toolTip = new ToolTip();
-                        toolTip.Content = innerSplit[0];
+                        string tipContent = innerSplit[0];
+                        if (!string.IsNullOrEmpty(navTag))
+                        {
+                            try
+                            {
+                                string t = navTag.Replace("\\/", "/").Replace("&amp;", "&").Trim();
+                                if (t.StartsWith("vk.ru", System.StringComparison.OrdinalIgnoreCase))
+                                    t = "https://" + t;
+                                tipContent = t;
+                            }
+                            catch { tipContent = navTag; }
+                        }
+                        toolTip.Content = tipContent;
                         ToolTipService.SetToolTip(hyperlink, toolTip);
 
                         par.Inlines.Add(hyperlink);
                     }
                 }
             }
+
             text_block.Blocks.Add(par);
             base.Children.Add(text_block);
-
-
-
 
             if (!show_full)
             {
@@ -203,7 +216,6 @@ namespace LunaVK.UC
                     TextBlock textBlock1 = new TextBlock();
                     textBlock1.FontWeight = Windows.UI.Text.FontWeights.Medium;
                     textBlock1.Text = LocalizedStrings.GetString("ExpandText");
-                    //textBlock1.Style = (Style)Application.Current.Resources["TextBlockThemeHigh"];
                     textBlock1.Foreground = (SolidColorBrush)Application.Current.Resources["SystemControlHighlightAccentBrush"];
                     textBlock1.FontSize = this.FontSize;
 
@@ -217,11 +229,10 @@ namespace LunaVK.UC
         private void Text_block_ContextMenuOpening(object sender, ContextMenuEventArgs e)
         {
             RichTextBlock tb = sender as RichTextBlock;
-            
             e.Handled = string.IsNullOrEmpty(tb.SelectedText);
         }
 
-        /*
+/*
 private void ParseText(string value, bool show_full)
 {
    if (this.FullOnly)
@@ -229,7 +240,6 @@ private void ParseText(string value, bool show_full)
 
    bool _showReadFull = false;
    //
-   //Windows.UI.Xaml.Hosting.XamlUIPresenter.SetHost( )
    if (value == null)
        value = "";
    this.Children.Clear();
@@ -287,7 +297,6 @@ private void ParseText(string value, bool show_full)
        else if (block.StartsWith("[", StringComparison.OrdinalIgnoreCase) && block.EndsWith("]", StringComparison.OrdinalIgnoreCase))
        {
            string part = block.Replace("[", "").Replace("]", "");
-           //paragraph.Inlines.Add(new Run { Text = part.Split(new char[] { '|' })[1], Foreground = (SolidColorBrush)Application.Current.Resources["AccentBrushHigh"] });
 
            Hyperlink hp = new Hyperlink();
            hp.Click += (sender, arg) =>
@@ -303,7 +312,6 @@ private void ParseText(string value, bool show_full)
                    int id = int.Parse(temp.Replace("id", ""));
                    Library.NavigatorImpl.Instance.NavigateToProfilePage(id);
                }
-               //Library.NavigatorImpl.Instance.NavigateToWebUri(block);
            };
 
            hp.Foreground = new SolidColorBrush((Windows.UI.Color)Application.Current.Resources["PhoneAccentColor"]);
@@ -317,18 +325,17 @@ private void ParseText(string value, bool show_full)
        }
        else if (block.StartsWith("#"))
        {
-           //paragraph.Inlines.Add(new Run { Text = block, Foreground = (SolidColorBrush)Application.Current.Resources["AccentBrushHigh"] });
            Hyperlink hp = new Hyperlink();
            hp.Click += (sender, arg) =>
            {
-               Library.NavigatorImpl.Instance.NavigateToWebUri("vk.com/feed?section=search&q=" + block);
+               Library.NavigatorImpl.Instance.NavigateToWebUri("vk.ru/feed?section=search&q=" + block);
            };
 
            hp.Foreground = new SolidColorBrush((Windows.UI.Color)Application.Current.Resources["PhoneAccentColor"]);
            hp.Inlines.Add(new Run { Text = block });
            paragraph.Inlines.Add(hp);
        }
-       else if (block.StartsWith("vk.me", StringComparison.OrdinalIgnoreCase) || block.StartsWith("vk.cc", StringComparison.OrdinalIgnoreCase))
+       else if (block.StartsWith("vk.me", System.StringComparison.OrdinalIgnoreCase) || block.StartsWith("vk.cc", System.StringComparison.OrdinalIgnoreCase))
        {
            Hyperlink hp = new Hyperlink();
            hp.Click += (sender, arg) =>
@@ -342,23 +349,10 @@ private void ParseText(string value, bool show_full)
        }
        else
        {
-
-           //switch (Settings.EmojiType)
-           //{
-           //    case 1://Skype
-           //        this.SetSkypeEmoji(paragraph, block);
-           //        continue;
-           //    case 2://Apple
-           //        this.SetAppleEmoji(paragraph, block);
-           //        continue;
-           //    default:
-           //        paragraph.Inlines.Add(new Run { Text = block });
-           //        continue;
-           //}
+           paragraph.Inlines.Add(new Run { Text = block });
        }
    }
    richTextBox.Blocks.Add(paragraph);
-   //
    base.Children.Add(richTextBox);
 
    if (!show_full)
@@ -367,11 +361,10 @@ private void ParseText(string value, bool show_full)
        {
            Border border1 = new Border();
 
-           string str = string.Format("{0}...", "Показать полностью");//CommonResources.ExpandText
+           string str = string.Format("{0}...", "Показать полностью");
            TextBlock textBlock1 = new TextBlock();
            textBlock1.FontWeight = Windows.UI.Text.FontWeights.Bold;
            textBlock1.Text = str;
-           //textBlock1.Foreground = (SolidColorBrush)Application.Current.Resources["AccentBrushHigh"];
            textBlock1.Style = (Style)Application.Current.Resources["TextBlockThemeHigh"];
            textBlock1.FontSize = this.FontSize;
 
@@ -382,107 +375,22 @@ private void ParseText(string value, bool show_full)
    }
 }
 */
-        /*
-        
 
-        /// <summary>
-        /// Вставляет в параграф Apple Emoji.
-        /// </summary>
-        /// <param name="paragraph">Параграф для добавления.</param>
-        /// <param name="block">Блок текста для добавления.</param>
         private void SetAppleEmoji(Paragraph paragraph, string block)
         {
-            TextElementEnumerator elementEnumerator = StringInfo.GetTextElementEnumerator(block);
-            bool flag1 = elementEnumerator.MoveNext();
-            while (flag1)
-            {
-                string textElement1 = elementEnumerator.GetTextElement();
-                
-                string hexString1 = this.ConvertToHexString(Encoding.BigEndianUnicode.GetBytes(textElement1));
-                if (hexString1 == "")
-                {
-                    flag1 = elementEnumerator.MoveNext();
-                    paragraph.Inlines.Add(new Run { Text = textElement1 });
-                }
-                else
-                {
-                        if(Smiles.Gestures.ContainsValue(hexString1))
-                    {
-                        string path = String.Format("ms-appx:///Assets/Emoji/{0:x}.png", hexString1);
-                        InlineUIContainer cont = new InlineUIContainer();
-                        Image img = new Image() { Height = 18, Margin = new Thickness(0, 0, 0, -2), Stretch = Stretch.Uniform, Source = new BitmapImage(new Uri(path)) };
-                        cont.Child = img;
-
-                        paragraph.Inlines.Add(cont);
-                    }
-                    flag1 = elementEnumerator.MoveNext();
-                }
-            }
+            // placeholder if needed
+            paragraph.Inlines.Add(new Run { Text = block });
         }
 
-        /// <summary>
-        /// Вставляет в параграф Apple Emoji.
-        /// </summary>
-        /// <param name="paragraph">Параграф для добавления.</param>
-        /// <param name="block">Блок текста для добавления.</param>
         private void SetSkypeEmoji(Paragraph paragraph, string block)
         {
-            var r = emojiRegex.Split(block);
-            foreach (string s in r)
-            {
-                if (emojiRegex.IsMatch(s))
-                {
-                    string path = null;
-                    for (int i = 0; i < s.Length; i += Char.IsSurrogatePair(s, i) ? 2 : 1)
-                    {
-                        try
-                        {
-                            int x = Char.ConvertToUtf32(s, i);
-                            path = String.Format("{0:x}", x);
-                        }
-                        catch (Exception) { }
-                    }
-
-                    if (path == null)
-                    {
-                        paragraph.Inlines.Add(new Run { Text = s });
-                        continue;
-                    }
-
-                    var cont = new InlineUIContainer();
-                    AnimatedEmojiUC img = new AnimatedEmojiUC(path);
-                    //var img = new Image() { Stretch = Stretch.Uniform, Source = new BitmapImage(new Uri(path)) };
-                    img.Width = img.Height = 18;
-                    img.Margin = new Thickness(0, 0, 0, -2);
-                    cont.Child = img;
-
-                    paragraph.Inlines.Add(cont);
-                }
-                else
-                    paragraph.Inlines.Add(new Run { Text = s });
-            }
+            paragraph.Inlines.Add(new Run { Text = block });
         }
-        */
-
 
         void TextBlockReadFull_OnTap(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
         {
-            //this.ParseText(this.Text, true);
             this.OnTextChanged(this.Text, true);
         }
     }
 }
 
-/*
- * Если Вы копировали Символ (😊), то после отправки/сохранения попробуйте обновить страницу. Если после обновления страницы смайл не появился, то, видимо, Ваше устройство просто не скопировало символ — воспользуйтесь Кодом.
-
-Если Вы копировали Код и после отправки видны символы и цифры, значит, Вы что-то забыли. Код должен начинаться с "&#" и заканчиваться на ";", а знак подчёркивания ( _ ) нужно удалять перед отправкой!
-
-Если смайл не появился, а на его месте отображается символ, то обратите внимание на вопрос-ответ выше. Смайлы преобразовываются в графический вид только в определённых местах.
-
-Изменение цвета смайлов
-ВКонтакте поддерживает изменение оттенков кожи у "человечных" смайлов, например: 👍🏻 👍🏼 👍🏽 👍🏾 👍🏿
-
-Для изменения существуют добавочные символы, которые нужно вставлять сразу после смайла (без пробела), например: 👍🏿 | &#_128077;&#_127999;
-
-    */

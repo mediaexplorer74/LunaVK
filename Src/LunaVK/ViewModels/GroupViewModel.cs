@@ -968,7 +968,7 @@ namespace LunaVK.ViewModels
                             emailMessage.To.Add(new Windows.ApplicationModel.Email.EmailRecipient(contact.email));
                             await Windows.ApplicationModel.Email.EmailManager.ShowComposeNewEmailAsync(emailMessage);
                         });
-                        contactsInfo.Items.Add(new ProfileInfoItem(contact.desc, contact.email, ProfileInfoItemType.Full) { photo = "https://vk.com/images/contact.png", NavigationAction = NavigationAction });
+                        contactsInfo.Items.Add(new ProfileInfoItem(contact.desc, contact.email, ProfileInfoItemType.Full) { photo = "https://vk.ru/images/contact.png", NavigationAction = NavigationAction });
                     }
                     else
                     {
@@ -1251,3 +1251,4 @@ namespace LunaVK.ViewModels
         }
     }
 }
+

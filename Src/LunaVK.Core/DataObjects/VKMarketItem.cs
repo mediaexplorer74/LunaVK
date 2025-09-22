@@ -15,7 +15,7 @@ namespace LunaVK.Core.DataObjects
 
     /// <summary>
     /// Объект, описывающий товар
-    /// https://vk.com/dev/objects/market_item
+    /// https://vk.ru/dev/objects/market_item
     /// </summary>
     public class VKMarketItem : IBinarySerializable
     {
@@ -296,3 +296,4 @@ namespace LunaVK.Core.DataObjects
         }
     }
 }
+

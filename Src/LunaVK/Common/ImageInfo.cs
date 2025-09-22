@@ -1,7 +1,7 @@
 ﻿using System;
 using Windows.UI.Xaml.Media.Imaging;
 
-namespace LunaVK.Common
+namespace Lunavk.rumon
 {
     public class ImageInfo
     {
@@ -14,3 +14,4 @@ namespace LunaVK.Common
         public double Height { get; set; }
     }
 }
+

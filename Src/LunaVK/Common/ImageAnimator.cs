@@ -6,13 +6,27 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Animation;
 
-namespace LunaVK.Common
+namespace Lunavk.rumon
 {
     public class ImageAnimator
     {
         private int _animationDurationMs;
         private EasingFunctionBase _easingFunction;
-        
+
+        private int _duration;
+        private object _param;
+
+        public ImageAnimator(int duration, object param)
+        {
+            this._duration = duration;
+            this._param = param;
+        }
+
+        public void AnimateIn(FrameworkElement source, UIElement target)
+        {
+            // no-op
+        }
+
         public ImageAnimator(int animationDurationMs, EasingFunctionBase easingFunction)
         {
             this._animationDurationMs = animationDurationMs;
@@ -138,3 +152,4 @@ namespace LunaVK.Common
         }
     }
 }
+

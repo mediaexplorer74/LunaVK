@@ -371,7 +371,7 @@ namespace LunaVK.Core.Library
 
                             if (owner == null)
                             {
-                                owner = new VKUser() { photo_50 = "https://vk.com/images/wall/deleted_avatar_50.png", first_name = "Комментарий удалён пользователем или руководителем страницы" };
+                                owner = new VKUser() { photo_50 = "https://vk.ru/images/wall/deleted_avatar_50.png", first_name = "Комментарий удалён пользователем или руководителем страницы" };
                             }
 
                             c.User = owner;
@@ -573,3 +573,4 @@ namespace LunaVK.Core.Library
         }
     }
 }
+

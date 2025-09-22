@@ -127,7 +127,7 @@ namespace LunaVK.Core.Library
             parameters.Add("al", "1");
             parameters.Add("box", "1");
 
-            string html = await RequestsDispatcher.PostAsync("https://vk.com/al_im.php", parameters);
+            string html = await RequestsDispatcher.PostAsync("https://vk.ru/al_im.php", parameters);
 
             if (string.IsNullOrEmpty(html))//no internet
                 return null;
@@ -190,7 +190,7 @@ namespace LunaVK.Core.Library
             
             //<a href="/stickers/vovchik" class="im_sticker_bl" onclick="return Emoji.previewSticker(286, this, false, event);"> 
             //<div class="im_sticker_bl_demo"> 
-            //<img class="im_sticker_bl_demo_thumb" src="https://vk.com//images/store/stickers/286/preview1_296.jpg" width="296" height="188" /> 
+            //<img class="im_sticker_bl_demo_thumb" src="https://vk.ru//images/store/stickers/286/preview1_296.jpg" width="296" height="188" /> 
             //</div> 
             //<div class="im_sticker_bl_info clear"> <div class="im_sticker_bl_act"><button class="flat_button _sticker_btn_286" onclick="return Emoji.buyStickers(286, event, this, '328ae5f4a361c33776', 'store')" onmouseover="showTooltip(this, {text: 'Купить набор', shift: [0,6,6], showdt: 0, black: 1, appendParentCls: curBox() ? 'box_body' : 'page_block'});">63 руб.</button></div> <div class="im_sticker_bl_name">Вовчик<span class="im_sticker_bl_promo">New</span></div> <div class="im_sticker_bl_desc">Антон Андреев</div>
             //</div>
@@ -233,13 +233,13 @@ namespace LunaVK.Core.Library
                 StockItem item = new StockItem();
                 item.author = author;
                 item.photo_296 = src;
-                item.photo_70 = "https://vk.com//images/store/stickers/" + pack_id + "/cover_70b.png";
+                item.photo_70 = "https://vk.ru//images/store/stickers/" + pack_id + "/cover_70b.png";
                 item.price_str = price;
                 item.product = new StoreProduct() { title = title, base_url = link };
                 sections[1].packs.Add(item);
             }
-            //https://vk.com//images/store/stickers/286/preview1_296.jpg большое превью
-            //https://vk.com//images/store/stickers/285/cover_70b.png мини превью для телефона
+            //https://vk.ru//images/store/stickers/286/preview1_296.jpg большое превью
+            //https://vk.ru//images/store/stickers/285/cover_70b.png мини превью для телефона
 
             return catlog;
             */
@@ -278,3 +278,4 @@ namespace LunaVK.Core.Library
         }
     }
 }
+

@@ -19,7 +19,7 @@ namespace LunaVK.Core.DataObjects
 {
     /// <summary>
     /// Объект, описывающий личное сообщение
-    /// https://vk.com/dev/objects/message
+    /// https://vk.ru/dev/objects/message
     /// </summary>
     public class VKMessage : INotifyPropertyChanged, IBinarySerializable, ISupportGroup
     {
@@ -740,3 +740,4 @@ namespace LunaVK.Core.DataObjects
 
 
 }
+

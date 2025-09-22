@@ -718,7 +718,7 @@ namespace LunaVK.Core.Library
         }
 
         /// <summary>
-        /// https://vk.com/dev/objects/video_cat_block
+        /// https://vk.ru/dev/objects/video_cat_block
         /// </summary>
         public class VideoCatalogCategory
         {
@@ -872,7 +872,7 @@ namespace LunaVK.Core.Library
 
             /// <summary>
             /// Элемент видеокаталога
-            /// https://vk.com/dev/objects/video_cat_element
+            /// https://vk.ru/dev/objects/video_cat_element
             /// </summary>
             public class VideoCatalogItem
             {
@@ -1129,3 +1129,4 @@ namespace LunaVK.Core.Library
         }
     }
 }
+

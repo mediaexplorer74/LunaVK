@@ -1,4 +1,4 @@
-﻿namespace LunaVK.Common
+﻿namespace Lunavk.rumon
 {
     public enum FreshNewsState : byte
     {
@@ -8,3 +8,4 @@
         //ForcedReload,
     }
 }
+

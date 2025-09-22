@@ -13,7 +13,7 @@ using Windows.System.UserProfile;
 using LunaVK.Core.Enums;
 using LunaVK.Core.Framework;
 using LunaVK.Core;
-using LunaVK.Common;
+using Lunavk.rumon;
 using System.IO;
 using LunaVK.Core.Utils;
 using System.Linq;
@@ -205,7 +205,7 @@ namespace LunaVK.ViewModels
         }*/
         #endregion
 
-        //https://vk.com/dev/feed_ads
+        //https://vk.ru/dev/feed_ads
         public override void GetData(int offset, int count, Action<VKError, IReadOnlyList<VKNewsfeedPost>> callback)
         {
             if (offset == 0)
@@ -913,3 +913,4 @@ count указывает, какое максимальное число нов�
 положительное число 
 
 */
+

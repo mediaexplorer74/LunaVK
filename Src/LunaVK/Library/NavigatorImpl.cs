@@ -23,9 +23,14 @@ using Windows.Foundation.Metadata;
 
 namespace LunaVK.Library
 {
-    public class NavigatorImpl
+    public partial class NavigatorImpl
     {
         private static NavigatorImpl _instance;
+        private bool _isNavigating = false;
+
+        // Store last attempted navigation URI for debugging purposes
+        public string LastAttemptedUri { get; private set; }
+
         public static NavigatorImpl Instance
         {
             get
@@ -51,34 +56,6 @@ namespace LunaVK.Library
                     return;
                 }
             }
-            /*
-            if (e.Parameter == null || CustomFrame.Instance.Content == null || !(CustomFrame.Instance.Content is PageBase))
-                return;
-
-            PagesParams page_param = (CustomFrame.Instance.Content as PageBase).NavigationParameter as PagesParams;//Dictionary<string,int> page_param = (NavigatorImpl.NavigationService.Content as PageBase).NavigationParameter as Dictionary<string,int>;
-            PagesParams nav_param = e.Parameter as PagesParams;//Dictionary<string,int> nav_param = e.Parameter as Dictionary<string,int>;
-
-            if (page_param == null || nav_param == null)
-                return;
-
-            bool equal = false;
-
-            if (nav_param.chat_id > 0)
-            {
-                if (page_param.chat_id == nav_param.chat_id)
-                    equal = true;
-            }
-            else
-            {
-                if (page_param.user_id == nav_param.user_id)
-                    equal = true;
-            }
-
-            if (equal)
-                e.Cancel = true;
-
-            int i = 0;
-            */
         }
 
         public void NavigateToAudio(int ownerId, string ownerName)
@@ -91,17 +68,6 @@ namespace LunaVK.Library
         
         public void NavigateToConversations(uint? groupId = null)
         {
-            /*
-            if (CustomFrame.Instance.Content is DialogsConversationPage2 page)
-            {
-                page.BackAction();
-                CustomFrame.Instance.OpenCloseMenu(false);
-            }
-            else
-            {
-                this.Navigate(typeof(DialogsConversationPage2));
-            }
-            */
             this.NavigateToConversation(0, groupId);
         }
         
@@ -128,24 +94,7 @@ namespace LunaVK.Library
                     QueryString["GroupId"] = (int)groupId.Value;
                 this.Navigate(typeof(DialogsConversationPage2), QueryString);
             }
-            
         }
-        /*
-        public void NavigateToConversation(int peerId, int messageId = 0, bool isContactSellerMode = false)
-        {
-            Dictionary<string, int> QueryString = new Dictionary<string, int>();
-
-            QueryString["PeerId"] = peerId;
-            //QueryString["FromLookup"] =
-            QueryString["MessageId"] = messageId;
-            //QueryString["IsContactProductSellerMode"] =
-
-
-
-
-            this.Navigate(typeof(Pages.DialogsConversationPage2), QueryString);
-        }
-    */
 
         /// <summary>
         /// Навигация в сообщество или пользователя
@@ -163,8 +112,6 @@ namespace LunaVK.Library
         {
             this.Navigate(typeof(NotificationsPage));
         }
-
-        
 
         /// <summary>
         /// 
@@ -293,14 +240,68 @@ namespace LunaVK.Library
 
         private void Navigate(Type navStr, object parameter = null)
         {
-            //NavigationTransitionInfo info = new NavigationTransitionInfo();
+            // Prevent re-entrancy / concurrent navigation
+            if (this._isNavigating)
+                return;
 
-            //Logger.Instance.Info("Navigator.Navigate, navStr={0} [{1}]", navStr.FullName, parameter);
+            Execute.ExecuteOnUIThread(() =>
+            {
+                // quick double-check
+                if (this._isNavigating)
+                    return;
 
-            CustomFrame.Instance.Navigate(navStr, parameter/*,new DrillInNavigationTransitionInfo()*/);//анимация перехода не работает :(
-            
-            CustomFrame.Instance.OpenCloseMenu(false);
+                try
+                {
+                    this._isNavigating = true;
 
+                    var frame = CustomFrame.Instance;
+                    if (frame == null)
+                    {
+                        try { Logger.Instance?.Error("Navigator.Navigate: CustomFrame.Instance is null"); } catch { Debug.WriteLine("Navigator.Navigate: CustomFrame.Instance is null"); }
+                        return;
+                    }
+
+                    // If already on the same page type with no parameter, skip navigation
+                    try
+                    {
+                        if (frame.Content != null && frame.Content.GetType() == navStr && parameter == null)
+                            return;
+                    }
+                    catch { }
+
+                    // Perform navigation
+                    frame.Navigate(navStr, parameter/*,new DrillInNavigationTransitionInfo()*/);
+                    frame.OpenCloseMenu(false);
+                }
+                catch (Exception ex)
+                {
+                    try
+                    {
+                        // Special handling for COMException to capture HRESULT and extra context
+                        var comEx = ex as System.Runtime.InteropServices.COMException;
+                        if (comEx != null)
+                        {
+                            string frameInfo = "";
+                            try { frameInfo = CustomFrame.Instance?.Content?.GetType()?.FullName ?? "<no-frame>"; } catch { frameInfo = "<err-getting-frame>"; }
+                            Logger.Instance?.Error($"Navigator.Navigate COMException HResult=0x{comEx.HResult:X8} Message={comEx.Message} Frame={frameInfo} Stack={comEx.StackTrace} EnvStack={System.Environment.StackTrace}", comEx);
+                            Debug.WriteLine($"Navigator.Navigate COMException HResult=0x{comEx.HResult:X8} Message={comEx.Message}");
+                        }
+                        else
+                        {
+                            Logger.Instance?.Error("Navigator.Navigate failed", ex);
+                        }
+                    }
+                    catch
+                    {
+                        Debug.WriteLine(ex.ToString());
+                    }
+                    // swallow - don't crash UI thread
+                }
+                finally
+                {
+                    this._isNavigating = false;
+                }
+            });
         }
 
         public void ClearBackStack()
@@ -315,17 +316,77 @@ namespace LunaVK.Library
 
         public void NavigateToWallPostComments(int ownerId, uint postId, uint commentId = 0, object postData = null)
         {
-            Dictionary<string, object> QueryString = new Dictionary<string, object>();
-            QueryString.Add("OwnerId", ownerId);
-            QueryString.Add("ItemId", postId);
-            QueryString.Add("CommentId", commentId);
+            try { Debug.WriteLine($"NavigateToWallPostComments: owner={ownerId} post={postId} commentId={commentId}"); } catch { }
 
-            if (postData != null)
-                QueryString.Add("Data", postData);
+            // Try to prefetch post to detect whether owner id sign is correct (user vs group).
+            WallService.Instance.GetWallPostByIdWithComments(ownerId, postId, 0, (int)commentId, true, (result) =>
+            {
+                if (result.error.error_code == VKErrors.None && result.response != null)
+                {
+                    // Success with given ownerId
+                    Execute.ExecuteOnUIThread(() =>
+                    {
+                        Dictionary<string, object> QueryString = new Dictionary<string, object>();
+                        QueryString.Add("OwnerId", ownerId);
+                        QueryString.Add("ItemId", postId);
+                        QueryString.Add("CommentId", commentId);
+                        if (postData != null)
+                            QueryString.Add("Data", postData);
+                        this.Navigate(typeof(CommentsPage), QueryString);
+                    });
+                    return;
+                }
 
-            this.Navigate(typeof(CommentsPage), QueryString);
-            //PostCommentsPage
-        }
+                // If access denied or content unavailable, and ownerId positive, try negated owner (group)
+                if ((result.error.error_code == VKErrors.AccessDenied || result.error.error_code == VKErrors.ContentUnavailable || result.error.error_code == VKErrors.PermissionIsDenied) && ownerId > 0)
+                {
+                    int swapped = -ownerId;
+                    WallService.Instance.GetWallPostByIdWithComments(swapped, postId, 0, (int)commentId, true, (result2) =>
+                    {
+                        if (result2.error.error_code == VKErrors.None && result2.response != null)
+                        {
+                            Execute.ExecuteOnUIThread(() =>
+                            {
+                                Dictionary<string, object> QueryString = new Dictionary<string, object>();
+                                QueryString.Add("OwnerId", swapped);
+                                QueryString.Add("ItemId", postId);
+                                QueryString.Add("CommentId", commentId);
+                                if (postData != null)
+                                    QueryString.Add("Data", postData);
+                                this.Navigate(typeof(CommentsPage), QueryString);
+                            });
+                        }
+                        else
+                        {
+                            // fallback: navigate with original ownerId so page shows error
+                            Execute.ExecuteOnUIThread(() =>
+                            {
+                                Dictionary<string, object> QueryString = new Dictionary<string, object>();
+                                QueryString.Add("OwnerId", ownerId);
+                                QueryString.Add("ItemId", postId);
+                                QueryString.Add("CommentId", commentId);
+                                if (postData != null)
+                                    QueryString.Add("Data", postData);
+                                this.Navigate(typeof(CommentsPage), QueryString);
+                            });
+                        }
+                    });
+                    return;
+                }
+
+                // Other errors - navigate with original ownerId so CommentsPage can handle/display appropriate message
+                Execute.ExecuteOnUIThread(() =>
+                {
+                    Dictionary<string, object> QueryString = new Dictionary<string, object>();
+                    QueryString.Add("OwnerId", ownerId);
+                    QueryString.Add("ItemId", postId);
+                    QueryString.Add("CommentId", commentId);
+                    if (postData != null)
+                        QueryString.Add("Data", postData);
+                    this.Navigate(typeof(CommentsPage), QueryString);
+                });
+            });
+         }
 
         /// <summary>
         /// Добавляем плеер во фрейм
@@ -405,13 +466,12 @@ namespace LunaVK.Library
             if (string.IsNullOrWhiteSpace(uri))
                 return;
 
+            // Save last attempted uri for diagnostics
+            try { this.LastAttemptedUri = uri; } catch { }
+
             if (uri.StartsWith("tel:"))
             {
-                //PhoneCallTask phoneCallTask = new PhoneCallTask();
-                //string str = uri.Substring(4);
-                //phoneCallTask.PhoneNumber = str;
-                //phoneCallTask.Show();
-
+                // phone call
             }
             else if (uri.StartsWith("vk.cc/"))
             {
@@ -430,6 +490,22 @@ namespace LunaVK.Library
             }
             else
             {
+                // If uri refers to a story and is a relative or hostless path, convert to https://vk.ru/story... to avoid malformed http://story...
+                bool isSchemeMissing = !uri.StartsWith("http://", StringComparison.CurrentCultureIgnoreCase) && !uri.StartsWith("https://", StringComparison.CurrentCultureIgnoreCase);
+                if (isSchemeMissing)
+                {
+                    string lower = uri.ToLowerInvariant();
+                    if (lower.StartsWith("/story") || lower.StartsWith("story") || lower.Contains("/story/"))
+                    {
+                        // ensure leading slash
+                        string path = uri.StartsWith("/") ? uri : "/" + uri;
+                        uri = "https://vk.ru" + path;
+
+                        // update last attempted uri
+                        try { this.LastAttemptedUri = uri; } catch { }
+                    }
+                }
+
                 if (!uri.StartsWith("http://", StringComparison.CurrentCultureIgnoreCase) && !uri.StartsWith("https://", StringComparison.CurrentCultureIgnoreCase))
                     uri = "http://" + uri;
 
@@ -439,16 +515,79 @@ namespace LunaVK.Library
                 if (flag)
                     return;
 
-                Task.Run(async() =>
+                // Normalize URL: unescape JSON slashes and HTML entities, then URL-decode
+                try
                 {
-                    LauncherOptions options = new LauncherOptions();
-                    
-                    if (ApiInformation.IsApiContractPresent("Windows.Foundation.UniversalApiContract", 3))
+                    uri = uri.Replace("\\/", "/").Replace("&amp;", "&").Trim();
+                    try { uri = System.Net.WebUtility.UrlDecode(uri); } catch { }
+                }
+                catch { }
+                
+                // Retry in-app navigation on normalized URI
+                try
+                {
+                    if (!forceWebNavigation)
                     {
-                        options.IgnoreAppUriHandlers = true;
+                        bool handled = this.GetWithinAppNavigationUri(uri);
+                        if (handled)
+                            return;
                     }
-                    
-                    await Launcher.LaunchUriAsync(new Uri(uri), options);
+                }
+                catch (Exception ex)
+                {
+                    try { Logger.Instance?.Error("GetWithinAppNavigationUri failed on normalized uri", ex); } catch { Debug.WriteLine(ex.ToString()); }
+                }
+
+                // Try extract wall-<owner>_<post> and navigate internally if found
+                try
+                {
+                    var m = System.Text.RegularExpressions.Regex.Match(uri, @"wall-?(?<owner>-?\d+)_(?<post>\d+)");
+                    if (m.Success)
+                    {
+                        int ownerId = int.Parse(m.Groups["owner"].Value);
+                        uint postId = uint.Parse(m.Groups["post"].Value);
+                        try
+                        {
+                            this.NavigateToWallPostComments(ownerId, postId);
+                            return;
+                        }
+                        catch (Exception navEx)
+                        {
+                            try { Logger.Instance?.Error("NavigateToWallPostComments failed for extracted wall link", navEx); } catch { Debug.WriteLine(navEx.ToString()); }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    try { Logger.Instance?.Error("Failed to extract wall link from uri", ex); } catch { Debug.WriteLine(ex.ToString()); }
+                }
+                // Fallback: open in external browser on UI thread
+                Execute.ExecuteOnUIThread(async () =>
+                {
+                    try
+                    {
+                        LauncherOptions options = new LauncherOptions();
+                        if (ApiInformation.IsApiContractPresent("Windows.Foundation.UniversalApiContract", 3))
+                            options.IgnoreAppUriHandlers = true;
+
+                        await Launcher.LaunchUriAsync(new Uri(uri), options);
+                    }
+                    catch (System.Runtime.InteropServices.COMException comEx)
+                    {
+                        try { Logger.Instance?.Error($"Launcher.LaunchUriAsync COMException HResult=0x{comEx.HResult:X8} Message={comEx.Message} Uri={uri}", comEx); } catch { Debug.WriteLine(comEx.ToString()); }
+                        try
+                        {
+                            await Launcher.LaunchUriAsync(new Uri(uri));
+                        }
+                        catch (Exception ex2)
+                        {
+                            try { Logger.Instance?.Error("Fallback LaunchUriAsync failed", ex2); } catch { Debug.WriteLine(ex2.ToString()); }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        try { Logger.Instance?.Error("Launcher.LaunchUriAsync failed", ex); } catch { Debug.WriteLine(ex.ToString()); }
+                    }
                 });
             }
         }
@@ -487,47 +626,6 @@ namespace LunaVK.Library
                this.NavigateToProfileAppPage((uint)id, sourceId, app.title, utmParamsStr);
                 
             }
-        }
-
-        public void NavigateToGroupRecommendations(object sender)//(int categoryId, string categoryName)
-        {
-            this.Navigate(typeof(RecommendedGroupsPage));
-        }
-
-        public void NavigateToSuggestedSourcesPage(object sender)
-        {
-            this.Navigate(typeof(SuggestedSourcesPage));
-        }
-
-        public void NavigateToUsersSearch(string query = "")
-        {
-            this.Navigate(typeof(SearchResultsPage), query); //UsersSearchResultsPage
-        }
-
-        public void NavigateToProfileAppPage(uint appId, int ownerId, string appName, string utmParamsStr = "")
-        {
-         //   utmParamsStr = HttpUtility.UrlEncode(utmParamsStr);
-            Dictionary<string, object> QueryString = new Dictionary<string, object>();
-            QueryString.Add("AppId", appId);
-            QueryString.Add("OwnerId", ownerId);
-            QueryString.Add("AppName", appName);
-            if(!string.IsNullOrEmpty(utmParamsStr))
-                QueryString.Add("UtmParams", utmParamsStr);
-            
-            this.Navigate(typeof(ProfileAppPage), QueryString);
-        }
-
-        public void NavigateToAudioPlayer(VKPlaylist playlist = null, int trackNumber = -1)
-        {
-            Dictionary<string, object> QueryString = new Dictionary<string, object>();
-            
-            if(trackNumber!=-1)
-                QueryString.Add("TrackNumber", trackNumber);
-
-            if (playlist != null)
-                QueryString.Add("Playlist", playlist);
-
-            this.Navigate(typeof(AudioPlayer), QueryString);
         }
 
         private bool TryOpenGame(VKGame game)
@@ -657,6 +755,8 @@ namespace LunaVK.Library
             this.Navigate(typeof(NewPostPage), QueryString);
         }
 
+        // Navigation helpers moved to NavigatorImpl.Helpers.cs
+
        /* public void NavigateToGroupRecommendations(object sender)//(int categoryId, string categoryName)
         {
             this.Navigate(typeof(RecommendedGroupsPage));
@@ -708,10 +808,57 @@ namespace LunaVK.Library
         {
             if (!NavigatorImpl.IsVKUri(uri))
                 return false;
+            
+            // Normalize incoming URI: unescape JSON slashes and HTML entities, then URL-decode to increase chance of matching
+            try
+            {
+                uri = uri.Replace("\\/", "/").Replace("&amp;", "&").Trim();
+                try { uri = System.Net.WebUtility.UrlDecode(uri); } catch { }
+            }
+            catch { }
+            
+            // Fix malformed pattern like "/id-12345" which sometimes появляется вместо "/club12345"
+            try { if (uri.Contains("/id-")) uri = uri.Replace("/id-", "/club"); } catch { }
+
             string uri1 = uri;
-            int num = uri1.IndexOf("://");
-            if (num > -1)
-                uri1 = uri1.Remove(0, num + 3);
+
+            // Aggressive early extraction: if URI (or decoded forms) contains a wall link, navigate to it immediately
+            try
+            {
+                var wallMatch = System.Text.RegularExpressions.Regex.Match(uri, @"wall-?(?<owner>-?\d+)_(?<post>\d+)", RegexOptions.IgnoreCase);
+                if (!wallMatch.Success)
+                    wallMatch = System.Text.RegularExpressions.Regex.Match(uri1, @"wall-?(?<owner>-?\d+)_(?<post>\d+)", RegexOptions.IgnoreCase);
+
+                if (wallMatch.Success)
+                {
+                    int parsedOwner = 0;
+                    uint parsedPost = 0;
+                    try
+                    {
+                        parsedOwner = int.Parse(wallMatch.Groups["owner"].Value);
+                        parsedPost = uint.Parse(wallMatch.Groups["post"].Value);
+                    }
+                    catch { }
+
+                    if (parsedPost != 0)
+                    {
+                        try
+                        {
+                            this.NavigateToWallPostComments(parsedOwner, parsedPost);
+                            return true;
+                        }
+                        catch (Exception navEx)
+                        {
+                            try { Logger.Instance?.Error("NavigateToWallPostComments failed for extracted wall link", navEx); } catch { Debug.WriteLine(navEx.ToString()); }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                try { Logger.Instance?.Error("GetWithinAppNavigationUri early wall extraction failed", ex); } catch { Debug.WriteLine(ex.ToString()); }
+            }
+
             int count = uri1.IndexOf("/");
             if (count > -1)
                 uri1 = uri1.Remove(0, count);
@@ -893,7 +1040,7 @@ namespace LunaVK.Library
                 uri = uri.Remove(0, 2);
             if (uri.StartsWith("www.") || uri.StartsWith("new."))
                 uri = uri.Remove(0, 4);
-            if (!uri.StartsWith("vk.com/") && !uri.StartsWith("vkontakte.ru/"))
+            if (!uri.StartsWith("vk.ru/") && !uri.StartsWith("vkontakte.ru/"))
                 return uri.StartsWith("vk.me/");
             return true;
         }
@@ -1161,183 +1308,185 @@ namespace LunaVK.Library
             throw new NotImplementedException();
         }
 
-        #region REGex
-        private static readonly Regex _friendsReg = new Regex("/friends(\\?id=[0-9])?");
-        private static readonly Regex _communitiesReg = new Regex("/groups(\\s|$)");
-        private static readonly Regex _dialogsReg = new Regex("/(im|mail)(\\s|$)");
-        private static readonly Regex _dialogReg = new Regex("/write[-0-9]+");
-        private static readonly Regex _wallReplyReg = new Regex("/wall[-0-9]+_[0-9]+\\?reply=[0-9]+");
-        private static readonly Regex _wallReg = new Regex("/wall[-0-9]+_[0-9]+");
-        private static readonly Regex _feedWallReg = new Regex("/feed?w=wall[-0-9]+_[0-9]+");
-        private static readonly Regex _audiosReg = new Regex("/audios[-0-9]+");
-        private static readonly Regex _newsReg = new Regex("/feed(\\s|$)");
-        private static readonly Regex _recommendedNewsReg = new Regex("/feed\\?section=recommended(\\s|$)");
-        private static readonly Regex _feedbackReg = new Regex("/feed\\?section=notifications(\\s|$)");
-        private static readonly Regex _profileReg = new Regex("/(id|wall)[0-9]+");
-        private static readonly Regex _communityReg = new Regex("/(club|event|public|wall)[-0-9]+");
-        private static readonly Regex _photosReg = new Regex("/(photos|albums)[-0-9]+");
-        private static readonly Regex _photoReg = new Regex("/photo[-0-9]+_[0-9]+");
-        private static readonly Regex _albumReg = new Regex("/album[-0-9]+_[0-9]+");
-        private static readonly Regex _tagReg = new Regex("/tag[0-9]+");
-        private static readonly Regex _videosReg = new Regex("/videos[-0-9]+");
-        private static readonly Regex _videoReg = new Regex("/video[-0-9]+_[0-9]+");
-        private static readonly Regex _videoTimeReg = new Regex("/video[-0-9]+_[0-9]+?t=(\\s|$)");
-        private static readonly Regex _boardReg = new Regex("/board[0-9]+");
-        private static readonly Regex _topicReg = new Regex("/topic[-0-9]+_[0-9]+");
-        private static readonly Regex _stickersSettingsReg = new Regex("/stickers/settings(\\s|$)");
-        private static readonly Regex _settingsReg = new Regex("/settings(\\s|$)");
-        private static readonly Regex _stickersReg = new Regex("/stickers(\\s|\\?|$)");
-        private static readonly Regex _stickersPackReg = new Regex("/stickers([\\/A-Za-z0-9]+)");
-        private static readonly Regex _faveReg = new Regex("/fave(\\s|$)");
-        private static readonly Regex _appsReg = new Regex("/apps(\\s|$)");
-        private static readonly Regex _appReg = new Regex("/app[-0-9]+_[-0-9]+");
-        private static readonly Regex _marketAlbumReg = new Regex("/market[-0-9]+\\?section=album_[-0-9]+");
-        private static readonly Regex _marketReg = new Regex("/market[-0-9]+");
-        private static readonly Regex _productReg = new Regex("/product[-0-9]+_[0-9]+");
-        private static readonly Regex _giftsReg = new Regex("/gifts[0-9]+");
-        private static readonly Regex _giftsCatalog = new Regex("/gifts(\\s|$)");
-        private static readonly Regex _namedObjReg = new Regex("/[A-Za-z0-9\\\\._-]+");
-        //
-        private static readonly Regex _podcastsReg = new Regex("/podcasts[-0-9]+");
-        //
-        public static readonly Regex Regex_Mention = new Regex("\\[(id|club)(\\d+)(?:\\:([a-z0-9_\\-]+))?\\|([^\\$]+?)\\]", RegexOptions.IgnoreCase);
-        public static readonly Regex Regex_DomainMention = new Regex("(\\*|@)((id|club|event|public)\\d+)\\s*\\((.+?)\\)", RegexOptions.IgnoreCase);
-
-        private readonly List<NavigatorImpl.NavigationTypeMatch> _navTypesList = new List<NavigatorImpl.NavigationTypeMatch>()
+        public void NavigateToNotificationDetail(VKNotification notification)
         {
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._friendsReg, NavigatorImpl.NavType.friends),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._communitiesReg, NavigatorImpl.NavType.communities),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._dialogsReg, NavigatorImpl.NavType.dialogs),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._dialogReg, NavigatorImpl.NavType.dialog),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._wallReplyReg, NavigatorImpl.NavType.wallPost),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._wallReg, NavigatorImpl.NavType.wallPost),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._feedWallReg, NavigatorImpl.NavType.wallPost),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._audiosReg, NavigatorImpl.NavType.audios),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._newsReg, NavigatorImpl.NavType.news),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._recommendedNewsReg, NavigatorImpl.NavType.recommendedNews),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._feedbackReg, NavigatorImpl.NavType.feedback),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._profileReg, NavigatorImpl.NavType.profile),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._communityReg, NavigatorImpl.NavType.community),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._photosReg, NavigatorImpl.NavType.albums),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._photoReg, NavigatorImpl.NavType.photo),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._albumReg, NavigatorImpl.NavType.album),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._tagReg, NavigatorImpl.NavType.tagPhoto),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._videosReg, NavigatorImpl.NavType.videos),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._videoReg, NavigatorImpl.NavType.video),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._videoTimeReg, NavigatorImpl.NavType.video),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._boardReg, NavigatorImpl.NavType.board),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._topicReg, NavigatorImpl.NavType.topic),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._stickersSettingsReg, NavigatorImpl.NavType.stickersSettings),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._settingsReg, NavigatorImpl.NavType.settings),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._faveReg, NavigatorImpl.NavType.fave),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._appsReg, NavigatorImpl.NavType.apps),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._appReg, NavigatorImpl.NavType.app),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._marketAlbumReg, NavigatorImpl.NavType.marketAlbum),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._marketReg, NavigatorImpl.NavType.market),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._productReg, NavigatorImpl.NavType.product),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._stickersReg, NavigatorImpl.NavType.stickers),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._stickersPackReg, NavigatorImpl.NavType.stickersPack),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._giftsReg, NavigatorImpl.NavType.gifts),
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._giftsCatalog, NavigatorImpl.NavType.giftsCatalog),
-            //
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._podcastsReg, NavigatorImpl.NavType.podcasts),
-            //
-            new NavigatorImpl.NavigationTypeMatch(NavigatorImpl._namedObjReg, NavigatorImpl.NavType.namedObject),
-        };
+            if (notification == null)
+                return;
 
-        public class NavigationTypeMatch
-        {
-            private readonly Regex _idsRegEx = new Regex("\\-?[0-9]+");
-            private readonly Regex _queryParamsRegex = new Regex("(\\?|\\&)([^=]+)\\=([^&]+)");
-
-            private readonly Regex _regEx;
-            public NavigatorImpl.NavType MatchType { get; private set; }
-
-            public int Id1 { get; private set; }
-            public int Id2 { get; private set; }
-            public int Id3 { get; private set; }
-            public List<string> SubTypes { get; private set; }
-            public string ObjName { get; private set; }
-            public string ObjSubName { get; private set; }
-
-            public NavigationTypeMatch(Regex regExp, NavigatorImpl.NavType navType)
+            // First: try to navigate using explicit TargetUrl / ActionUrl if present.
+            try
             {
-                this._regEx = regExp;
-                this.MatchType = navType;
+                string target = notification.TargetUrl ?? notification.ActionUrl;
+                if (!string.IsNullOrWhiteSpace(target))
+                {
+                    try
+                    {
+                        // Normalize and decode
+                        string uri = target.Replace("\\/", "/").Replace("&amp;", "&").Trim();
+                        try { uri = System.Net.WebUtility.UrlDecode(uri); } catch { }
+
+                        // Try in-app navigation first (best effort)
+                        bool handled = false;
+                        try
+                        {
+                            handled = this.GetWithinAppNavigationUri(uri);
+                        }
+                        catch { handled = false; }
+
+                        if (handled)
+                            return;
+
+                        // Sometimes URIs lack scheme or are hostless; try adding https:// if it helps
+                        try
+                        {
+                            if (!uri.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && !uri.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                            {
+                                string withScheme = "https://" + uri.TrimStart('/');
+                                if (this.GetWithinAppNavigationUri(withScheme))
+                                    return;
+                            }
+                        }
+                        catch { }
+
+                        // Final fallback: open as web uri (this will again attempt in-app handling inside NavigateToWebUri)
+                        this.NavigateToWebUri(uri);
+                        return;
+                    }
+                    catch { /* swallow and continue to parsed-parent flow */ }
+                }
+            }
+            catch { /* ignore target-url pre-check failures and continue */ }
+
+            try
+            {
+                var parsedParent = notification.ParsedParent;
+                var parsedFeedback = notification.ParsedFeedback;
+
+                // Wall post parent -> open comments
+                if (parsedParent is VKWallPost wp)
+                {
+                    int ownerId = wp.owner_id;
+                    uint postId = (wp.reply_post_id != 0) ? (uint)wp.reply_post_id : wp.id;
+                    uint commentId = 0;
+                    if (parsedFeedback is VKComment fb)
+                        commentId = fb.id;
+
+                    this.NavigateToWallPostComments(ownerId, postId, commentId, wp);
+                    return;
+                }
+
+                // Parent is a comment -> open post comments and scroll to comment
+                if (parsedParent is VKComment parentComment)
+                {
+                    int ownerId = parentComment.owner_id != 0 ? parentComment.owner_id : parentComment.from_id;
+                    uint postId = parentComment.post_id != 0 ? parentComment.post_id : parentComment.id;
+                    uint commentId = parentComment.id;
+
+                    this.NavigateToWallPostComments(ownerId, postId, commentId);
+                    return;
+                }
+
+                // Parent is a topic (discussion)
+                if (parsedParent is VKTopic topic)
+                {
+                    // Try to get topic id and group id if available
+                    uint topicId = 0;
+                    uint groupIdParam = 0;
+                    try { topicId = topic.id; } catch { }
+                    try { groupIdParam = (topic.owner_id < 0) ? (uint)(-topic.owner_id) : 0; } catch { }
+
+                    uint commentId = 0;
+                    if (parsedFeedback is VKComment fb2)
+                        commentId = fb2.id;
+
+                    if (groupIdParam != 0 && topicId != 0)
+                    {
+                        this.NavigateToGroupDiscussion(groupIdParam, topicId, topic.title ?? string.Empty, true, commentId);
+                        return;
+                    }
+                }
+
+                // Parent is photo
+                if (parsedParent is VKPhoto photo)
+                {
+                    int ownerId = 0;
+                    uint photoId = 0;
+                    try { ownerId = photo.owner_id; } catch { }
+                    try { photoId = photo.id; } catch { }
+
+                    if (photoId != 0)
+                    {
+                        this.NavigateToPhotoWithComments(ownerId, photoId, string.Empty, photo);
+                        return;
+                    }
+                }
+
+                // Parent is video
+                if (parsedParent is VKVideoBase video)
+                {
+                    int ownerId = 0;
+                    uint videoId = 0;
+                    try { ownerId = video.owner_id; } catch { }
+                    try { videoId = video.id; } catch { }
+
+                    if (videoId != 0)
+                    {
+                        this.NavigateToVideoWithComments(ownerId, videoId);
+                        return;
+                    }
+                }
+
+                // If feedback itself is a comment, try routing based on it
+                if (parsedFeedback is VKComment feedbackComment)
+                {
+                    uint commentId = feedbackComment.id;
+                    int ownerId = feedbackComment.owner_id != 0 ? feedbackComment.owner_id : feedbackComment.from_id;
+                    uint postId = feedbackComment.post_id != 0 ? feedbackComment.post_id : 0;
+
+                    if (postId != 0)
+                    {
+                        this.NavigateToWallPostComments(ownerId, postId, commentId);
+                        return;
+                    }
+
+                    // try photo/video ids on comment if present
+                    try
+                    {
+                        if (feedbackComment.photo != null)
+                        {
+                            uint photoId = feedbackComment.photo.id;
+                            if (photoId != 0)
+                            {
+                                this.NavigateToPhotoWithComments(ownerId, photoId);
+                                return;
+                            }
+                        }
+                    }
+                    catch { }
+
+                    try
+                    {
+                        if (feedbackComment.video != null)
+                        {
+                            uint videoId = feedbackComment.video.id;
+                            if (videoId != 0)
+                            {
+                                this.NavigateToVideoWithComments(ownerId, videoId);
+                                return;
+                            }
+                        }
+                    }
+                    catch { }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("NavigateToNotificationDetail error: " + ex);
             }
 
-            public bool Check(string uri)
-            {
-                MatchCollection matchCollection1 = this._regEx.Matches(uri);
-                if (matchCollection1.Count == 0)
-                    return false;
-                Match match1 = matchCollection1[0];
-                this.ObjName = match1.Value;
-                if (match1.Groups.Count > 0)
-                    this.ObjSubName = match1.Groups[match1.Groups.Count - 1].Value;
-                MatchCollection matchCollection2 = this._idsRegEx.Matches(this.ObjName);
-                if (matchCollection2.Count > 0)
-                {
-                    int result;
-                    this.Id1 = int.TryParse(matchCollection2[0].Value, out result) ? result : 0;
-                }
-                if (matchCollection2.Count > 1)
-                {
-                    int result;
-                    this.Id2 = int.TryParse(matchCollection2[1].Value, out result) ? result : 0;
-                }
-                if (matchCollection2.Count > 2)
-                {
-                    int result;
-                    this.Id3 = int.TryParse(matchCollection2[2].Value, out result) ? result : 0;
-                }
-                MatchCollection matchCollection3 = this._queryParamsRegex.Matches(uri);
-                this.SubTypes = new List<string>();
-                foreach (Match match2 in matchCollection3)
-                {
-                    if (match2.Groups.Count == 4 && match2.Groups[2].Value == "w")
-                        this.SubTypes.Add("/" + match2.Groups[match2.Groups.Count - 1].Value);
-                }
-                return true;
-            }
-        }
-#endregion
-        public enum NavType
-        {
-            none,
-            friends,
-            communities,
-            dialogs,
-            news,
-            tagPhoto,
-            albums,
-            profile,
-            dialog,
-            community,
-            board,
-            album,
-            video,
-            audios,
-            topic,
-            photo,
-            wallPost,
-            namedObject,
-            stickersSettings,
-            settings,
-            feedback,
-            videos,
-            fave,
-            apps,
-            marketAlbum,
-            market,
-            product,
-            stickers,
-            stickersPack,
-            recommendedNews,
-            app,
-            gifts,
-            giftsCatalog,
-            podcasts,
+            // Fallback to notifications list
+            this.NavigateToFeedback();
         }
     }
 }
+

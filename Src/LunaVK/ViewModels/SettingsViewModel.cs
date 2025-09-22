@@ -7,18 +7,33 @@ using LunaVK.Core;
 using LunaVK.Core.Library;
 using LunaVK.Library;
 using LunaVK.Core.Utils;
-using LunaVK.Common;
+using Lunavk.rumon;
 using LunaVK.Framework;
 using Windows.UI.Xaml;
 using LunaVK.Core.Framework;
 using System.Linq;
 using Windows.Globalization;
+using Windows.System.UserProfile;
 using System.Globalization;
 
 namespace LunaVK.ViewModels
 {
     public class SettingsViewModel : ViewModelBase
     {
+        // If runtime supports system language change events, callers can subscribe and call RefreshLanguages().
+        public void RefreshLanguages()
+        {
+            _languages = null;
+            try
+            {
+                base.NotifyPropertyChanged(nameof(Languages));
+                base.NotifyPropertyChanged(nameof(SelectedLanguage));
+                base.NotifyPropertyChanged(nameof(LanguageSettings));
+                base.NotifyPropertyChanged(nameof(LanguagesFiltered));
+            }
+            catch { }
+        }
+
         public bool PushNotificationsEnabledAndNotTempDisabled
         {
             get
@@ -1007,7 +1022,6 @@ namespace LunaVK.ViewModels
         */
 
 
-
         public bool CompressPhotosOnUpload
         {
             get { return Settings.CompressPhotosOnUpload; }
@@ -1057,45 +1071,268 @@ namespace LunaVK.ViewModels
             get { return (!CustomFrame.Instance.IsDevicePhone).ToVisiblity(); }
         }
 
-        public List<string> Languages
+        private List<LanguageItem> _languages = null;
+
+        public class LanguageItem
+        {
+            public string DisplayName { get; set; }
+            public string Code { get; set; }
+            public override string ToString() => DisplayName;
+        }
+
+        public List<LanguageItem> Languages
         {
             get
             {
-                List<string> list = new List<string>();
-                list.Add("System");
+                if (_languages != null)
+                    return _languages;
 
-                foreach(string lang in Windows.System.UserProfile.GlobalizationPreferences.Languages)
+                var list = new List<LanguageItem>();
+
+                // "System" option -> empty override
+                list.Add(new LanguageItem { DisplayName = LocalizedStrings.GetString("Settings_Language_System") ?? "System", Code = "" });
+
+                // Preferred explicit languages: Russian, English, Chinese
+                string[] preferred = new[] { "ru", "en-US", "zh-CN" };
+                var codes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var code in preferred)
                 {
-                    CultureInfo temp = new CultureInfo(lang);
-                    list.Add(temp.DisplayName);
+                    try
+                    {
+                        var ci = new System.Globalization.CultureInfo(code);
+                        if (!codes.Contains(ci.Name))
+                        {
+                            list.Add(new LanguageItem { DisplayName = ci.DisplayName, Code = ci.Name });
+                            codes.Add(ci.Name);
+                        }
+                    }
+                    catch { }
                 }
-                
-                return list;
+
+                // Append system-preferred languages (if not already added)
+                try
+                {
+                    foreach (string lang in Windows.System.UserProfile.GlobalizationPreferences.Languages)
+                    {
+                        try
+                        {
+                            var ci = new System.Globalization.CultureInfo(lang);
+                            if (!codes.Contains(ci.Name))
+                            {
+                                list.Add(new LanguageItem { DisplayName = ci.DisplayName, Code = ci.Name });
+                                codes.Add(ci.Name);
+                            }
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
+
+                _languages = list;
+                return _languages;
             }
         }
 
+        // Filtered list for UI (exclude empty 'System' entry)
+        public List<LanguageItem> LanguagesFiltered
+        {
+            get
+            {
+                try
+                {
+                    return this.Languages.Where(l => !string.IsNullOrEmpty(l.Code)).ToList();
+                }
+                catch
+                {
+                    return this.Languages;
+                }
+            }
+        }
+
+        // Two-way string binding for Selected language code (safe for ComboBox.SelectedValue)
+        public string SelectedLanguageCode
+        {
+            get
+            {
+                try
+                {
+                    var langs = this.Languages;
+                    int idx = Settings.LanguageSettings;
+                    if (idx >= 0 && idx < langs.Count)
+                    {
+                        var code = langs[idx].Code;
+                        // If stored index points to 'System' (empty code), resolve a concrete code for UI bindings that use filtered list
+                        if (string.IsNullOrEmpty(code))
+                        {
+                            // Prefer explicit PrimaryLanguageOverride if set
+                            string primary = Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride;
+                            if (!string.IsNullOrEmpty(primary))
+                            {
+                                var match = langs.FirstOrDefault(l => !string.IsNullOrEmpty(l.Code) &&
+                                    (string.Equals(l.Code, primary, StringComparison.OrdinalIgnoreCase) ||
+                                     primary.StartsWith(l.Code.Split('-')[0], StringComparison.OrdinalIgnoreCase)));
+                                if (match != null)
+                                    return match.Code;
+                            }
+
+                            // Otherwise try current system preferred languages
+                            foreach (var sys in Windows.Globalization.ApplicationLanguages.Languages)
+                            {
+                                var match = langs.FirstOrDefault(l => !string.IsNullOrEmpty(l.Code) &&
+                                    (string.Equals(l.Code, sys, StringComparison.OrdinalIgnoreCase) ||
+                                     sys.StartsWith(l.Code.Split('-')[0], StringComparison.OrdinalIgnoreCase)));
+                                if (match != null)
+                                    return match.Code;
+                            }
+
+                            // Fallback to first explicit language
+                            return langs.FirstOrDefault(l => !string.IsNullOrEmpty(l.Code))?.Code ?? string.Empty;
+                        }
+
+                        return code;
+                    }
+                }
+                catch { }
+                return this.Languages.FirstOrDefault(l => !string.IsNullOrEmpty(l.Code))?.Code ?? this.Languages.FirstOrDefault()?.Code ?? string.Empty;
+            }
+            set
+            {
+                if (value == null)
+                    value = string.Empty;
+
+                var langs = this.Languages;
+                int idx = langs.FindIndex(l => string.Equals(l.Code, value, StringComparison.OrdinalIgnoreCase));
+                if (idx < 0)
+                    idx = 0;
+
+                // Persist index only. Do NOT set ApplicationLanguages.PrimaryLanguageOverride here to avoid runtime resource reload issues.
+                Settings.LanguageSettings = (byte)idx;
+
+                try
+                {
+                    base.NotifyPropertyChanged(nameof(SelectedLanguageCode));
+                    base.NotifyPropertyChanged(nameof(LanguageSettings));
+                    base.NotifyPropertyChanged(nameof(SelectedLanguage));
+                    base.NotifyPropertyChanged(nameof(SelectedLanguageFiltered));
+                }
+                catch { }
+            }
+        }
+
+        public LanguageItem SelectedLanguage
+        {
+            get
+            {
+                try
+                {
+                    var langs = this.Languages;
+                    int idx = Settings.LanguageSettings;
+                    if (idx >= 0 && idx < langs.Count)
+                        return langs[idx];
+                }
+                catch { }
+                return this.Languages.FirstOrDefault();
+            }
+            set
+            {
+                if (value == null)
+                    return;
+
+                var langs = this.Languages;
+                int idx = langs.FindIndex(l => string.Equals(l.Code, value.Code, StringComparison.OrdinalIgnoreCase));
+                if (idx < 0)
+                    idx = 0;
+
+                Settings.LanguageSettings = (byte)idx;
+
+                if (idx == 0)
+                    ApplicationLanguages.PrimaryLanguageOverride = "";
+                else
+                    ApplicationLanguages.PrimaryLanguageOverride = langs[idx].Code;
+
+                System.Diagnostics.Debug.WriteLine($"SelectedLanguage changed to index={idx} code={ApplicationLanguages.PrimaryLanguageOverride}");
+
+                // Notify UI bindings
+                try
+                {
+                    base.NotifyPropertyChanged(nameof(SelectedLanguage));
+                    base.NotifyPropertyChanged(nameof(LanguageSettings));
+                    base.NotifyPropertyChanged(nameof(SelectedLanguageFiltered));
+                }
+                catch { }
+            }
+        }
+
+        // Keep backward-compatible int-based property (maps to SelectedLanguage)
         public int LanguageSettings
         {
             get { return Settings.LanguageSettings; }
             set
             {
-                Settings.LanguageSettings = (byte)value;
-                if (value == 0)
+                var langs = this.Languages;
+                int idx = value;
+                if (idx < 0 || idx >= langs.Count)
+                    idx = 0;
+
+                Settings.LanguageSettings = (byte)idx;
+                if (idx == 0)
                     ApplicationLanguages.PrimaryLanguageOverride = "";
                 else
+                    ApplicationLanguages.PrimaryLanguageOverride = langs[idx].Code;
+
+                System.Diagnostics.Debug.WriteLine($"LanguageSettings changed to index={idx} primaryOverride={ApplicationLanguages.PrimaryLanguageOverride}");
+
+                try
                 {
-                    ApplicationLanguages.PrimaryLanguageOverride = Windows.System.UserProfile.GlobalizationPreferences.Languages[value - 1];
-                    //var temp = new CultureInfo(Windows.System.UserProfile.GlobalizationPreferences.Languages[0]);
-                    //int i = 0;
+                    base.NotifyPropertyChanged(nameof(SelectedLanguage));
+                    base.NotifyPropertyChanged(nameof(LanguageSettings));
+                    base.NotifyPropertyChanged(nameof(SelectedLanguageFiltered));
                 }
-
-                //Window.Current.Content = null;
-                //Window.Current.Content = CustomFrame.Instance;
-
-                
-                //Windows.ApplicationModel.Resources.Core.ResourceContext.GetForCurrentView().Reset();
-                //Windows.ApplicationModel.Resources.Core.ResourceContext.GetForViewIndependentUse().Reset();
+                catch { }
             }
         }
+
+        // New property: selected LanguageItem from the filtered list (no 'System' entry)
+        public LanguageItem SelectedLanguageFiltered
+        {
+            get
+            {
+                try
+                {
+                    var filtered = this.LanguagesFiltered;
+                    if (filtered == null || filtered.Count == 0)
+                        return null;
+
+                    // Resolve code via SelectedLanguageCode (this returns a concrete code even if stored selection is 'System')
+                    string code = this.SelectedLanguageCode;
+                    if (!string.IsNullOrEmpty(code))
+                    {
+                        var match = filtered.FirstOrDefault(l => string.Equals(l.Code, code, StringComparison.OrdinalIgnoreCase));
+                        if (match != null)
+                            return match;
+                    }
+
+                    // fallback to first
+                    return filtered.FirstOrDefault();
+                }
+                catch { return null; }
+            }
+            set
+            {
+                if (value == null)
+                    return;
+                // set via code property so all existing persistence logic applies
+                this.SelectedLanguageCode = value.Code;
+                try
+                {
+                    base.NotifyPropertyChanged(nameof(SelectedLanguageFiltered));
+                }
+                catch { }
+            }
+        }
+
+        // ...rest of file remains unchanged ...
     }
 }
+

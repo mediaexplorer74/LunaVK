@@ -9,12 +9,7 @@ using LunaVK.Core.Utils;
 using Windows.Graphics.Display;
 using System.Diagnostics;
 using LunaVK.Core;
-/*
-* текст + влож = отступы со всех сторон
-* только текст = отступы со всех сторон
-* картинка вложена = отступов нет
-* статья/ссылка/документ = отступы со всех сторон
-*/
+
 namespace LunaVK.UC
 {
     public class AttachmentsPresenter : StackPanel
@@ -345,10 +340,6 @@ namespace LunaVK.UC
                             }
                         case VKAttachmentType.Geo:
                             {
-                                /*
-                                 * this._geoItem = !this._isMessage ? (!(this._geo.type == "place") ? (showMap ? this.CreateMapPointFull(topMargin) : this.CreateMapPointSmall(topMargin)) : (showMap ? this.CreateMapPlaceFull(topMargin) : this.CreateMapPlaceSmall(topMargin))) : this.CreateMapPointSimple(topMargin);
-                    this.VirtualizableChildren.Add((IVirtualizable)this._geoItem);
-                    */
                                 if (attachment.geo.type == "place")
                                 {
 
@@ -363,19 +354,10 @@ namespace LunaVK.UC
                             }
                         case VKAttachmentType.Page:
                             {
-                                /*
-                                if (this._attachment.type == "page" && this._attachment.Page != null)
-                                {
-                                    this._title = this._attachment.Page.title ?? "";
-                                    this._subtitle = CommonResources.WikiPage;
-                                    this._navigateUri = string.Format("https://vk.com/club{0}?w=page-{0}_{1}", this._attachment.Page.gid, this._attachment.Page.pid);
-                                    this._iconSrc = "/Resources/WallPost/AttachLink.png";
-                                }
-                                */
                                 FrameworkElement a = new AttachLinkUC();
                                 VKLink link = new VKLink();
                                 link.caption = LocalizedStrings.GetString("WikiPage");
-                                link.url = string.Format("https://vk.com/club{0}?w=page-{0}_{1}", attachment.page.group_id, attachment.page.id);
+                                link.url = string.Format("https://vk.ru/club{0}?w=page-{0}_{1}", attachment.page.group_id, attachment.page.id);
                                 link.title = attachment.page.title;
                                 a.DataContext = link;
                                 this.ListPresenter.Children.Add(a);
@@ -388,7 +370,7 @@ namespace LunaVK.UC
                                 link.button = new VKPrettyCard.Button();
                                 link.button.title = LocalizedStrings.GetString("ViewProduct");
                                 link.button.action = new VKPrettyCard.Action();
-                                link.button.action.url = string.Format("https://vk.com/product{0}_{1}", attachment.market.owner_id, attachment.market.id);
+                                link.button.action.url = string.Format("https://vk.ru/product{0}_{1}", attachment.market.owner_id, attachment.market.id);
                                 link.caption = attachment.market.description;
                                 link.title = attachment.market.title;
                                 link.description = attachment.market.PriceString;
@@ -424,17 +406,7 @@ namespace LunaVK.UC
             }
 
             
-
-
-
-
-
-
-
-
-
-
-            
+  
 
             if (this._mediaPresenter != null && !base.Children.Contains(this._mediaPresenter))
             {
@@ -458,7 +430,6 @@ namespace LunaVK.UC
         private Rectangle GetRectangle()
         {
             double w = base.ActualWidth == 0 ? 600 : base.ActualWidth;
-            //double w = 600;
             double maxH = this.IsMessage ? 300 : 400;
             double h = double.IsInfinity(base.MaxHeight) ? maxH : base.MaxHeight;
 
@@ -601,28 +572,17 @@ namespace LunaVK.UC
                     base.Children.Remove(this._listPresenter);
             }
 
-            
-
             if (this.ForwardedMessages != null)
             {
-                //System.Diagnostics.Debug.WriteLine("ProcessForwardedMessages" + this.ForwardedMessages.Count);
-
                 foreach (VKMessage msg in this.ForwardedMessages)
                 {
-                    //
                     if (msg.text == "" && msg.fwd_messages == null && msg.attachments == null && msg.geo == null)
                         msg.text = "(контент удалён)";
-                    //
-                    //double offs = 0;
-                    //if (this.DataVM.UserThumbVisibility == Visibility.Visible)
-                    //    offs = 64;
+
                     ForwardedMessagesUC fwd = new ForwardedMessagesUC(msg, this, 0);
                     this.ListPresenter.Children.Add(fwd);
                 }
             }
-
-
-
 
             if (this._mediaPresenter != null)
             {
@@ -638,7 +598,6 @@ namespace LunaVK.UC
             if (this._listPresenter != null)
                 base.Children.Add(this._listPresenter);
 
-            //
             this.UpdateMargin();
         }
 #endregion
@@ -671,10 +630,6 @@ namespace LunaVK.UC
                 this.TextPresenter.Text = this.Text;
             }
 
-
-
-
-
             if (this._textBlock != null)
             {
                 if (!base.Children.Contains(this._textBlock))
@@ -684,10 +639,6 @@ namespace LunaVK.UC
             this.UpdateMargin();
         }
 #endregion
-
-
-
-
 
         private bool IsLandscape
         {
@@ -706,7 +657,6 @@ namespace LunaVK.UC
         private void AttachmentsPresenter_Loaded(object sender, RoutedEventArgs e)
         {
             base.SizeChanged += AttachmentsPresenter_SizeChanged;
-            //
             if (this._mediaPresenter != null)
                 this._mediaPresenter.ReMeasure(this.ActualWidth);
         }
@@ -718,3 +668,4 @@ namespace LunaVK.UC
         }
     }
 }
+

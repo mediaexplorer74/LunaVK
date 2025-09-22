@@ -10,7 +10,7 @@ using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
 using Windows.UI.Xaml.Media.Imaging;
 
-namespace LunaVK.Common
+namespace Lunavk.rumon
 {
     public class GraffitiEncoder
     {
@@ -88,3 +88,4 @@ namespace LunaVK.Common
         */
     }
 }
+
