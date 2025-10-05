@@ -38,7 +38,9 @@ namespace LunaVK.Core.DataObjects
         {
             get
             {
-                if (this._pollVM.answer_ids == null || ( this._pollVM.answer_ids.Count == 0 || !this._pollVM.answer_ids.Contains(this.id)))
+                if (this._pollVM.answer_ids == null 
+                    || ( this._pollVM.answer_ids.Count == 0 
+                    || !this._pollVM.answer_ids.Contains(this.id)))
                     return Visibility.Collapsed;
                 return Visibility.Visible;
             }
@@ -48,7 +50,9 @@ namespace LunaVK.Core.DataObjects
         {
             get
             {
-                if (this._pollVM.answer_ids.Count == 0 && this._pollVM.can_vote)
+                if (this._pollVM.answer_ids == null)
+                    return "";
+                if (this._pollVM.answer_ids.Count == 0 && this._pollVM.can_vote) 
                     return "";
                 return this.PercentageRelativeValue.ToString("0") + " %";
             }
@@ -58,6 +62,8 @@ namespace LunaVK.Core.DataObjects
         {
             get
             {
+                if (this._pollVM.answer_ids == null)
+                    return "";
                 if (this._pollVM.answer_ids.Count == 0 && this._pollVM.can_vote)
                     return "";
                 return this.votes.ToString();
@@ -68,6 +74,8 @@ namespace LunaVK.Core.DataObjects
         {
             get
             {
+                if (this._pollVM.answer_ids == null)
+                    return 0.0;
                 if (this._pollVM.answer_ids.Count == 0 && this._pollVM.can_vote)
                     return 0.0;
                 return this.GetRelativeRate();
@@ -86,7 +94,8 @@ namespace LunaVK.Core.DataObjects
         {
             get
             {
-                if (this._pollVM.answer_ids == null || ( this._pollVM.answer_ids.Count == 0 && this._pollVM.can_vote))
+                if (this._pollVM.answer_ids == null 
+                    || ( this._pollVM.answer_ids.Count == 0 && this._pollVM.can_vote))
                     return 0.0;
                 return this.GetAbsoluteRate();
             }
@@ -119,7 +128,11 @@ namespace LunaVK.Core.DataObjects
         {
             get
             {
-                return (this._pollVM.multiple  && this._pollVM.answer_ids == null || this._pollVM.answer_ids.Count == 0) ? Visibility.Visible : Visibility.Collapsed;
+                if (this._pollVM.multiple && this._pollVM.answer_ids == null)
+                    return Visibility.Visible;
+                if (this._pollVM.multiple && this._pollVM.answer_ids.Count == 0)
+                    return Visibility.Visible;
+                return Visibility.Collapsed;
             }
         }
         #endregion

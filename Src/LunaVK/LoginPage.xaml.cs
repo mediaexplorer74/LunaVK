@@ -24,15 +24,13 @@ using Windows.Storage;
 using Windows.ApplicationModel.Background;
 using Windows.Foundation.Metadata;
 using Lunavk.rumon;
-using VkLib.Error; // Added for VkLib exceptions
+using VkLib.Error; 
 
 namespace LunaVK
 {
     public sealed partial class LoginPage : Page
     {
-        /// <summary>
-        /// Р•СЃР»Рё РµСЃС‚СЊ РєРѕРЅС‚РёРЅСѓРј Р°РЅРёРјР°С†РёСЏ
-        /// </summary>
+        
         bool needAnimation;
         //private bool Accessed;
         private bool _isCompleted;
@@ -87,7 +85,8 @@ namespace LunaVK
                 PushNotifications.Instance.UpdateDeviceRegistration((ret) =>
                 {
                     Settings.UserId = 0;
-                    Settings.AccessToken = Settings.LoggedInUserName = Settings.LoggedInUserPhoto = Settings.LoggedInUserStatus = "";
+                    Settings.AccessToken = Settings.LoggedInUserName 
+                      = Settings.LoggedInUserPhoto = Settings.LoggedInUserStatus = "";
                 }, true);
             }
 
@@ -110,12 +109,14 @@ namespace LunaVK
             this._error.Text = "";
             this._error.Opacity = 0;
             this._progressRing.IsActive = true;
-            this.passwordBox.IsEnabled = this.textBoxUsername.IsEnabled = this.LoginBtn.IsEnabled = false;
+            this.passwordBox.IsEnabled = this.textBoxUsername.IsEnabled 
+                = this.LoginBtn.IsEnabled = false;
             
             // Use VkLib direct authentication instead of the complex OAuth flow
             try
             {
-                var token = await VkService.Instance.Auth.Login(this.textBoxUsername.Text, this.passwordBox.Password, 
+                var token = await VkService.Instance.Auth.Login(
+                    this.textBoxUsername.Text, this.passwordBox.Password, 
                     VkLib.Auth.VkScopeSettings.CanAccessFriends |
                     VkLib.Auth.VkScopeSettings.CanAccessGroups |
                     VkLib.Auth.VkScopeSettings.CanAccessMessages |
@@ -137,24 +138,24 @@ namespace LunaVK
                 }
                 else
                 {
-                    this.Callback(VKErrors.AccessDenied, "РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ С‚РѕРєРµРЅ РґРѕСЃС‚СѓРїР°");
+                    this.Callback(VKErrors.AccessDenied, "Access denied");
                 }
             }
             catch (VkCaptchaNeededException ex)
             {
-                this.Callback(VKErrors.CaptchaNeeded, $"РўСЂРµР±СѓРµС‚СЃСЏ РєР°РїС‡Р°: {ex.CaptchaImg}");
+                this.Callback(VKErrors.CaptchaNeeded, $"Captha needed: {ex.CaptchaImg}");
             }
             catch (VkInvalidClientException ex)
             {
-                this.Callback(VKErrors.AccessDenied, "РќРµРІРµСЂРЅС‹Р№ Р»РѕРіРёРЅ РёР»Рё РїР°СЂРѕР»СЊ");
+                this.Callback(VKErrors.AccessDenied, "Invalid client, access denied");
             }
             catch (VkNeedValidationException ex)
             {
-                this.Callback(VKErrors.NeedValidation, "РўСЂРµР±СѓРµС‚СЃСЏ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ Р±РµР·РѕРїР°СЃРЅРѕСЃС‚Рё");
+                this.Callback(VKErrors.NeedValidation, "Validation needed");
             }
             catch (Exception ex)
             {
-                this.Callback(VKErrors.UnknownError, $"РћС€РёР±РєР° Р°РІС‚РѕСЂРёР·Р°С†РёРё: {ex.Message}");
+                this.Callback(VKErrors.UnknownError, $"Unknown error: {ex.Message}");
             }
         }
 
@@ -176,7 +177,7 @@ namespace LunaVK
                             NavigatorImpl.Instance.NavigateToNewsFeed();
                         else
                         {
-                            this._error.Text = "РђРІС‚РѕСЂРёР·Р°С†РёСЏ РІС‹РїРѕР»РЅРµРЅР°, РЅРѕ РЅРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ РґР°РЅРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ.";
+                            this._error.Text = "VK error";
                             this._error.Opacity = 1;
                             this._progressRing.IsActive = false;
                             this.passwordBox.IsEnabled = this.textBoxUsername.IsEnabled = this.LoginBtn.IsEnabled = true;
@@ -197,7 +198,8 @@ namespace LunaVK
                         this._errorStoryBoard.Begin();
                     }
                     this._progressRing.IsActive = false;
-                    this.passwordBox.IsEnabled = this.textBoxUsername.IsEnabled = this.LoginBtn.IsEnabled = true;
+                    this.passwordBox.IsEnabled = this.textBoxUsername.IsEnabled 
+                       = this.LoginBtn.IsEnabled = true;
                 });
             }
         }

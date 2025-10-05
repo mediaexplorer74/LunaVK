@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3" xmlns:uap2="http://schemas.microsoft.com/appx/manifest/uap/windows10/2" IgnorableNamespaces="uap mp uap3 uap2">
-  <Identity Name="ME.LunaVKv1" Publisher="CN=Admin" Version="1.1.150.0" />
+  <Identity Name="ME.LunaVKv1" Publisher="CN=Admin" Version="1.1.200.0" />
   <mp:PhoneIdentity PhoneProductId="cead2502-d791-4386-8e6d-e3133dfc5cfb" PhonePublisherId="59300341-6564-2435-8601-801280357735" />
   <Properties>
     <DisplayName>LunaVK</DisplayName>
@@ -15,7 +15,7 @@
   </Resources>
   <Applications>
     <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="LunaVK.App">
-      <uap:VisualElements DisplayName="LunaVK 1.1.150" Square150x150Logo="Assets\Img\Square150x150Logo.png" Square44x44Logo="Assets\Img\Square44x44Logo.png" Description="Luna – alternative client for VK social network" BackgroundColor="transparent">
+      <uap:VisualElements DisplayName="LunaVK 1.1.200" Square150x150Logo="Assets\Img\Square150x150Logo.png" Square44x44Logo="Assets\Img\Square44x44Logo.png" Description="Luna – alternative client for VK social network" BackgroundColor="transparent">
         <uap:DefaultTile Square310x310Logo="Assets\Img\LargeTile.png" Wide310x150Logo="Assets\Img\Wide310x150Logo.png" Square71x71Logo="Assets\Img\SmallTile.png" ShortName="LunaVK">
           <uap:ShowNameOnTiles>
             <uap:ShowOn Tile="square150x150Logo" />
